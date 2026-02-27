@@ -169,8 +169,8 @@ function DashboardPage() {
   const stats = [
     { label:'Garage Vehicles', value:d.vehicles.length, sub:`${d.vehicles.filter(v=>v.status==='In_Service').length} in service`, icon:'🚗', color:'#f59e0b' },
     { label:'Fleet Vehicles', value:d.fleet.length, sub:`${d.fleet.filter(f=>f.status==='Active').length} active`, icon:'🚛', color:'#3b82f6' },
-    { label:'Fuel Cost', value:totalFuelCost.toLocaleString()+' RWF', sub:'All time', icon:'⛽', color:'#10b981' },
-    { label:'Service Revenue', value:totalServiceCost.toLocaleString()+' RWF', sub:'All time', icon:'🔧', color:'#8b5cf6' },
+    { label:'Fuel Consumption', value:totalFuelCost.toLocaleString()+' RWF', sub:'All time', icon:'⛽', color:'#10b981' },
+    { label:'Service Expenses', value:totalServiceCost.toLocaleString()+' RWF', sub:'All time', icon:'🔧', color:'#8b5cf6' },
     { label:'Staff Members', value:d.staff.length, sub:`${d.staff.filter(s=>s.role==='mechanic').length} mechanics`, icon:'👥', color:'#ec4899' },
     { label:'Inventory Items', value:d.inventory.length, sub:`${lowStock.length} low/out of stock`, icon:'📦', color:lowStock.length>0?'#ef4444':'#10b981' },
   ]
