@@ -630,8 +630,8 @@ function FleetModal({ vehicle, onSave, onClose }) {
         <div className="modal-body">
           <div style={{ fontSize:11, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:14, paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Vehicle Details</div>
           <div className="form-row" style={{ marginBottom:14 }}>
-            <div><label className="form-label">Plate *</label><input className="form-input" value={form.plate} onChange={e=>s('plate',e.target.value.toUpperCase())} placeholder="KCA 123A"/></div>
-            <div><label className="form-label">Status *</label><select className="form-input" style={{ appearance:'auto' }} value={form.status} onChange={e=>s('status',e.target.value)}>{['Active','In_Maintenance','Out_of_Service'].map(x=><option key={x}>{x}</option>)}</select></div>
+            <div><label className="form-label">Plate *</label><input className="form-input" value={form.plate} onChange={e=>s('plate',e.target.value.toUpperCase())} placeholder="RAA 001A"/></div>
+            <div><label className="form-label">Status *</label><select className="form-input" style={{ appearance:'auto' }} value={form.status} onChange={e=>s('status',e.target.value)}>{[,'Active','In_Maintenance','Out_of_Service'].map(x=><option key={x}>{x}</option>)}</select></div>
           </div>
           <div className="form-row" style={{ marginBottom:14 }}>
             <div><label className="form-label">Make *</label><input className="form-input" value={form.make} onChange={e=>s('make',e.target.value)}/></div>
@@ -639,6 +639,7 @@ function FleetModal({ vehicle, onSave, onClose }) {
           </div>
           <div className="form-row" style={{ marginBottom:14 }}>
             <div><label className="form-label">Card Number *</label><input className="form-input" value={form.cardNumber} onChange={e=>s('cardNumber',e.target.value.toUpperCase())} style={{ fontFamily:'DM Mono,monospace' }}/></div>
+            <div><label className="form-label">Company Departments *</label><select className="form-input" style={{ appearance:'auto' }} value={form.companyDepartment} onChange={e=>s('companyDepartment',e.target.value)}>{['--Please Select--','Blue_Band','Colgate', 'OXI', 'Nestle', 'Indomie'].map(x=><option key={x}>{x}</option>)}</select></div>
           </div> 
           <div className="form-row" style={{ marginBottom:14 }}>
             <div><label className="form-label">Year *</label><input className="form-input" type="number" value={form.year} onChange={e=>s('year',e.target.value)}/></div>
@@ -662,6 +663,10 @@ function FleetModal({ vehicle, onSave, onClose }) {
           <div className="form-row">
             <div><label className="form-label">Insurance Expiry *</label><input className="form-input" type="date" value={form.insuranceExpiry} onChange={e=>s('insuranceExpiry',e.target.value)}/></div>
             <div><label className="form-label">Inspection Expiry *</label><input className="form-input" type="date" value={form.inspectionExpiry} onChange={e=>s('inspectionExpiry',e.target.value)}/></div>
+          </div> 
+          <div className="form-row">
+            <div><label className="form-label">Inspection Issued Date: *</label><input className="form-input" type="date" value={form.inspectionIssuedDate} onChange={e=>s('inspectionIssuedDate',e.target.value)}/></div>
+            <div><label className="form-label">Inspection Expiry Date *</label><input className="form-input" type="date" value={form.inspectionExpiry} onChange={e=>s('inspectionExpiry',e.target.value)}/></div>
           </div>
         </div>
         <div className="modal-footer">
