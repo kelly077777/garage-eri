@@ -620,7 +620,7 @@ function ServiceModal({ onSave, onClose, currentUser }) {
 
 // ─── FLEET MODAL ──────────────────────────────────────────────────────────────
 function FleetModal({ vehicle, onSave, onClose }) {
-  const empty = { plate:'', make:'', model:'', year:new Date().getFullYear(), color:'', vin:'', type:'Sedan', mileage:0, driverName:'', driverPhone:'', driverLicense:'', insuranceCompany:'', insuranceNumber:'', insuranceExpiry:'', inspectionExpiry:'', status:'Active' }
+  const empty = { plate:'', make:'', model:'',cardNumber:'', year:new Date().getFullYear(), color:'', vin:'', type:'Sedan', mileage:0, driverName:'', driverPhone:'', driverLicense:'', insuranceCompany:'', insuranceNumber:'', insuranceExpiry:'', inspectionExpiry:'', status:'Active' }
   const [form, setForm] = useState(vehicle||empty)
   const s = (k,v) => setForm(f=>({...f,[k]:v}))
   return (
@@ -631,39 +631,42 @@ function FleetModal({ vehicle, onSave, onClose }) {
           <div style={{ fontSize:11, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:14, paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Vehicle Details</div>
           <div className="form-row" style={{ marginBottom:14 }}>
             <div><label className="form-label">Plate *</label><input className="form-input" value={form.plate} onChange={e=>s('plate',e.target.value.toUpperCase())} placeholder="KCA 123A"/></div>
-            <div><label className="form-label">Status</label><select className="form-input" style={{ appearance:'auto' }} value={form.status} onChange={e=>s('status',e.target.value)}>{['Active','In_Maintenance','Out_of_Service'].map(x=><option key={x}>{x}</option>)}</select></div>
+            <div><label className="form-label">Status *</label><select className="form-input" style={{ appearance:'auto' }} value={form.status} onChange={e=>s('status',e.target.value)}>{['Active','In_Maintenance','Out_of_Service'].map(x=><option key={x}>{x}</option>)}</select></div>
           </div>
           <div className="form-row" style={{ marginBottom:14 }}>
             <div><label className="form-label">Make *</label><input className="form-input" value={form.make} onChange={e=>s('make',e.target.value)}/></div>
             <div><label className="form-label">Model *</label><input className="form-input" value={form.model} onChange={e=>s('model',e.target.value)}/></div>
           </div>
           <div className="form-row" style={{ marginBottom:14 }}>
-            <div><label className="form-label">Year</label><input className="form-input" type="number" value={form.year} onChange={e=>s('year',e.target.value)}/></div>
-            <div><label className="form-label">Color</label><input className="form-input" value={form.color} onChange={e=>s('color',e.target.value)}/></div>
+            <div><label className="form-label">Card Number *</label><input className="form-input" value={form.cardNumber} onChange={e=>s('cardNumber',e.target.value.toUpperCase())} style={{ fontFamily:'DM Mono,monospace' }}/></div>
+          </div> 
+          <div className="form-row" style={{ marginBottom:14 }}>
+            <div><label className="form-label">Year *</label><input className="form-input" type="number" value={form.year} onChange={e=>s('year',e.target.value)}/></div>
+            <div><label className="form-label">Color *</label><input className="form-input" value={form.color} onChange={e=>s('color',e.target.value)}/></div>
           </div>
           <div className="form-row" style={{ marginBottom:14 }}>
-            <div><label className="form-label">Type</label><select className="form-input" style={{ appearance:'auto' }} value={form.type} onChange={e=>s('type',e.target.value)}>{['Sedan','SUV','Pickup Truck','Van','Minibus','Truck','Motorcycle'].map(t=><option key={t}>{t}</option>)}</select></div>
-            <div><label className="form-label">Mileage (km)</label><input className="form-input" type="number" value={form.mileage} onChange={e=>s('mileage',e.target.value)}/></div>
+            <div><label className="form-label">Type *</label><select className="form-input" style={{ appearance:'auto' }} value={form.type} onChange={e=>s('type',e.target.value)}>{['Sedan','SUV','Pickup Truck','Van','Minibus','Truck','Motorcycle'].map(t=><option key={t}>{t}</option>)}</select></div>
+            <div><label className="form-label">Mileage (km) *</label><input className="form-input" type="number" value={form.mileage} onChange={e=>s('mileage',e.target.value)}/></div>
           </div>
           <div style={{ fontSize:11, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', margin:'20px 0 14px', paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Assigned Driver</div>
           <div className="form-row" style={{ marginBottom:14 }}>
-            <div><label className="form-label">Driver Name</label><input className="form-input" value={form.driverName} onChange={e=>s('driverName',e.target.value)}/></div>
-            <div><label className="form-label">Driver Phone</label><input className="form-input" value={form.driverPhone} onChange={e=>s('driverPhone',e.target.value)}/></div>
+            <div><label className="form-label">Driver Name *</label><input className="form-input" value={form.driverName} onChange={e=>s('driverName',e.target.value)}/></div>
+            <div><label className="form-label">Driver Phone *</label><input className="form-input" value={form.driverPhone} onChange={e=>s('driverPhone',e.target.value)}/></div>
           </div>
-          <div className="form-group"><label className="form-label">License Number</label><input className="form-input" value={form.driverLicense} onChange={e=>s('driverLicense',e.target.value)}/></div>
+          <div className="form-group"><label className="form-label">License Identification *</label><input className="form-input" value={form.driverLicense} onChange={e=>s('driverLicense',e.target.value)}/></div>
           <div style={{ fontSize:11, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', margin:'20px 0 14px', paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Insurance & Documents</div>
           <div className="form-row" style={{ marginBottom:14 }}>
-            <div><label className="form-label">Insurance Company</label><input className="form-input" value={form.insuranceCompany} onChange={e=>s('insuranceCompany',e.target.value)}/></div>
-            <div><label className="form-label">Insurance Number</label><input className="form-input" value={form.insuranceNumber} onChange={e=>s('insuranceNumber',e.target.value)}/></div>
+            <div><label className="form-label">Insurance Company *</label><input className="form-input" value={form.insuranceCompany} onChange={e=>s('insuranceCompany',e.target.value)}/></div>
+            <div><label className="form-label">Insurance Number *</label><input className="form-input" value={form.insuranceNumber} onChange={e=>s('insuranceNumber',e.target.value)}/></div>
           </div>
           <div className="form-row">
-            <div><label className="form-label">Insurance Expiry</label><input className="form-input" type="date" value={form.insuranceExpiry} onChange={e=>s('insuranceExpiry',e.target.value)}/></div>
-            <div><label className="form-label">Inspection Expiry</label><input className="form-input" type="date" value={form.inspectionExpiry} onChange={e=>s('inspectionExpiry',e.target.value)}/></div>
+            <div><label className="form-label">Insurance Expiry *</label><input className="form-input" type="date" value={form.insuranceExpiry} onChange={e=>s('insuranceExpiry',e.target.value)}/></div>
+            <div><label className="form-label">Inspection Expiry *</label><input className="form-input" type="date" value={form.inspectionExpiry} onChange={e=>s('inspectionExpiry',e.target.value)}/></div>
           </div>
         </div>
         <div className="modal-footer">
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn btn-blue" onClick={()=>{ if (!form.plate||!form.make||!form.model){alert('Plate, Make, Model required');return} onSave(form) }}>{vehicle?'Save Changes':'Add Vehicle'}</button>
+          <button className="btn btn-blue" onClick={()=>{ if (!form.plate||!form.make||!form.model||!form.driverName||!form.driverPhone||!form.insuranceCompany||!form.insuranceNumber||!form.insuranceExpiry){alert('Required fields missing');return} onSave(form) }}>{vehicle?'Save Changes':'Add Vehicle'}</button>
         </div>
       </div>
     </div>
