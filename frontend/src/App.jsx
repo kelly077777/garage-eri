@@ -138,7 +138,7 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout }) {
         <div style={{ padding:'8px 12px 6px', fontSize:10, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.1em' }}>Main</div>
         {N('dashboard','📊','Dashboard')}
         {N('vehicles','🚗','Vehicles')}
-        {N('fuel','⛽','Fuel Logs')}
+        {user.role === 'manager' && N('fuel','⛽','Fuel Logs')}
         {N('inventory','📦','Inventory')}
         {user.role === 'manager' && N('staff','👥','Staff')}
       </nav>
@@ -259,7 +259,12 @@ function FuelLogsPage({ user }) {
   const [logs, setLogs] = useState([])
   const [fleet, setFleet] = useState([])
   const [showAdd, setShowAdd] = useState(false)
+  const [showReport, setShowReport] = useState(false)
   const [filterVehicle, setFilterVehicle] = useState('all')
+  const [reportType, setReportType] = useState('range') // 'range' or 'month'
+  const [reportFrom, setReportFrom] = useState(new Date().toISOString().split('T')[0])
+  const [reportTo, setReportTo] = useState(new Date().toISOString().split('T')[0])
+  const [reportMonth, setReportMonth] = useState(new Date().toISOString().slice(0,7))
   const [form, setForm] = useState({ fleetVehicleId:'', date:new Date().toISOString().split('T')[0], liters:'', costPerLiter:'', totalCost:'', mileageAtFill:'', filledBy:user.name, station:'' })
   const sf = (k,v) => setForm(f=>({...f,[k]:v}))
 
@@ -284,11 +289,103 @@ function FuelLogsPage({ user }) {
   const totalL = filtered.reduce((s,l)=>s+(l.liters||0),0)
   const totalC = filtered.reduce((s,l)=>s+(l.totalCost||0),0)
 
+  const getReportData = () => {
+    return logs.filter(l => {
+      const d = l.date
+      if (reportType==='range') return d >= reportFrom && d <= reportTo
+      if (reportType==='month') return d && d.slice(0,7)===reportMonth
+      return true
+    })
+  }
+
+  const exportExcel = () => {
+    const data = getReportData()
+    if (data.length===0) { alert('No data for selected period'); return }
+    const period = reportType==='range' ? `${reportFrom} to ${reportTo}` : reportMonth
+    const totalLiters = data.reduce((s,l)=>s+(l.liters||0),0)
+    const totalCost = data.reduce((s,l)=>s+(l.totalCost||0),0)
+    const rows = [
+      ['ERI-RWANDA - Fuel Consumption Report'],
+      [`Period: ${period}`],
+      [`Generated: ${new Date().toLocaleDateString()}`],
+      [],
+      ['Vehicle','Date','Liters (L)','Cost/L (RWF)','Total Cost (RWF)','Mileage (km)','Station','Filled By'],
+      ...data.map(l=>[
+        l.fleetVehicle?.plate||'—',
+        l.date,
+        l.liters,
+        l.costPerLiter||0,
+        l.totalCost||0,
+        l.mileageAtFill||0,
+        l.station||'—',
+        l.filledBy||'—'
+      ]),
+      [],
+      ['TOTALS','',totalLiters.toFixed(1),'',totalCost,'','','']
+    ]
+    const csv = rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type:'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = `fuel-report-${period}.csv`; a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const exportPDF = () => {
+    const data = getReportData()
+    if (data.length===0) { alert('No data for selected period'); return }
+    const period = reportType==='range' ? `${reportFrom} to ${reportTo}` : reportMonth
+    const totalLiters = data.reduce((s,l)=>s+(l.liters||0),0)
+    const totalCost = data.reduce((s,l)=>s+(l.totalCost||0),0)
+    const rows = data.map(l=>`
+      <tr>
+        <td>${l.fleetVehicle?.plate||'—'}</td>
+        <td>${l.date}</td>
+        <td>${l.liters}L</td>
+        <td>${l.costPerLiter||0} RWF</td>
+        <td>${(l.totalCost||0).toLocaleString()} RWF</td>
+        <td>${l.mileageAtFill?l.mileageAtFill.toLocaleString()+' km':'—'}</td>
+        <td>${l.station||'—'}</td>
+        <td>${l.filledBy||'—'}</td>
+      </tr>`).join('')
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Fuel Report</title>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 30px; color: #111; }
+      h1 { font-size: 22px; margin-bottom: 4px; }
+      p { color: #555; font-size: 13px; margin: 2px 0; }
+      table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+      th { background: #f59e0b; color: #000; padding: 8px; text-align: left; }
+      td { padding: 7px 8px; border-bottom: 1px solid #eee; }
+      tr:nth-child(even) td { background: #fafafa; }
+      .totals td { font-weight: bold; background: #fff8e1; border-top: 2px solid #f59e0b; }
+      .footer { margin-top: 20px; font-size: 11px; color: #888; }
+    </style></head><body>
+    <h1>⛽ ERI-RWANDA Fuel Consumption Report</h1>
+    <p>Period: ${period}</p>
+    <p>Generated: ${new Date().toLocaleDateString()}</p>
+    <p>Total Entries: ${data.length}</p>
+    <table>
+      <thead><tr><th>Vehicle</th><th>Date</th><th>Liters</th><th>Cost/L</th><th>Total Cost</th><th>Mileage</th><th>Station</th><th>Filled By</th></tr></thead>
+      <tbody>${rows}
+      <tr class="totals"><td>TOTAL</td><td></td><td>${totalLiters.toFixed(1)}L</td><td></td><td>${totalCost.toLocaleString()} RWF</td><td></td><td></td><td></td></tr>
+      </tbody>
+    </table>
+    <div class="footer">ERI-RWANDA Garage Management System</div>
+    </body></html>`
+    const w = window.open('','_blank')
+    w.document.write(html)
+    w.document.close()
+    w.print()
+  }
+
   return (
     <>
       <div className="page-header">
         <div><div className="page-title">⛽ Fuel Logs</div><div className="page-sub">Track fuel consumption for fleet vehicles</div></div>
-        <button className="btn btn-accent" onClick={()=>setShowAdd(true)}>+ Log Fuel Fill</button>
+        <div style={{ display:'flex', gap:10 }}>
+          {user.role==='manager' && <button className="btn btn-ghost" onClick={()=>setShowReport(true)}>📊 Generate Report</button>}
+          <button className="btn btn-accent" onClick={()=>setShowAdd(true)}>+ Log Fuel Fill</button>
+        </div>
       </div>
       <div className="page-content">
         <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, marginBottom:20 }}>
@@ -325,6 +422,43 @@ function FuelLogsPage({ user }) {
           )}
         </div>
       </div>
+
+      {showReport && (
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowReport(false)}>
+          <div className="modal" style={{ maxWidth:480 }}>
+            <div className="modal-header"><div className="modal-title">📊 Generate Fuel Report</div><X onClick={()=>setShowReport(false)}/></div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label className="form-label">Report Type</label>
+                <select className="form-input" style={{ appearance:'auto' }} value={reportType} onChange={e=>setReportType(e.target.value)}>
+                  <option value="range">Date Range</option>
+                  <option value="month">By Month</option>
+                </select>
+              </div>
+              {reportType==='range' ? (
+                <div className="form-row" style={{ marginBottom:14 }}>
+                  <div><label className="form-label">From Date</label><input className="form-input" type="date" value={reportFrom} onChange={e=>setReportFrom(e.target.value)}/></div>
+                  <div><label className="form-label">To Date</label><input className="form-input" type="date" value={reportTo} onChange={e=>setReportTo(e.target.value)}/></div>
+                </div>
+              ) : (
+                <div className="form-group">
+                  <label className="form-label">Select Month</label>
+                  <input className="form-input" type="month" value={reportMonth} onChange={e=>setReportMonth(e.target.value)}/>
+                </div>
+              )}
+              <div style={{ background:'var(--surface2)', borderRadius:8, padding:12, fontSize:13, color:'var(--text2)', marginTop:8 }}>
+                <strong style={{ color:'var(--text)' }}>{getReportData().length}</strong> entries found for selected period
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={()=>setShowReport(false)}>Cancel</button>
+              <button className="btn btn-blue" onClick={exportExcel}>📥 Export Excel</button>
+              <button className="btn btn-accent" onClick={exportPDF}>📄 Export PDF</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showAdd && (
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowAdd(false)}>
           <div className="modal" style={{ maxWidth:520 }}>
@@ -801,8 +935,8 @@ function VehiclesPage({ user }) {
       <div className="page-header">
         <div><div className="page-title">Vehicles</div><div className="page-sub">{tab==='garage'?`${vehicles.length} garage vehicles`:`${fleet.length} fleet vehicles`}</div></div>
         <div style={{ display:'flex', gap:10 }}>
-          {canAdd&&tab==='garage'&&<button className="btn btn-success" onClick={()=>setShowAdd(true)}>+ Register Vehicle</button>}
-          {tab==='fleet'&&<button className="btn btn-blue" onClick={()=>setShowAddFleet(true)}>+ Add Fleet Vehicle</button>}
+          {tab==='garage'&&<button className="btn btn-success" onClick={()=>setShowAdd(true)}>+ Register Vehicle</button>}
+          {canAdd&&tab==='fleet'&&<button className="btn btn-blue" onClick={()=>setShowAddFleet(true)}>+ Add Fleet Vehicle</button>}
         </div>
       </div>
       <div className="page-content">
