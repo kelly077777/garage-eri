@@ -158,13 +158,14 @@ function DashboardPage() {
   const [d, setD] = useState({ vehicles:[], fleet:[], fuel:[], inventory:[], staff:[] })
   useEffect(() => {
     Promise.all([api.get('/vehicles'), api.get('/fleet'), api.get('/fleet/fuel/all'), api.get('/inventory'), api.get('/auth/users')])
-      .then(([v,f,fuel,inv,s]) => setD({ vehicles:v.data, fleet:f.data, fuel:fuel.data, inventory:inv.data, staff:s.data }))
-      .catch(e => console.error(e))
-  }, [])
+      .then(([v,f,fuel,inv,s]) => setD({ vehicles: Array.isArray(v.data) ? v.data : v.data?.content || [], fleet: Array.isArray(f.data) ? f.data : f.data?.content || [], fuel: Array.isArray(fuel.data) ? fuel.data : fuel.data?.content || [],
+         inventory: Array.isArray(inv.data) ? inv.data : inv.data?.content || [],
+         staff: Array.isArray(s.data) ? s.data : s.data?.content || [] }))
+      .catch(e => console.error(e))}, [])
 
-  const totalFuelCost = d.fuel.reduce((s,f) => s+(f.totalCost||0), 0)
-  const totalServiceCost = d.vehicles.flatMap(v => v.serviceHistory||[]).reduce((s,h) => s+(h.cost||0), 0)
-  const lowStock = d.inventory.filter(i => i.status==='Low_Stock'||i.status==='Out_of_Stock')
+  const totalFuelCost = (d.fuel||[]).reduce((s,f) => s+(f.totalCost||0), 0)
+  const totalServiceCost = 0
+  const lowStock = (d.inventory||[]).filter(i => i.status==='Low_Stock'||i.status==='Out_of_Stock')
 
   const stats = [
     { label:'Garage Vehicles', value:d.vehicles.length, sub:`${d.vehicles.filter(v=>v.status==='In_Service').length} in service`, icon:'🚗', color:'#f59e0b' },
@@ -531,7 +532,7 @@ function InventoryPage({ user }) {
   return (
     <>
       <div className="page-header">
-        <div><div className="page-title">📦 Inventory</div><div className="page-sub">Parts, tools and consumables</div></div>
+        <div><div className="page-title">📦 Inventory *</div><div className="page-sub">Parts, tools and consumables *</div></div>
         {canEdit && <button className="btn btn-success" onClick={()=>{ setForm(empty); setEditing(null); setShowAdd(true) }}>+ Add Item</button>}
       </div>
       <div className="page-content">
@@ -553,7 +554,7 @@ function InventoryPage({ user }) {
           <div className="card-header"><div className="card-title">Stock List</div><span style={{ fontSize:12, color:'var(--text2)' }}>{filtered.length} items</span></div>
           {filtered.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}><div style={{ fontSize:36, marginBottom:12 }}>📦</div><div>No items found</div></div> : (
             <table className="table">
-              <thead><tr><th>Item</th><th>Category</th><th>Qty</th><th>Unit Price</th><th>Location</th><th>Status</th>{canEdit&&<th>Actions</th>}</tr></thead>
+              <thead><tr><th>Item</th><th>Category </th><th>Qty</th><th>Unit Price</th><th>Location</th><th>Status</th>{canEdit&&<th>Actions</th>}</tr></thead>
               <tbody>
                 {filtered.map(item=>{
                   const st=INV_STATUS[item.status]||INV_STATUS['In_Stock']
@@ -584,28 +585,28 @@ function InventoryPage({ user }) {
             <div className="modal-body">
               <div className="form-row" style={{ marginBottom:14 }}>
                 <div><label className="form-label">Item Name *</label><input className="form-input" value={form.name} onChange={e=>sf('name',e.target.value)} placeholder="e.g. Oil Filter"/></div>
-                <div><label className="form-label">Category</label>
+                <div><label className="form-label">Category *</label>
                   <select className="form-input" style={{ appearance:'auto' }} value={form.category} onChange={e=>sf('category',e.target.value)}>
                     <option value="PART">Part</option><option value="TOOL">Tool</option><option value="CONSUMABLE">Consumable</option>
                   </select>
                 </div>
               </div>
-              <div className="form-group"><label className="form-label">Description</label><input className="form-input" value={form.description} onChange={e=>sf('description',e.target.value)} placeholder="Optional"/></div>
+              <div className="form-group"><label className="form-label">Description *</label><input className="form-input" value={form.description} onChange={e=>sf('description',e.target.value)} placeholder="Optional"/></div>
               <div className="form-row" style={{ marginBottom:14 }}>
-                <div><label className="form-label">Quantity</label><input className="form-input" type="number" value={form.quantity} onChange={e=>sf('quantity',parseInt(e.target.value)||0)}/></div>
-                <div><label className="form-label">Unit</label>
+                <div><label className="form-label">Quantity *</label><input className="form-input" type="text" value={form.quantity} onChange={e=>sf('quantity',parseInt(e.target.value)||0)}/></div>
+                <div><label className="form-label">Unit *</label>
                   <select className="form-input" style={{ appearance:'auto' }} value={form.unit} onChange={e=>sf('unit',e.target.value)}>
                     {['pcs','liters','kg','meters','boxes','sets'].map(u=><option key={u}>{u}</option>)}
                   </select>
                 </div>
               </div>
               <div className="form-row" style={{ marginBottom:14 }}>
-                <div><label className="form-label">Min Qty (alert threshold)</label><input className="form-input" type="number" value={form.minQuantity} onChange={e=>sf('minQuantity',parseInt(e.target.value)||0)}/></div>
-                <div><label className="form-label">Unit Price (RWF)</label><input className="form-input" type="number" value={form.unitPrice} onChange={e=>sf('unitPrice',parseInt(e.target.value)||0)}/></div>
+                <div><label className="form-label">Min Qty (alert threshold) *</label><input className="form-input" type="number" value={form.minQuantity} onChange={e=>sf('minQuantity',parseInt(e.target.value)||0)}/></div>
+                <div><label className="form-label">Price (RWF) *</label><input className="form-input" type="text" value={form.unitPrice} onChange={e=>sf('unitPrice',parseInt(e.target.value)||0)}/></div>
               </div>
               <div className="form-row">
-                <div><label className="form-label">Supplier</label><input className="form-input" value={form.supplier} onChange={e=>sf('supplier',e.target.value)} placeholder="Supplier name"/></div>
-                <div><label className="form-label">Location</label><input className="form-input" value={form.location} onChange={e=>sf('location',e.target.value)} placeholder="e.g. Shelf A-3"/></div>
+                <div><label className="form-label">Supplier *</label><input className="form-input" value={form.supplier} onChange={e=>sf('supplier',e.target.value)} placeholder="Supplier name"/></div>
+                <div><label className="form-label">Location *</label><input className="form-input" value={form.location} onChange={e=>sf('location',e.target.value)} placeholder="e.g. Shelf A-3"/></div>
               </div>
             </div>
             <div className="modal-footer">
@@ -689,29 +690,29 @@ function VehicleModal({ vehicle, onSave, onClose }) {
           <div style={{ fontSize:11, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:14, paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Vehicle Details</div>
           <div className="form-row" style={{ marginBottom:14 }}>
             <div><label className="form-label">Plate *</label><input className="form-input" value={form.plate} onChange={e=>s('plate',e.target.value.toUpperCase())} placeholder="KCA 123A"/></div>
-            <div><label className="form-label">Status</label><select className="form-input" style={{ appearance:'auto' }} value={form.status} onChange={e=>s('status',e.target.value)}>{['Ready','In_Service','Awaiting_Parts','Completed'].map(x=><option key={x}>{x}</option>)}</select></div>
+            <div><label className="form-label">Status *</label><select className="form-input" style={{ appearance:'auto' }} value={form.status} onChange={e=>s('status',e.target.value)}>{['Ready','In_Service','Awaiting_Parts','Completed'].map(x=><option key={x}>{x}</option>)}</select></div>
           </div>
           <div className="form-row" style={{ marginBottom:14 }}>
             <div><label className="form-label">Make *</label><input className="form-input" value={form.make} onChange={e=>s('make',e.target.value)} placeholder="Toyota"/></div>
             <div><label className="form-label">Model *</label><input className="form-input" value={form.model} onChange={e=>s('model',e.target.value)} placeholder="Hilux"/></div>
           </div>
           <div className="form-row" style={{ marginBottom:14 }}>
-            <div><label className="form-label">Year</label><input className="form-input" type="number" value={form.year} onChange={e=>s('year',e.target.value)}/></div>
-            <div><label className="form-label">Color</label><input className="form-input" value={form.color} onChange={e=>s('color',e.target.value)} placeholder="White"/></div>
+            <div><label className="form-label">Year *</label><input className="form-input" type="number" value={form.year} onChange={e=>s('year',e.target.value)}/></div>
+            <div><label className="form-label">Color *</label><input className="form-input" value={form.color} onChange={e=>s('color',e.target.value)} placeholder="White"/></div>
           </div>
           <div className="form-row" style={{ marginBottom:14 }}>
-            <div><label className="form-label">Type</label><select className="form-input" style={{ appearance:'auto' }} value={form.type} onChange={e=>s('type',e.target.value)}>{['Sedan','SUV','Pickup Truck','Van','Minibus','Truck','Motorcycle'].map(t=><option key={t}>{t}</option>)}</select></div>
-            <div><label className="form-label">Mileage (km)</label><input className="form-input" type="number" value={form.mileage} onChange={e=>s('mileage',e.target.value)}/></div>
+            <div><label className="form-label">Type *</label><select className="form-input" style={{ appearance:'auto' }} value={form.type} onChange={e=>s('type',e.target.value)}>{['Sedan','SUV','Pickup Truck','Van','Minibus','Truck','Motorcycle'].map(t=><option key={t}>{t}</option>)}</select></div>
+            <div><label className="form-label">Mileage (km) *</label><input className="form-input" type="number" value={form.mileage} onChange={e=>s('mileage',e.target.value)}/></div>
           </div>
           <div className="form-group"><label className="form-label">VIN</label><input className="form-input" value={form.vin} onChange={e=>s('vin',e.target.value.toUpperCase())} style={{ fontFamily:'DM Mono,monospace' }}/></div>
           <div style={{ fontSize:11, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', margin:'20px 0 14px', paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Owner Information</div>
           <div className="form-row" style={{ marginBottom:14 }}>
             <div><label className="form-label">Owner Name *</label><input className="form-input" value={form.ownerName} onChange={e=>s('ownerName',e.target.value)} placeholder="Full name"/></div>
-            <div><label className="form-label">Phone</label><input className="form-input" value={form.ownerPhone} onChange={e=>s('ownerPhone',e.target.value)} placeholder="+250 788 000 000"/></div>
+            <div><label className="form-label">Phone *</label><input className="form-input" value={form.ownerPhone} onChange={e=>s('ownerPhone',e.target.value)} placeholder="+250 788 000 000"/></div>
           </div>
           <div className="form-row">
-            <div><label className="form-label">Email</label><input className="form-input" value={form.ownerEmail} onChange={e=>s('ownerEmail',e.target.value)}/></div>
-            <div><label className="form-label">Company</label><input className="form-input" value={form.ownerCompany} onChange={e=>s('ownerCompany',e.target.value)}/></div>
+            <div><label className="form-label">Email *</label><input className="form-input" value={form.ownerEmail} onChange={e=>s('ownerEmail',e.target.value)}/></div>
+            <div><label className="form-label">Company *</label><input className="form-input" value={form.ownerCompany} onChange={e=>s('ownerCompany',e.target.value)}/></div>
           </div>
         </div>
         <div className="modal-footer">
@@ -738,7 +739,7 @@ function ServiceModal({ onSave, onClose, currentUser }) {
           </div>
           <div className="form-group"><label className="form-label">Description *</label><textarea className="form-input" rows={3} value={form.description} onChange={e=>s('description',e.target.value)} placeholder="Describe the work done..." style={{ resize:'vertical' }}/></div>
           <div className="form-row" style={{ marginBottom:14 }}>
-            <div><label className="form-label">Cost (RWF)</label><input className="form-input" type="number" value={form.cost} onChange={e=>s('cost',e.target.value)}/></div>
+            <div><label className="form-label">Cost (RWF)</label><input className="form-input" type="text" value={form.cost} onChange={e=>s('cost',e.target.value)}/></div>
             <div><label className="form-label">Mechanic</label><input className="form-input" value={form.mechanic} onChange={e=>s('mechanic',e.target.value)}/></div>
           </div>
           <div className="form-group"><label className="form-label">Parts Used (comma separated)</label><input className="form-input" value={form.parts} onChange={e=>s('parts',e.target.value)} placeholder="Oil Filter, Brake Pads x2..."/></div>
@@ -800,7 +801,7 @@ function FleetModal({ vehicle, onSave, onClose }) {
           </div> 
           <div className="form-row">
             <div><label className="form-label">Inspection Issued Date: *</label><input className="form-input" type="date" value={form.inspectionIssuedDate} onChange={e=>s('inspectionIssuedDate',e.target.value)}/></div>
-            <div><label className="form-label">Inspection Expiry Date *</label><input className="form-input" type="date" value={form.inspectionExpiry} onChange={e=>s('inspectionExpiry',e.target.value)}/></div>
+            <div><label className="form-label">Inspection Expiry Date: *</label><input className="form-input" type="date" value={form.inspectionExpiry} onChange={e=>s('inspectionExpiry',e.target.value)}/></div>
           </div>
         </div>
         <div className="modal-footer">
@@ -917,13 +918,13 @@ function VehiclesPage({ user }) {
   const canAdd = user.role==='manager'||user.role==='supervisor'
 
   useEffect(()=>{ fetchVehicles(); fetchFleet() },[])
-  const fetchVehicles = async () => { try { const r=await api.get('/vehicles'); setVehicles(r.data) } catch { alert('Failed to load vehicles') } setLoading(false) }
-  const fetchFleet = async () => { try { const r=await api.get('/fleet'); setFleet(r.data) } catch(e){console.error(e)} }
+  const fetchVehicles = async () => { try { const r=await api.get('/vehicles'); setVehicles(Array.isArray(r.data) ? r.data : r.data?.content || []) } catch { alert('Failed to load vehicles') } setLoading(false) }
+  const fetchFleet = async () => { try { const r=await api.get('/fleet'); setFleet(Array.isArray(r.data) ? r.data : r.data?.content || []) } catch(e){console.error(e)} }
   const addVehicle = async (data) => { try { await api.post('/vehicles',data); fetchVehicles(); setShowAdd(false) } catch { alert('Failed') } }
   const addFleetVehicle = async (data) => { try { await api.post('/fleet',data); fetchFleet(); setShowAddFleet(false) } catch { alert('Failed') } }
   const updateVehicle = (u) => { setVehicles(p=>p.map(v=>v.id===u.id?u:v)); setSelected(u) }
 
-  const filtered = vehicles.filter(v => {
+  const filtered =( vehicles  || []).filter(v => {
     const q=search.toLowerCase()
     return (filter==='All'||v.status===filter)&&(!q||v.plate?.toLowerCase().includes(q)||v.make?.toLowerCase().includes(q)||v.model?.toLowerCase().includes(q)||v.ownerName?.toLowerCase().includes(q))
   })
