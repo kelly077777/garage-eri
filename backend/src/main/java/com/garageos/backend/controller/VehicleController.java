@@ -56,4 +56,8 @@ public class VehicleController {
             return ResponseEntity.ok(historyRepo.save(entry));
         }).orElse(ResponseEntity.notFound().build());
     }
+ @GetMapping("/{id}/history")
+public List<ServiceHistory> getHistory(@PathVariable Long id) {
+    return historyRepo.findByVehicleId(id);
+}
 }
