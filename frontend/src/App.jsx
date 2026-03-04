@@ -817,10 +817,12 @@ function FleetModal({ vehicle, onSave, onClose }) {
 function VehicleDetail({ vehicle, user, onBack, onUpdate }) {
   const [showService, setShowService] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
+   const [history, setHistory] = useState([])
   const ss = STATUS_STYLE[vehicle.status]||STATUS_STYLE['Ready']
   const canEdit = user.role==='manager'||user.role==='supervisor'
+  
   const totalSpend = (history).reduce((s,h)=>s+(h.cost||0),0)
-  const [history, setHistory] = useState([])
+ 
 useEffect(() => {
   api.get(`/vehicles/${vehicle.id}/history`)
     .then(r => setHistory(Array.isArray(r.data) ? r.data : []))
