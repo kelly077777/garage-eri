@@ -109,7 +109,7 @@ function LoginPage({ onLogin }) {
           <img src="/log.png" style={{ width:46, height:46, borderRadius:8, objectFit:'cover' }} />
           <div style={{ fontFamily:'Times New Roman', fontSize:20, fontWeight:800 }}>ERI-<span style={{ color:'#f59e0b' }}>RWANDA</span></div>
         </div>
-        <div style={{ fontFamily:'Times New Roman', fontSize:26, fontWeight:700, marginBottom:6 }}>Welcome back to ERI-RWANDA garage management system</div>
+        <div style={{ fontFamily:'Times New Roman', fontSize:26, fontWeight:700, marginBottom:6 }}>Welcome Back To ERI-RWANDA Garage Management System</div>
         <div style={{ color:'#9090a8', fontSize:14, marginBottom:28 }}>Sign in to your garage management portal</div>
         {error && <div className="error-msg">{error}</div>}
         <div className="form-group"><label className="form-label">Email</label><input className="form-input" type="email" placeholder="you@garage.com" value={email} onChange={e => { setEmail(e.target.value); setError('') }} /></div>
