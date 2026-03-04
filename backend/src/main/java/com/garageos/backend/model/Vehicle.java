@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "vehicles")
 @Data
@@ -26,8 +28,9 @@ public class Vehicle {
     @Enumerated(EnumType.STRING)
     private Status status = Status.Ready;
 
-    @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<ServiceHistory> history;
+   @JsonIgnore
+@OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+private List<ServiceHistory> history;
 
     public enum Status {
         Ready, In_Service, Awaiting_Parts, Completed
