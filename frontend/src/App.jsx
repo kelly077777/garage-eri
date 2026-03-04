@@ -532,7 +532,7 @@ function InventoryPage({ user }) {
   return (
     <>
       <div className="page-header">
-        <div><div className="page-title">📦 Inventory *</div><div className="page-sub">Parts, tools and consumables *</div></div>
+        <div><div className="page-title">📦 Inventory </div><div className="page-sub">Parts, tools and consumables *</div></div>
         {canEdit && <button className="btn btn-success" onClick={()=>{ setForm(empty); setEditing(null); setShowAdd(true) }}>+ Add Item</button>}
       </div>
       <div className="page-content">
