@@ -819,9 +819,14 @@ function VehicleDetail({ vehicle, user, onBack, onUpdate }) {
   const [showEdit, setShowEdit] = useState(false)
   const ss = STATUS_STYLE[vehicle.status]||STATUS_STYLE['Ready']
   const canEdit = user.role==='manager'||user.role==='supervisor'
-  const totalSpend = (vehicle.serviceHistory||[]).reduce((s,h)=>s+(h.cost||0),0)
+  const totalSpend = (history).reduce((s,h)=>s+(h.cost||0),0)
+  const [history, setHistory] = useState([])
+useEffect(() => {
+  api.get(`/vehicles/${vehicle.id}/history`)
+    .then(r => setHistory(Array.isArray(r.data) ? r.data : []))
+}, [vehicle.id])
   const addService = async (entry) => {
-    try { await api.post(`/vehicles/${vehicle.id}/history`,entry); const r=await api.get(`/vehicles/${vehicle.id}`); onUpdate(r.data); setShowService(false) }
+   try { await api.post(`/vehicles/${vehicle.id}/history`,entry); const r=await api.get(`/vehicles/${vehicle.id}`); const h=await api.get(`/vehicles/${vehicle.id}/history`); onUpdate({...r.data, serviceHistory: h.data}); setShowService(false) }
     catch { alert('Failed to log service') }
   }
   const saveEdit = async (data) => {
@@ -848,7 +853,7 @@ function VehicleDetail({ vehicle, user, onBack, onUpdate }) {
       </div>
       <div className="page-content">
         <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:20 }}>
-          {[['Total Services',(vehicle.serviceHistory||[]).length,'All time'],['Total Spend',totalSpend.toLocaleString(),'RWF'],['Mileage',Number(vehicle.mileage||0).toLocaleString(),'km'],['Year',vehicle.year,vehicle.color]].map(([l,v,s])=>(
+          {[['Total Services',(history).length,'All time'],['Total Spend',totalSpend.toLocaleString(),'RWF'],['Mileage',Number(vehicle.mileage||0).toLocaleString(),'km'],['Year',vehicle.year,vehicle.color]].map(([l,v,s])=>(
             <div key={l} className="card" style={{ padding:'18px 20px' }}>
               <div style={{ fontSize:12, color:'var(--text2)', marginBottom:8 }}>{l}</div>
               <div style={{ fontFamily:'Syne,sans-serif', fontSize:24, fontWeight:800 }}>{v}</div>
@@ -879,9 +884,9 @@ function VehicleDetail({ vehicle, user, onBack, onUpdate }) {
           </div>
         </div>
         <div className="card">
-          <div className="card-header"><div className="card-title">Service & Repair History</div><span style={{ fontSize:12, color:'var(--text2)' }}>{(vehicle.serviceHistory||[]).length} records</span></div>
-          {(vehicle.serviceHistory||[]).length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}><div style={{ fontSize:36, marginBottom:12 }}>📋</div><div>No service records yet</div></div>
-            : [...(vehicle.serviceHistory||[])].reverse().map(h=>(
+          <div className="card-header"><div className="card-title">Service & Repair History</div><span style={{ fontSize:12, color:'var(--text2)' }}>{history.length} records</span></div>
+          {history.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}><div style={{ fontSize:36, marginBottom:12 }}>📋</div><div>No service records yet</div></div>
+            : [...history].reverse().map(h=>(
               <div key={h.id} style={{ padding:'16px 20px', borderBottom:'1px solid var(--border)', display:'flex', gap:16 }}>
                 <div style={{ width:36, height:36, borderRadius:'50%', background:'var(--surface2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>🔧</div>
                 <div style={{ flex:1 }}>
