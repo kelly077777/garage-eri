@@ -133,7 +133,7 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout }) {
       <div style={{ padding:'24px 20px 20px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', gap:10 }}>
         {/*<div style={{ width:36, height:36, background:'#f59e0b', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>🔧</div>*/}
         <img src="/log.png" style={{ width:46, height:46, borderRadius:8, objectFit:'cover' }} />
-        <div style={{ fontFamily:'Syne,sans-serif', fontSize:16, fontWeight:800 }}>ERI-<span style={{ color:'#f59e0b' }}>RWANDA</span></div>
+        <div style={{ fontFamily:'Syne,sans-serif', fontSize:16, fontWeight:800 }}>ERI-<span style={{ color:'#ffffff' }}>RWANDA</span></div>
       </div>
       <nav style={{ flex:1, padding:'16px 10px', display:'flex', flexDirection:'column', gap:2 }}>
         <div style={{ padding:'8px 12px 6px', fontSize:10, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.1em' }}>Main</div>
