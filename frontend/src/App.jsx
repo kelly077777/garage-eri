@@ -591,6 +591,8 @@ function InventoryPage({ user }) {
                   </select>
                 </div>
               </div>
+
+              
               <div className="form-group"><label className="form-label">Description *</label><input className="form-input" value={form.description} onChange={e=>sf('description',e.target.value)} placeholder="Optional"/></div>
               <div className="form-row" style={{ marginBottom:14 }}>
                 <div><label className="form-label">Quantity *</label><input className="form-input" type="text" value={form.quantity} onChange={e=>sf('quantity',parseInt(e.target.value)||0)}/></div>
