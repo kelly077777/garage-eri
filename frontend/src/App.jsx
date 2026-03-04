@@ -107,7 +107,7 @@ function LoginPage({ onLogin }) {
         <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:32 }}>
          {/* <div style={{ width:44, height:44, background:'#f59e0b', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22 }}>🔧</div>*/}
           <img src="/log.png" style={{ width:46, height:46, borderRadius:8, objectFit:'cover' }} />
-          <div style={{ fontFamily:'Times New Roman', fontSize:20, fontWeight:800 }}>ERI-<span style={{ color:'#f59e0b' }}>RWANDA</span></div>
+          <div style={{ fontFamily:'Times New Roman', fontSize:20, fontWeight:800 }}>ERI-<span style={{ color:'#f9f8f7' }}>RWANDA</span></div>
         </div>
         <div style={{ fontFamily:'Times New Roman', fontSize:26, fontWeight:700, marginBottom:6 }}>Welcome Back To ERI-RWANDA Garage Management System</div>
         <div style={{ color:'#9090a8', fontSize:14, marginBottom:28 }}>Sign in to your garage management portal</div>
