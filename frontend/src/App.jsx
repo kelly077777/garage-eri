@@ -97,7 +97,7 @@ function LoginPage({ onLogin }) {
       localStorage.setItem('token', res.data.token)
       localStorage.setItem('user', JSON.stringify(res.data.user))
       onLogin(res.data.user)
-    } catch { setError('Invalid email or password.') }
+    } catch (err) { setError('Invalid email or password.') }
     setLoading(false)
   }
   return (
@@ -105,8 +105,9 @@ function LoginPage({ onLogin }) {
       <div className="login-bg" /><div className="login-grid" />
       <div className="login-card">
         <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:32 }}>
-          <div style={{ width:44, height:44, background:'#f59e0b', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22 }}>🔧</div>
-          <div style={{ fontFamily:'Syne,sans-serif', fontSize:20, fontWeight:800 }}>ERI-<span style={{ color:'#f59e0b' }}>RWANDA</span></div>
+         {/* <div style={{ width:44, height:44, background:'#f59e0b', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22 }}>🔧</div>*/}
+          <img src="/log.png" style={{ width:46, height:46, borderRadius:8, objectFit:'cover' }} />
+          <div style={{ fontFamily:'Times New Roman', fontSize:20, fontWeight:800 }}>ERI-<span style={{ color:'#f59e0b' }}>RWANDA</span></div>
         </div>
         <div style={{ fontFamily:'Times New Roman', fontSize:26, fontWeight:700, marginBottom:6 }}>Welcome back to ERI-RWANDA garage management system</div>
         <div style={{ color:'#9090a8', fontSize:14, marginBottom:28 }}>Sign in to your garage management portal</div>
