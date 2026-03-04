@@ -131,7 +131,8 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout }) {
   return (
     <div className="sidebar">
       <div style={{ padding:'24px 20px 20px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', gap:10 }}>
-        <div style={{ width:36, height:36, background:'#f59e0b', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>🔧</div>
+        {/*<div style={{ width:36, height:36, background:'#f59e0b', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>🔧</div>*/}
+        <img src="1.png" style={{ width:36, height:36, borderRadius:8, objectFit:'cover' }} />
         <div style={{ fontFamily:'Syne,sans-serif', fontSize:16, fontWeight:800 }}>ERI-<span style={{ color:'#f59e0b' }}>RWANDA</span></div>
       </div>
       <nav style={{ flex:1, padding:'16px 10px', display:'flex', flexDirection:'column', gap:2 }}>
