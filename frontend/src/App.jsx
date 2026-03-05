@@ -101,7 +101,7 @@ function LoginPage({ onLogin }) {
     setLoading(false)
   }
   return (
-    <div className="login-wrap">
+   <div className="login-wrap" style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'100vh' }}>
       <div className="login-bg" /><div className="login-grid" />
       <div className="login-card">
         <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:32 }}>
