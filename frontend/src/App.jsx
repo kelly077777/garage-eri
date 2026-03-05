@@ -106,7 +106,7 @@ function LoginPage({ onLogin }) {
       <div className="login-card" style={{ width:'100%', maxWidth:'450px' }}>
         <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:32 }}>
          {/* <div style={{ width:44, height:44, background:'#f59e0b', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22 }}>🔧</div>*/}
-          <img src="/log.png" style={{ width:46, height:46, borderRadius:8, objectFit:'cover' }} />
+          <img src="/canvas.png" style={{ width:46, height:46, borderRadius:8, objectFit:'cover' }} />
           <div style={{ fontFamily:'Times New Roman', fontSize:20, fontWeight:800 }}>ERI-<span style={{ color:'#f9f8f7' }}>RWANDA</span></div>
         </div>
         <div style={{ fontFamily:'Times New Roman', fontSize:26, fontWeight:700, marginBottom:6 }}>Welcome back to ERI-RWANDA garage management system</div>
@@ -133,7 +133,7 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout }) {
     <div className="sidebar">
       <div style={{ padding:'24px 20px 20px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', gap:10 }}>
         {/*<div style={{ width:36, height:36, background:'#f59e0b', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>🔧</div>*/}
-        <img src="/log.png" style={{ width:46, height:46, borderRadius:8, objectFit:'cover' }} />
+        <img src="/canvas.png" style={{ width:46, height:46, borderRadius:8, objectFit:'cover' }} />
         <div style={{ fontFamily:'Syne,sans-serif', fontSize:16, fontWeight:800 }}>ERI-<span style={{ color:'#ffffff' }}>RWANDA</span></div>
       </div>
       <nav style={{ flex:1, padding:'16px 10px', display:'flex', flexDirection:'column', gap:2 }}>
