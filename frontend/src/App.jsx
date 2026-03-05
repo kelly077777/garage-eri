@@ -103,7 +103,7 @@ function LoginPage({ onLogin }) {
   return (
    <div className="login-wrap" style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'100vh' }}>
       <div className="login-bg" /><div className="login-grid" />
-      <div className="login-card">
+      <div className="login-card" style={{ width:'100%', maxWidth:'450px' }}>
         <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:32 }}>
          {/* <div style={{ width:44, height:44, background:'#f59e0b', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22 }}>🔧</div>*/}
           <img src="/log.png" style={{ width:46, height:46, borderRadius:8, objectFit:'cover' }} />
