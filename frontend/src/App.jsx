@@ -173,7 +173,7 @@ function DashboardPage() {
     { label:'Garage Vehicles', value:d.vehicles.length, sub:`${d.vehicles.filter(v=>v.status==='In_Service').length} in service`, icon:'🚗', color:'#f9f8f5' },
     { label:'Fleet Vehicles', value:d.fleet.length, sub:`${d.fleet.filter(f=>f.status==='Active').length} active`, icon:'🚛', color:'#fcfdfd' },
     { label:'Fuel Consumption', value:totalFuelCost.toLocaleString()+' RWF', sub:'All time', icon:'⛽', color:'#fafbfb' },
-    { label:'Service Expenses', value:totalServiceCost.toLocaleString()+' RWF', sub:'All time', icon:'🔧', color:'#fefefe' },
+   {/* { label:'Service Expenses', value:totalServiceCost.toLocaleString()+' RWF', sub:'All time', icon:'🔧', color:'#fefefe' },*/},
     { label:'Staff Members', value:d.staff.length, sub:`${d.staff.filter(s=>s.role==='mechanic').length} mechanics`, icon:'👥', color:'#fcfcfc' },
     { label:'Inventory Items', value:d.inventory.length, sub:`${lowStock.length} low/out of stock`, icon:'📦', color:lowStock.length>0?'#fcfbfb':'#f8f9f8' },
   ]
