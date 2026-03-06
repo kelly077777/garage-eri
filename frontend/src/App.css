@@ -1,8 +1,8 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
 }
 
 .logo {
@@ -43,4 +43,17 @@
 
 .login-bg, .login-grid {
   display: none;
+}
+
+.login-wrap {
+  width: 100% !important;
+}
+.login-bg, .login-grid {
+  display: none !important;
+} 
+
+
+.sidebar {
+  background-color: #ffffff !important;
+  border-right: 1px solid #e2e8f0 !important;
 }

@@ -101,9 +101,18 @@ function LoginPage({ onLogin }) {
     setLoading(false)
   }
   return (
-   <div className="login-wrap" style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'100vh' }}>
-      <div className="login-bg" /><div className="login-grid" />
-      <div className="login-card" style={{ width:'100%', maxWidth:'450px' }}>
+   <div className="login-wrap" style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'100vh',width:'100%', background:'linear-gradient(135deg, #2d3748 0%, #1a202c 40%, #2b4c7e 70%, #1e3a5f 100%)' }}>
+     {/*} <div className="login-bg" /><div className="login-grid" />  */}
+      <div className="login-card" style={{ 
+  backgroundColor:'rgba(255,255,255,0.05)',
+  backdropFilter:'blur(10px)',
+  padding:'40px',
+  borderRadius:'16px',
+  boxShadow:'0 8px 32px rgba(0,0,0,0.3)',
+  border:'1px solid rgba(255,255,255,0.1)',
+  width:'100%',
+  maxWidth:'450px'
+}}>
         <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:32 }}>
          {/* <div style={{ width:44, height:44, background:'#f59e0b', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22 }}>🔧</div>*/}
           <img src="/canvas.png" style={{ width:46, height:46, borderRadius:8, objectFit:'cover' }} />
@@ -839,6 +848,15 @@ useEffect(() => {
     try { const r=await api.put(`/vehicles/${vehicle.id}`,data); onUpdate(r.data); setShowEdit(false) }
     catch { alert('Failed to update') }
   }
+
+  const deleteVehicle = async () => {
+  if(!window.confirm('Are you sure you want to delete this vehicle?')) return
+  try {
+    await api.delete(`/vehicles/${vehicle.id}`)
+    onBack()
+  } catch { alert('Failed to delete vehicle') }
+}
+
   return (
     <>
       <div className="page-header">
@@ -854,7 +872,8 @@ useEffect(() => {
         </div>
         <div style={{ display:'flex', gap:10 }}>
           {canEdit&&<button className="btn btn-ghost" onClick={()=>setShowEdit(true)}>Edit</button>}
-          <button className="btn btn-blue" onClick={()=>setShowService(true)}>+ Log Service</button>
+{canEdit&&<button style={{backgroundColor:'#ef4444', color:'white', border:'none', padding:'8px 16px', borderRadius:'8px', cursor:'pointer'}} onClick={deleteVehicle}>Delete</button>}
+<button className="btn btn-blue" onClick={()=>setShowService(true)}>+ Log Service</button>
         </div>
       </div>
       <div className="page-content">
