@@ -2,66 +2,64 @@ import { useState, useEffect } from 'react'
 import api from './api/client'
 
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
     --bg: #f4f5f7; --surface: #ffffff; --surface2: #f0f1f4; --surface3: #e8eaef;
     --border: #e2e4ea; --text: #111318; --text2: #5a5f72; --text3: #9096ab;
-    --accent: #000000;; --accent2: #f5a623; --blue: #2563eb; --green: #059669; --red: #dc2626;
+    --accent: #0a0909; --accent2: #f5a623; --blue: #2563eb; --green: #059669; --red: #dc2626;
   }
-  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+  body { background: var(--bg); color: var(--text); font-family: 'Nunito', 'Calibri Light', Calibri, sans-serif; min-height: 100vh; }
   .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); position: relative; overflow: hidden; }
-  .login-bg { position: absolute; inset: 0; background: radial-gradient(ellipse at 20% 50%, rgba(230,148,10,0.08) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(37,99,235,0.06) 0%, transparent 50%); }
-  .login-grid { position: absolute; inset: 0; background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px); background-size: 40px 40px; opacity: 0.6; }
   .login-card { position: relative; width: 420px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 48px; animation: slideUp 0.5s ease; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
   @keyframes slideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
-  .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
-  .form-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; }
-  .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(230,148,10,0.1); }
+  .form-label { display: block; font-size: 12px; font-weight: 700; color: var(--text2); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+  .form-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; color: var(--text); font-family: 'Nunito', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; }
+  .form-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
   .form-input::placeholder { color: var(--text3); }
-  .btn-primary { background: var(--accent); color: #fff; width: 100%; padding: 14px; font-size: 15px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
-  .btn-primary:hover { background: var(--accent2); }
+  .btn-primary { background: var(--blue); color: #fff; width: 100%; padding: 14px; font-size: 15px; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-family: 'Nunito', sans-serif; }
+  .btn-primary:hover { background: #1d4ed8; }
   .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
   .error-msg { background: rgba(220,38,38,0.07); border: 1px solid rgba(220,38,38,0.2); border-radius: 8px; padding: 10px 14px; color: #b91c1c; font-size: 13px; margin-bottom: 16px; }
   .app { display: flex; min-height: 100vh; }
   .sidebar { width: 240px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; box-shadow: 2px 0 8px rgba(0,0,0,0.04); }
-  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; font-size: 14px; color: var(--text2); cursor: pointer; transition: all 0.15s; font-weight: 500; border: none; background: none; width: 100%; text-align: left; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; font-size: 14px; color: var(--text2); cursor: pointer; transition: all 0.15s; font-weight: 600; border: none; background: none; width: 100%; text-align: left; font-family: 'Nunito', sans-serif; }
   .nav-item:hover { background: var(--surface2); color: var(--text); }
-  .nav-item.active { background: rgba(230,148,10,0.1); color: var(--accent); }
+  .nav-item.active { background: rgba(37,99,235,0.08); color: var(--blue); }
   .main { flex: 1; overflow-y: auto; background: var(--bg); }
   .page-header { padding: 28px 32px 0; display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
-  .page-title { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); }
-  .page-sub { color: var(--text2); font-size: 14px; margin-top: 4px; }
+  .page-title { font-family: 'Nunito', 'Calibri Light', Calibri, sans-serif; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); }
+  .page-sub { color: var(--text2); font-size: 14px; margin-top: 4px; font-weight: 500; }
   .page-content { padding: 0 32px 32px; }
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
   .card-header { padding: 18px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-  .card-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--text); }
-  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+  .card-title { font-family: 'Nunito', 'Calibri Light', Calibri, sans-serif; font-size: 15px; font-weight: 800; color: var(--text); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; border-radius: 8px; font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; border: none; transition: all 0.2s; }
   .btn-success { background: var(--green); color: #fff; } .btn-success:hover { background: #047857; }
   .btn-blue { background: var(--blue); color: #fff; } .btn-blue:hover { background: #1d4ed8; }
-  .btn-accent { background: var(--accent); color: #fff; } .btn-accent:hover { background: var(--accent2); }
+  .btn-accent { background: var(--accent); color: #fff; } .btn-accent:hover { background: #333; }
   .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); } .btn-ghost:hover { background: var(--surface2); color: var(--text); }
   .btn-danger { background: rgba(220,38,38,0.07); color: var(--red); border: 1px solid rgba(220,38,38,0.15); }
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; backdrop-filter: blur(2px); }
   .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 480px; animation: slideUp 0.2s ease; box-shadow: 0 8px 40px rgba(0,0,0,0.12); }
   .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-  .modal-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); }
+  .modal-title { font-family: 'Nunito', 'Calibri Light', Calibri, sans-serif; font-size: 18px; font-weight: 800; color: var(--text); }
   .modal-body { padding: 24px; }
   .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; background: var(--surface2); border-radius: 0 0 16px 16px; }
   .table { width: 100%; border-collapse: collapse; }
-  .table th { padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); background: var(--surface2); }
-  .table td { padding: 14px 16px; font-size: 14px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .table th { padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); background: var(--surface2); font-family: 'Nunito', sans-serif; }
+  .table td { padding: 14px 16px; font-size: 14px; border-bottom: 1px solid var(--border); color: var(--text); font-family: 'Nunito', sans-serif; }
   .table tr:last-child td { border: none; }
   .table tr:hover td { background: var(--surface2); }
   .form-group { margin-bottom: 16px; }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
-  .tab-btn { display: flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 8px; border: none; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .tab-btn { display: flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 8px; border: none; font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
 `
 
 const ROLE_CONFIG = {
-  manager: { color: '#e6940a', bg: 'rgba(230,148,10,0.1)', label: 'Manager' },
-  supervisor: { color: '#2563eb', bg: 'rgba(37,99,235,0.1)', label: 'Supervisor' },
+  manager: { color: '#2563eb', bg: 'rgba(37,99,235,0.1)', label: 'Manager' },
+  supervisor: { color: '#7c3aed', bg: 'rgba(124,58,237,0.1)', label: 'Supervisor' },
   mechanic: { color: '#059669', bg: 'rgba(5,150,105,0.1)', label: 'Mechanic' },
 }
 const STATUS_STYLE = {
@@ -101,21 +99,22 @@ function LoginPage({ onLogin }) {
     setLoading(false)
   }
   return (
-  <div className="login-wrap" style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'100vh', width:'100%', background:'linear-gradient(135deg, #2d3748 0%, #1a202c 40%, #2b4c7e 70%, #1e3a5f 100%)' }}>
-    <div className="login-card" style={{ background:'rgba(255,255,255,0.05)', backdropFilter:'blur(10px)', border:'1px solid rgba(255,255,255,0.1)' }}>
-      <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:32 }}>
-        <img src="/canvas.png" style={{ width:46, height:46, borderRadius:8, objectFit:'cover' }} />
-        <div style={{ fontFamily:'Times New Roman', fontSize:20, fontWeight:800, color:'#ffffff' }}>ERI-<span style={{ color:'var(--accent)' }}>RWANDA</span></div>
+    <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'100vh', width:'100%', background:'linear-gradient(135deg, #2d3748 0%, #1a202c 40%, #2b4c7e 70%, #1e3a5f 100%)' }}>
+      <div className="login-card">
+        <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:32 }}>
+          <img src="/canvas.png" style={{ width:46, height:46, borderRadius:8, objectFit:'cover' }} />
+          <div style={{ fontFamily:'Nunito, Calibri Light, Calibri, sans-serif', fontSize:20, fontWeight:800, color:'var(--text)' }}>ERI-<span style={{ color:'var(--blue)' }}>RWANDA</span></div>
+        </div>
+        <div style={{ fontFamily:'Nunito, Calibri Light, Calibri, sans-serif', fontSize:24, fontWeight:800, marginBottom:6, color:'var(--text)' }}>Welcome back</div>
+        <div style={{ fontFamily:'Nunito, Calibri Light, Calibri, sans-serif', fontSize:15, fontWeight:500, marginBottom:6, color:'var(--text)' }}>ERI-RWANDA Garage Management System</div>
+        <div style={{ color:'var(--text2)', fontSize:13, marginBottom:28 }}>Sign in to your garage management portal</div>
+        {error && <div className="error-msg">{error}</div>}
+        <div className="form-group"><label className="form-label">Email</label><input className="form-input" type="email" placeholder="you@garage.com" value={email} onChange={e => { setEmail(e.target.value); setError('') }} /></div>
+        <div className="form-group"><label className="form-label">Password</label><input className="form-input" type="password" placeholder="••••••••" value={password} onChange={e => { setPassword(e.target.value); setError('') }} onKeyDown={e => e.key === 'Enter' && handleLogin()} /></div>
+        <button className="btn-primary" onClick={handleLogin} disabled={loading}>{loading ? 'Signing in...' : 'Sign In'}</button>
       </div>
-      <div style={{ fontFamily:'Times New Roman', fontSize:26, fontWeight:700, marginBottom:6, color:'#ffffff' }}>Welcome back to ERI-RWANDA garage management system</div>
-      <div style={{ color:'rgba(255,255,255,0.6)', fontSize:14, marginBottom:28 }}>Sign in to your garage management portal</div>
-      {error && <div className="error-msg">{error}</div>}
-      <div className="form-group"><label className="form-label">Email</label><input className="form-input" type="email" placeholder="you@garage.com" value={email} onChange={e => { setEmail(e.target.value); setError('') }} /></div>
-      <div className="form-group"><label className="form-label">Password</label><input className="form-input" type="password" placeholder="••••••••" value={password} onChange={e => { setPassword(e.target.value); setError('') }} onKeyDown={e => e.key === 'Enter' && handleLogin()} /></div>
-      <button className="btn-primary" onClick={handleLogin} disabled={loading}>{loading ? 'Signing in...' : 'Sign In'}</button>
     </div>
-  </div>
-)
+  )
 }
 
 // ─── SIDEBAR ──────────────────────────────────────────────────────────────────
@@ -130,23 +129,24 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout }) {
   return (
     <div className="sidebar">
       <div style={{ padding:'24px 20px 20px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', gap:10 }}>
-        <img src="/canvas.png" style={{ width:86, height:86, borderRadius:8, objectFit:'cover' }} />
-        <div style={{ fontFamily:'Calibri Light (Headings)', fontSize:16, fontWeight:800, color:'var(--text)' }}>ERI-<span style={{ color:'var(--accent)' }}>RWANDA</span></div>
+        <img src="/canvas.png" style={{ width:40, height:40, borderRadius:8, objectFit:'cover' }} />
+        <div style={{ fontFamily:'Nunito, Calibri Light, Calibri, sans-serif', fontSize:15, fontWeight:800, color:'var(--text)' }}>ERI-<span style={{ color:'var(--black)' }}>RWANDA</span></div>
       </div>
       <nav style={{ flex:1, padding:'16px 10px', display:'flex', flexDirection:'column', gap:2 }}>
-        <div style={{ padding:'8px 12px 6px', fontSize:10, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.1em' }}>Main</div>
-        {N('dashboard','','Dashboard')}
-        {N('vehicles','','Vehicles')}
-        {user.role === 'manager' && N('fuel','','Fuel Logs')}
-        {N('inventory','','Inventory')}
-        {user.role === 'manager' && N('staff','','Staff')}
+        <div style={{ padding:'8px 12px 6px', fontSize:10, fontWeight:800, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.1em' }}>Main</div>
+        {N('dashboard','📊','Dashboard')}
+        {N('vehicles','🚗','Vehicles')}
+        {user.role === 'manager' && N('fuel','⛽','Fuel Logs')}
+        {N('inventory','📦','Inventory')}
+        {user.role === 'manager' && N('staff','👥','Staff')}
+        {user.role === 'manager' && N('reports','📋','Reports')}
       </nav>
       <div style={{ padding:16, borderTop:'1px solid var(--border)' }}>
         <div style={{ display:'flex', alignItems:'center', gap:10, padding:10, background:'var(--surface2)', borderRadius:10, marginBottom:10 }}>
-          <div style={{ width:34, height:34, borderRadius:'50%', background:rc.color, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Syne,sans-serif', fontWeight:700, fontSize:13, color:'#fff' }}>{initials}</div>
-          <div><div style={{ fontSize:13, fontWeight:600, color:'var(--text)' }}>{user.name}</div><div style={{ fontSize:11, color:'var(--text2)' }}>{rc.label}</div></div>
+          <div style={{ width:34, height:34, borderRadius:'50%', background:rc.color, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Nunito,sans-serif', fontWeight:800, fontSize:13, color:'#fff' }}>{initials}</div>
+          <div><div style={{ fontSize:13, fontWeight:700, color:'var(--text)' }}>{user.name}</div><div style={{ fontSize:11, color:'var(--text2)' }}>{rc.label}</div></div>
         </div>
-        <button onClick={onLogout} style={{ width:'100%', background:'transparent', border:'1px solid var(--border)', color:'var(--text2)', borderRadius:8, padding:8, fontSize:13, cursor:'pointer', fontFamily:'DM Sans,sans-serif' }}>Sign Out →</button>
+        <button onClick={onLogout} style={{ width:'100%', background:'transparent', border:'1px solid var(--border)', color:'var(--text2)', borderRadius:8, padding:8, fontSize:13, cursor:'pointer', fontFamily:'Nunito,sans-serif', fontWeight:600 }}>Sign Out →</button>
       </div>
     </div>
   )
@@ -157,23 +157,23 @@ function DashboardPage() {
   const [d, setD] = useState({ vehicles:[], fleet:[], fuel:[], inventory:[], staff:[] })
   useEffect(() => {
     Promise.all([api.get('/vehicles'), api.get('/fleet'), api.get('/fleet/fuel/all'), api.get('/inventory'), api.get('/auth/users')])
-      .then(([v,f,fuel,inv,s]) => setD({ vehicles: Array.isArray(v.data) ? v.data : v.data?.content || [], fleet: Array.isArray(f.data) ? f.data : f.data?.content || [], fuel: Array.isArray(fuel.data) ? fuel.data : fuel.data?.content || [],
-         inventory: Array.isArray(inv.data) ? inv.data : inv.data?.content || [],
-         staff: Array.isArray(s.data) ? s.data : s.data?.content || [] }))
-      .catch(e => console.error(e))}, [])
-
+      .then(([v,f,fuel,inv,s]) => setD({
+        vehicles: Array.isArray(v.data) ? v.data : v.data?.content || [],
+        fleet: Array.isArray(f.data) ? f.data : f.data?.content || [],
+        fuel: Array.isArray(fuel.data) ? fuel.data : fuel.data?.content || [],
+        inventory: Array.isArray(inv.data) ? inv.data : inv.data?.content || [],
+        staff: Array.isArray(s.data) ? s.data : s.data?.content || []
+      })).catch(e => console.error(e))
+  }, [])
   const totalFuelCost = (d.fuel||[]).reduce((s,f) => s+(f.totalCost||0), 0)
-  const totalServiceCost = 0
   const lowStock = (d.inventory||[]).filter(i => i.status==='Low_Stock'||i.status==='Out_of_Stock')
-
   const stats = [
-    { label:'Garage Vehicles', value:d.vehicles.length, sub:`${d.vehicles.filter(v=>v.status==='In_Service').length} in service`, icon:'', color:'var(--text)' },
-    { label:'Fleet Vehicles', value:d.fleet.length, sub:`${d.fleet.filter(f=>f.status==='Active').length} active`, icon:'', color:'var(--text)' },
-    { label:'Fuel Consumption', value:totalFuelCost.toLocaleString()+' RWF', sub:'All time', icon:'', color:'var(--accent)' },
-    { label:'Staff Members', value:d.staff.length, sub:`${d.staff.filter(s=>s.role==='mechanic').length} mechanics`, icon:'', color:'var(--text)' },
-    { label:'Inventory Items', value:d.inventory.length, sub:`${lowStock.length} low/out of stock`, icon:'', color:lowStock.length>0?'var(--red)':'var(--text)' },
+    { label:'Garage Vehicles', value:d.vehicles.length, sub:`${d.vehicles.filter(v=>v.status==='In_Service').length} in service`, icon:'', color:'var(--black)' },
+    { label:'Fleet Vehicles', value:d.fleet.length, sub:`${d.fleet.filter(f=>f.status==='Active').length} active`, icon:'', color:'var(--black)' },
+    { label:'Fuel Consumption', value:totalFuelCost.toLocaleString()+' RWF', sub:'All time', icon:'', color:'var(--black)' },
+    { label:'Staff Members', value:d.staff.length, sub:`${d.staff.filter(s=>s.role==='mechanic').length} mechanics`, icon:'', color:'var(--black)' },
+    { label:'Inventory Items', value:d.inventory.length, sub:`${lowStock.length} low/out of stock`, icon:'', color:lowStock.length>0?'var(--red)':'var(--black)' },
   ]
-
   return (
     <>
       <div className="page-header"><div><div className="page-title">Dashboard</div><div className="page-sub">Overview of your garage operations</div></div></div>
@@ -183,11 +183,11 @@ function DashboardPage() {
             <div key={s.label} className="stat-card">
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
                 <div>
-                  <div style={{ fontSize:13, color:'var(--text2)', marginBottom:8 }}>{s.label}</div>
-                  <div style={{ fontFamily:'Calibri Light (Headings)', fontSize:16, fontWeight:800, color:s.color }}>{s.value}</div>
-                  <div style={{ fontSize:12, color:'var(--text3)', marginTop:4 }}>{s.sub}</div>
+                  <div style={{ fontSize:13, color:'var(--black)', marginBottom:8, fontWeight:600 }}>{s.label}</div>
+                  <div style={{ fontFamily:'Nunito, Calibri Light, Calibri, sans-serif', fontSize:26, fontWeight:800, color:s.color }}>{s.value}</div>
+                  <div style={{ fontSize:12, color:'var(--black)', marginTop:4 }}>{s.sub}</div>
                 </div>
-                <div style={{ fontSize:28, background:'var(--surface2)', borderRadius:10, width:48, height:48, display:'flex', alignItems:'center', justifyContent:'center' }}>{s.icon}</div>
+               {/* <div style={{ fontSize:28, background:'var(--surface2)', borderRadius:10, width:48, height:48, display:'flex', alignItems:'center', justifyContent:'center' }}>{s.icon}</div>*/}
               </div>
             </div>
           ))}
@@ -202,8 +202,8 @@ function DashboardPage() {
                 return (
                   <div key={status} style={{ marginBottom:14 }}>
                     <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
-                      <span style={{ fontSize:13, color:'var(--text2)' }}>{status.replace('_',' ')}</span>
-                      <span style={{ fontSize:13, fontWeight:600 }}>{count}</span>
+                      <span style={{ fontSize:13, color:'var(--text2)', fontWeight:600 }}>{status.replace('_',' ')}</span>
+                      <span style={{ fontSize:13, fontWeight:700 }}>{count}</span>
                     </div>
                     <div style={{ height:6, background:'var(--surface2)', borderRadius:3 }}>
                       <div style={{ height:'100%', width:`${pct}%`, background:ss.dot, borderRadius:3, transition:'width 0.5s' }} />
@@ -214,15 +214,15 @@ function DashboardPage() {
             </div>
           </div>
           <div className="card">
-            <div className="card-header"><div className="card-title">Stock Alerts</div><span style={{ fontSize:12, color:lowStock.length>0?'#dc2626':'var(--text2)' }}>{lowStock.length} items need attention</span></div>
+            <div className="card-header"><div className="card-title">Stock Alerts</div><span style={{ fontSize:12, color:lowStock.length>0?'#dc2626':'var(--text2)', fontWeight:600 }}>{lowStock.length} items need attention</span></div>
             {lowStock.length===0 ? (
               <div style={{ padding:32, textAlign:'center', color:'var(--text3)' }}><div style={{ fontSize:28, marginBottom:8 }}>✅</div><div>All items well stocked</div></div>
             ) : (
               <div style={{ maxHeight:220, overflowY:'auto' }}>
                 {lowStock.map(item => (
                   <div key={item.id} style={{ padding:'12px 20px', borderBottom:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                    <div><div style={{ fontSize:13, fontWeight:500 }}>{item.name}</div><div style={{ fontSize:11, color:'var(--text3)' }}>{item.category}</div></div>
-                    <span style={{ fontSize:11, fontWeight:600, borderRadius:20, padding:'3px 8px', background:INV_STATUS[item.status]?.bg, color:INV_STATUS[item.status]?.color }}>{item.quantity} {item.unit} left</span>
+                    <div><div style={{ fontSize:13, fontWeight:600 }}>{item.name}</div><div style={{ fontSize:11, color:'var(--text3)' }}>{item.category}</div></div>
+                    <span style={{ fontSize:11, fontWeight:700, borderRadius:20, padding:'3px 8px', background:INV_STATUS[item.status]?.bg, color:INV_STATUS[item.status]?.color }}>{item.quantity} {item.unit} left</span>
                   </div>
                 ))}
               </div>
@@ -239,8 +239,8 @@ function DashboardPage() {
                   <tr key={f.id}>
                     <td style={{ fontFamily:'DM Mono,monospace', color:'var(--blue)', fontSize:13 }}>{f.fleetVehicle?.plate||'—'}</td>
                     <td style={{ color:'var(--text2)' }}>{f.date}</td>
-                    <td>{f.liters}L</td>
-                    <td style={{ fontFamily:'DM Mono,monospace', color:'var(--accent)' }}>{(f.totalCost||0).toLocaleString()} RWF</td>
+                    <td style={{ fontWeight:600 }}>{f.liters}L</td>
+                    <td style={{ fontFamily:'DM Mono,monospace', color:'var(--green)' }}>{(f.totalCost||0).toLocaleString()} RWF</td>
                     <td style={{ color:'var(--text2)' }}>{f.station||'—'}</td>
                   </tr>
                 ))}
@@ -253,20 +253,264 @@ function DashboardPage() {
   )
 }
 
+// ─── REPORTS PAGE ─────────────────────────────────────────────────────────────
+function ReportsPage() {
+  const [activeReport, setActiveReport] = useState('fleet')
+  const [search, setSearch] = useState('')
+  const [data, setData] = useState({ vehicles:[], fleet:[], fuel:[], inventory:[], staff:[] })
+
+  useEffect(() => {
+    Promise.all([api.get('/vehicles'), api.get('/fleet'), api.get('/fleet/fuel/all'), api.get('/inventory'), api.get('/auth/users')])
+      .then(([v,f,fuel,inv,s]) => setData({
+        vehicles: Array.isArray(v.data) ? v.data : v.data?.content || [],
+        fleet: Array.isArray(f.data) ? f.data : f.data?.content || [],
+        fuel: Array.isArray(fuel.data) ? fuel.data : fuel.data?.content || [],
+        inventory: Array.isArray(inv.data) ? inv.data : inv.data?.content || [],
+        staff: Array.isArray(s.data) ? s.data : s.data?.content || []
+      })).catch(e => console.error(e))
+  }, [])
+
+  const reportTabs = [
+    { key:'fleet', label:'Fleet Vehicles', icon:'🚛' },
+    { key:'garage', label:'Garage Vehicles', icon:'🚗' },
+    { key:'fuel', label:'Fuel Logs', icon:'⛽' },
+    { key:'inventory', label:'Inventory', icon:'📦' },
+    { key:'staff', label:'Staff', icon:'👥' },
+  ]
+
+  const q = search.toLowerCase()
+
+  const filteredFleet = data.fleet.filter(v =>
+    !q || v.plate?.toLowerCase().includes(q) || v.make?.toLowerCase().includes(q) || v.model?.toLowerCase().includes(q) || v.driverName?.toLowerCase().includes(q)
+  )
+  const filteredGarage = data.vehicles.filter(v =>
+    !q || v.plate?.toLowerCase().includes(q) || v.make?.toLowerCase().includes(q) || v.model?.toLowerCase().includes(q) || v.ownerName?.toLowerCase().includes(q)
+  )
+  const filteredFuel = data.fuel.filter(f =>
+    !q || f.fleetVehicle?.plate?.toLowerCase().includes(q) || f.station?.toLowerCase().includes(q) || f.filledBy?.toLowerCase().includes(q)
+  )
+  const filteredInventory = data.inventory.filter(i =>
+    !q || i.name?.toLowerCase().includes(q) || i.category?.toLowerCase().includes(q) || i.supplier?.toLowerCase().includes(q)
+  )
+  const filteredStaff = data.staff.filter(s =>
+    !q || s.name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q) || s.role?.toLowerCase().includes(q)
+  )
+
+  const exportCSV = (rows, headers, filename) => {
+    const csv = [headers, ...rows].map(r => r.map(c => `"${c??''}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type:'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a'); a.href=url; a.download=`${filename}-${new Date().toISOString().split('T')[0]}.csv`; a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const exportPDF = (title, headers, rows) => {
+    const tableRows = rows.map(r => `<tr>${r.map(c=>`<td>${c??'—'}</td>`).join('')}</tr>`).join('')
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
+    <style>body{font-family:Calibri,sans-serif;padding:30px;color:#111}h1{font-size:20px;margin-bottom:4px}p{color:#555;font-size:12px;margin:2px 0}table{width:100%;border-collapse:collapse;margin-top:16px;font-size:12px}th{background:#2563eb;color:#fff;padding:8px;text-align:left}td{padding:7px 8px;border-bottom:1px solid #eee}tr:nth-child(even) td{background:#f8faff}.footer{margin-top:16px;font-size:11px;color:#888}</style>
+    </head><body><h1>📋 ${title}</h1><p>Generated: ${new Date().toLocaleString()}</p><p>Total Records: ${rows.length}</p>
+    <table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${tableRows}</tbody></table>
+    <div class="footer">ERI-RWANDA Garage Management System</div></body></html>`
+    const w = window.open('','_blank'); w.document.write(html); w.document.close(); w.print()
+  }
+
+  const handleExportCSV = () => {
+    if (activeReport==='fleet') exportCSV(filteredFleet.map(v=>[v.plate,v.make,v.model,v.year,v.color,v.type,v.status,v.driverName,v.driverPhone,v.mileage,v.insuranceCompany,v.insuranceExpiry]),['Plate','Make','Model','Year','Color','Type','Status','Driver','Phone','Mileage','Insurance Co.','Ins. Expiry'],'fleet-vehicles')
+    else if (activeReport==='garage') exportCSV(filteredGarage.map(v=>[v.plate,v.make,v.model,v.year,v.color,v.type,v.status,v.ownerName,v.ownerPhone,v.ownerEmail,v.mileage]),['Plate','Make','Model','Year','Color','Type','Status','Owner','Phone','Email','Mileage'],'garage-vehicles')
+    else if (activeReport==='fuel') exportCSV(filteredFuel.map(f=>[f.fleetVehicle?.plate,f.date,f.liters,f.costPerLiter,f.totalCost,f.mileageAtFill,f.station,f.filledBy]),['Vehicle','Date','Liters','Cost/L','Total Cost','Mileage','Station','Filled By'],'fuel-logs')
+    else if (activeReport==='inventory') exportCSV(filteredInventory.map(i=>[i.name,i.category,i.quantity,i.unit,i.minQuantity,i.unitPrice,i.status,i.supplier,i.location]),['Name','Category','Qty','Unit','Min Qty','Unit Price','Status','Supplier','Location'],'inventory')
+    else if (activeReport==='staff') exportCSV(filteredStaff.map(s=>[s.name,s.email,s.role]),['Name','Email','Role'],'staff')
+  }
+
+  const handleExportPDF = () => {
+    if (activeReport==='fleet') exportPDF('Fleet Vehicles Report',['Plate','Make','Model','Year','Status','Driver','Phone','Mileage','Ins. Expiry'],filteredFleet.map(v=>[v.plate,v.make,v.model,v.year,v.status,v.driverName,v.driverPhone,v.mileage,v.insuranceExpiry]))
+    else if (activeReport==='garage') exportPDF('Garage Vehicles Report',['Plate','Make','Model','Year','Status','Owner','Phone','Mileage'],filteredGarage.map(v=>[v.plate,v.make,v.model,v.year,v.status,v.ownerName,v.ownerPhone,v.mileage]))
+    else if (activeReport==='fuel') exportPDF('Fuel Logs Report',['Vehicle','Date','Liters','Cost/L (RWF)','Total Cost (RWF)','Station','Filled By'],filteredFuel.map(f=>[f.fleetVehicle?.plate,f.date,f.liters,f.costPerLiter,f.totalCost,f.station,f.filledBy]))
+    else if (activeReport==='inventory') exportPDF('Inventory Report',['Name','Category','Qty','Unit Price (RWF)','Status','Supplier','Location'],filteredInventory.map(i=>[i.name,i.category,`${i.quantity} ${i.unit}`,i.unitPrice,i.status,i.supplier,i.location]))
+    else if (activeReport==='staff') exportPDF('Staff Report',['Name','Email','Role'],filteredStaff.map(s=>[s.name,s.email,s.role]))
+  }
+
+  const currentCount = {fleet:filteredFleet.length,garage:filteredGarage.length,fuel:filteredFuel.length,inventory:filteredInventory.length,staff:filteredStaff.length}[activeReport]
+
+  return (
+    <>
+      <div className="page-header">
+        <div><div className="page-title">📋 Reports</div><div className="page-sub">Generate and export reports — Manager only</div></div>
+        <div style={{ display:'flex', gap:10 }}>
+          <button className="btn btn-ghost" onClick={handleExportCSV}>📥 Export CSV</button>
+          <button className="btn btn-blue" onClick={handleExportPDF}>📄 Export PDF</button>
+        </div>
+      </div>
+      <div className="page-content">
+        {/* Report type tabs */}
+        <div style={{ display:'flex', gap:4, marginBottom:20, background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, padding:4, width:'fit-content', flexWrap:'wrap' }}>
+          {reportTabs.map(t => (
+            <button key={t.key} className="tab-btn" onClick={()=>{ setActiveReport(t.key); setSearch('') }}
+              style={{ background:activeReport===t.key?'var(--blue)':'transparent', color:activeReport===t.key?'#fff':'var(--text2)', padding:'8px 16px' }}>
+              {t.icon} {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Search bar */}
+        <div style={{ marginBottom:16, display:'flex', gap:10, alignItems:'center' }}>
+          <div style={{ position:'relative', flex:1, maxWidth:400 }}>
+            <span style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:'var(--text3)', fontSize:16 }}>🔍</span>
+            <input className="form-input" style={{ paddingLeft:38 }} placeholder={`Search by plate number, name...`} value={search} onChange={e=>setSearch(e.target.value)}/>
+          </div>
+          {search && <button className="btn btn-ghost" style={{ padding:'10px 14px' }} onClick={()=>setSearch('')}>✕ Clear</button>}
+          <span style={{ fontSize:13, color:'var(--text2)', fontWeight:600 }}>{currentCount} records found</span>
+        </div>
+
+        {/* Fleet Vehicles Table */}
+        {activeReport==='fleet' && (
+          <div className="card">
+            <div className="card-header"><div className="card-title">🚛 Fleet Vehicles</div></div>
+            {filteredFleet.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}>No fleet vehicles found</div> : (
+              <div style={{ overflowX:'auto' }}>
+                <table className="table">
+                  <thead><tr><th>Plate</th><th>Make / Model</th><th>Year</th><th>Type</th><th>Status</th><th>Driver</th><th>Phone</th><th>Mileage</th><th>Ins. Expiry</th></tr></thead>
+                  <tbody>{filteredFleet.map(v=>{ const ss=FLEET_STATUS[v.status]||FLEET_STATUS['Active']; return (
+                    <tr key={v.id}>
+                      <td style={{ fontFamily:'DM Mono,monospace', color:'var(--blue)', fontWeight:700 }}>{v.plate}</td>
+                      <td style={{ fontWeight:600 }}>{v.make} {v.model}</td>
+                      <td>{v.year}</td>
+                      <td><span style={{ fontSize:11, background:'var(--surface2)', color:'var(--text2)', borderRadius:6, padding:'3px 8px', fontWeight:600 }}>{v.type}</span></td>
+                      <td><span style={{ fontSize:11, fontWeight:700, borderRadius:20, padding:'3px 10px', background:ss.bg, color:ss.color }}>{v.status?.replace('_',' ')}</span></td>
+                      <td>{v.driverName||'—'}</td>
+                      <td style={{ color:'var(--text2)' }}>{v.driverPhone||'—'}</td>
+                      <td style={{ fontFamily:'DM Mono,monospace' }}>{v.mileage?`${Number(v.mileage).toLocaleString()} km`:'—'}</td>
+                      <td style={{ color:v.insuranceExpiry&&new Date(v.insuranceExpiry)<new Date()?'var(--red)':'var(--text2)' }}>{v.insuranceExpiry||'—'}</td>
+                    </tr>
+                  )})}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Garage Vehicles Table */}
+        {activeReport==='garage' && (
+          <div className="card">
+            <div className="card-header"><div className="card-title">🚗 Garage Vehicles</div></div>
+            {filteredGarage.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}>No garage vehicles found</div> : (
+              <div style={{ overflowX:'auto' }}>
+                <table className="table">
+                  <thead><tr><th>Plate</th><th>Make / Model</th><th>Year</th><th>Type</th><th>Status</th><th>Owner</th><th>Phone</th><th>Company</th><th>Mileage</th></tr></thead>
+                  <tbody>{filteredGarage.map(v=>{ const ss=STATUS_STYLE[v.status]||STATUS_STYLE['Ready']; return (
+                    <tr key={v.id}>
+                      <td style={{ fontFamily:'DM Mono,monospace', color:'var(--blue)', fontWeight:700 }}>{v.plate}</td>
+                      <td style={{ fontWeight:600 }}>{v.make} {v.model}</td>
+                      <td>{v.year}</td>
+                      <td><span style={{ fontSize:11, background:'var(--surface2)', color:'var(--text2)', borderRadius:6, padding:'3px 8px', fontWeight:600 }}>{v.type}</span></td>
+                      <td><span style={{ fontSize:11, fontWeight:700, borderRadius:20, padding:'3px 10px', background:ss.bg, color:ss.color }}>{v.status?.replace('_',' ')}</span></td>
+                      <td style={{ fontWeight:600 }}>{v.ownerName||'—'}</td>
+                      <td style={{ color:'var(--text2)' }}>{v.ownerPhone||'—'}</td>
+                      <td style={{ color:'var(--text2)' }}>{v.ownerCompany||'—'}</td>
+                      <td style={{ fontFamily:'DM Mono,monospace' }}>{v.mileage?`${Number(v.mileage).toLocaleString()} km`:'—'}</td>
+                    </tr>
+                  )})}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Fuel Logs Table */}
+        {activeReport==='fuel' && (
+          <div className="card">
+            <div className="card-header">
+              <div className="card-title">⛽ Fuel Logs</div>
+              <span style={{ fontFamily:'DM Mono,monospace', fontSize:13, color:'var(--green)', fontWeight:700 }}>
+                Total: {filteredFuel.reduce((s,f)=>s+(f.totalCost||0),0).toLocaleString()} RWF
+              </span>
+            </div>
+            {filteredFuel.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}>No fuel logs found</div> : (
+              <div style={{ overflowX:'auto' }}>
+                <table className="table">
+                  <thead><tr><th>Vehicle</th><th>Date</th><th>Liters</th><th>Cost/L</th><th>Total Cost</th><th>Mileage</th><th>Station</th><th>Filled By</th></tr></thead>
+                  <tbody>{[...filteredFuel].reverse().map(f=>(
+                    <tr key={f.id}>
+                      <td style={{ fontFamily:'DM Mono,monospace', color:'var(--blue)', fontWeight:700 }}>{f.fleetVehicle?.plate||'—'}</td>
+                      <td style={{ color:'var(--text2)' }}>{f.date}</td>
+                      <td style={{ fontWeight:600 }}>{f.liters}L</td>
+                      <td style={{ color:'var(--text2)' }}>{f.costPerLiter?`${f.costPerLiter} RWF`:'—'}</td>
+                      <td style={{ fontFamily:'DM Mono,monospace', color:'var(--green)', fontWeight:700 }}>{(f.totalCost||0).toLocaleString()} RWF</td>
+                      <td style={{ color:'var(--text2)' }}>{f.mileageAtFill?`${f.mileageAtFill.toLocaleString()} km`:'—'}</td>
+                      <td>{f.station||'—'}</td>
+                      <td style={{ color:'var(--text2)' }}>{f.filledBy||'—'}</td>
+                    </tr>
+                  ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Inventory Table */}
+        {activeReport==='inventory' && (
+          <div className="card">
+            <div className="card-header"><div className="card-title">📦 Inventory</div></div>
+            {filteredInventory.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}>No inventory items found</div> : (
+              <div style={{ overflowX:'auto' }}>
+                <table className="table">
+                  <thead><tr><th>Name</th><th>Category</th><th>Qty</th><th>Unit Price</th><th>Min Qty</th><th>Status</th><th>Supplier</th><th>Location</th></tr></thead>
+                  <tbody>{filteredInventory.map(i=>{ const st=INV_STATUS[i.status]||INV_STATUS['In_Stock']; return (
+                    <tr key={i.id}>
+                      <td style={{ fontWeight:600 }}>{i.name}</td>
+                      <td><span style={{ fontSize:11, background:'var(--surface2)', color:'var(--text2)', borderRadius:6, padding:'3px 8px', fontWeight:600 }}>{i.category}</span></td>
+                      <td style={{ fontFamily:'DM Mono,monospace', fontWeight:600 }}>{i.quantity} {i.unit}</td>
+                      <td style={{ fontFamily:'DM Mono,monospace', color:'var(--green)' }}>{(i.unitPrice||0).toLocaleString()} RWF</td>
+                      <td style={{ color:'var(--text2)' }}>{i.minQuantity}</td>
+                      <td><span style={{ fontSize:11, fontWeight:700, borderRadius:20, padding:'3px 10px', background:st.bg, color:st.color }}>{i.status?.replace('_',' ')}</span></td>
+                      <td style={{ color:'var(--text2)' }}>{i.supplier||'—'}</td>
+                      <td style={{ color:'var(--text2)' }}>{i.location||'—'}</td>
+                    </tr>
+                  )})}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Staff Table */}
+        {activeReport==='staff' && (
+          <div className="card">
+            <div className="card-header"><div className="card-title">👥 Staff Members</div></div>
+            {filteredStaff.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}>No staff found</div> : (
+              <div style={{ overflowX:'auto' }}>
+                <table className="table">
+                  <thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead>
+                  <tbody>{filteredStaff.map(s=>{ const rc=ROLE_CONFIG[s.role]; return (
+                    <tr key={s.id}>
+                      <td style={{ fontWeight:600 }}>{s.name}</td>
+                      <td style={{ fontFamily:'DM Mono,monospace', color:'var(--text2)', fontSize:13 }}>{s.email}</td>
+                      <td><span style={{ display:'inline-flex', alignItems:'center', padding:'3px 10px', borderRadius:20, fontSize:12, fontWeight:700, background:rc?.bg, color:rc?.color }}>{rc?.label}</span></td>
+                    </tr>
+                  )})}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </>
+  )
+}
+
 // ─── FUEL LOGS ────────────────────────────────────────────────────────────────
 function FuelLogsPage({ user }) {
   const [logs, setLogs] = useState([])
   const [fleet, setFleet] = useState([])
   const [showAdd, setShowAdd] = useState(false)
-  const [showReport, setShowReport] = useState(false)
   const [filterVehicle, setFilterVehicle] = useState('all')
-  const [reportType, setReportType] = useState('range')
-  const [reportFrom, setReportFrom] = useState(new Date().toISOString().split('T')[0])
-  const [reportTo, setReportTo] = useState(new Date().toISOString().split('T')[0])
-  const [reportMonth, setReportMonth] = useState(new Date().toISOString().slice(0,7))
   const [form, setForm] = useState({ fleetVehicleId:'', date:new Date().toISOString().split('T')[0], liters:'', costPerLiter:'', totalCost:'', mileageAtFill:'', filledBy:user.name, station:'' })
   const sf = (k,v) => setForm(f=>({...f,[k]:v}))
-
   useEffect(() => { fetchData() }, [])
   const fetchData = async () => {
     try {
@@ -275,7 +519,6 @@ function FuelLogsPage({ user }) {
       if (f.data.length>0) setForm(fr=>({...fr, fleetVehicleId:f.data[0].id}))
     } catch(e) { console.error(e) }
   }
-
   const handleAdd = async () => {
     if (!form.fleetVehicleId||!form.liters||!form.date) { alert('Vehicle, date and liters required'); return }
     try {
@@ -283,82 +526,19 @@ function FuelLogsPage({ user }) {
       fetchData(); setShowAdd(false)
     } catch { alert('Failed to log fuel') }
   }
-
   const filtered = filterVehicle==='all' ? logs : logs.filter(l=>l.fleetVehicle?.id===parseInt(filterVehicle))
   const totalL = filtered.reduce((s,l)=>s+(l.liters||0),0)
   const totalC = filtered.reduce((s,l)=>s+(l.totalCost||0),0)
-
-  const getReportData = () => {
-    return logs.filter(l => {
-      const d = l.date
-      if (reportType==='range') return d >= reportFrom && d <= reportTo
-      if (reportType==='month') return d && d.slice(0,7)===reportMonth
-      return true
-    })
-  }
-
-  const exportExcel = () => {
-    const data = getReportData()
-    if (data.length===0) { alert('No data for selected period'); return }
-    const period = reportType==='range' ? `${reportFrom} to ${reportTo}` : reportMonth
-    const totalLiters = data.reduce((s,l)=>s+(l.liters||0),0)
-    const totalCost = data.reduce((s,l)=>s+(l.totalCost||0),0)
-    const rows = [
-      ['ERI-RWANDA - Fuel Consumption Report'],
-      [`Period: ${period}`],
-      [`Generated: ${new Date().toLocaleDateString()}`],
-      [],
-      ['Vehicle','Date','Liters (L)','Cost/L (RWF)','Total Cost (RWF)','Mileage (km)','Station','Filled By'],
-      ...data.map(l=>[l.fleetVehicle?.plate||'—',l.date,l.liters,l.costPerLiter||0,l.totalCost||0,l.mileageAtFill||0,l.station||'—',l.filledBy||'—']),
-      [],
-      ['TOTALS','',totalLiters.toFixed(1),'',totalCost,'','','']
-    ]
-    const csv = rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n')
-    const blob = new Blob([csv], { type:'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url; a.download = `fuel-report-${period}.csv`; a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  const exportPDF = () => {
-    const data = getReportData()
-    if (data.length===0) { alert('No data for selected period'); return }
-    const period = reportType==='range' ? `${reportFrom} to ${reportTo}` : reportMonth
-    const totalLiters = data.reduce((s,l)=>s+(l.liters||0),0)
-    const totalCost = data.reduce((s,l)=>s+(l.totalCost||0),0)
-    const rows = data.map(l=>`
-      <tr>
-        <td>${l.fleetVehicle?.plate||'—'}</td><td>${l.date}</td><td>${l.liters}L</td>
-        <td>${l.costPerLiter||0} RWF</td><td>${(l.totalCost||0).toLocaleString()} RWF</td>
-        <td>${l.mileageAtFill?l.mileageAtFill.toLocaleString()+' km':'—'}</td>
-        <td>${l.station||'—'}</td><td>${l.filledBy||'—'}</td>
-      </tr>`).join('')
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Fuel Report</title>
-    <style>body{font-family:Arial,sans-serif;padding:30px;color:#111}h1{font-size:22px;margin-bottom:4px}p{color:#555;font-size:13px;margin:2px 0}table{width:100%;border-collapse:collapse;margin-top:20px;font-size:12px}th{background:#e6940a;color:#fff;padding:8px;text-align:left}td{padding:7px 8px;border-bottom:1px solid #eee}tr:nth-child(even) td{background:#fafafa}.totals td{font-weight:bold;background:#fff8e1;border-top:2px solid #e6940a}.footer{margin-top:20px;font-size:11px;color:#888}</style>
-    </head><body>
-    <h1>⛽ ERI-RWANDA Fuel Consumption Report</h1>
-    <p>Period: ${period}</p><p>Generated: ${new Date().toLocaleDateString()}</p><p>Total Entries: ${data.length}</p>
-    <table><thead><tr><th>Vehicle</th><th>Date</th><th>Liters</th><th>Cost/L</th><th>Total Cost</th><th>Mileage</th><th>Station</th><th>Filled By</th></tr></thead>
-    <tbody>${rows}<tr class="totals"><td>TOTAL</td><td></td><td>${totalLiters.toFixed(1)}L</td><td></td><td>${totalCost.toLocaleString()} RWF</td><td></td><td></td><td></td></tr></tbody></table>
-    <div class="footer">ERI-RWANDA Garage Management System</div></body></html>`
-    const w = window.open('','_blank')
-    w.document.write(html); w.document.close(); w.print()
-  }
-
   return (
     <>
       <div className="page-header">
         <div><div className="page-title">⛽ Fuel Logs</div><div className="page-sub">Track fuel consumption for fleet vehicles</div></div>
-        <div style={{ display:'flex', gap:10 }}>
-          {user.role==='manager' && <button className="btn btn-ghost" onClick={()=>setShowReport(true)}>📊 Generate Report</button>}
-          <button className="btn btn-accent" onClick={()=>setShowAdd(true)}>+ Log Fuel Fill</button>
-        </div>
+        <button className="btn btn-blue" onClick={()=>setShowAdd(true)}>+ Log Fuel Fill</button>
       </div>
       <div className="page-content">
         <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, marginBottom:20 }}>
-          {[['Total Fills',filtered.length,'Log entries','var(--blue)'],['Total Liters',totalL.toFixed(1)+'L','Consumed','var(--green)'],['Total Cost',totalC.toLocaleString()+' RWF','Expenditure','var(--accent)']].map(([l,v,s,c])=>(
-            <div key={l} className="stat-card"><div style={{ fontSize:13, color:'var(--text2)', marginBottom:8 }}>{l}</div><div style={{ fontFamily:'Syne,sans-serif', fontSize:24, fontWeight:800, color:c }}>{v}</div><div style={{ fontSize:12, color:'var(--text3)', marginTop:4 }}>{s}</div></div>
+          {[['Total Fills',filtered.length,'Log entries','var(--blue)'],['Total Liters',totalL.toFixed(1)+'L','Consumed','var(--green)'],['Total Cost',totalC.toLocaleString()+' RWF','Expenditure','var(--text)']].map(([l,v,s,c])=>(
+            <div key={l} className="stat-card"><div style={{ fontSize:13, color:'var(--text2)', marginBottom:8, fontWeight:600 }}>{l}</div><div style={{ fontFamily:'Nunito,sans-serif', fontSize:24, fontWeight:800, color:c }}>{v}</div><div style={{ fontSize:12, color:'var(--text3)', marginTop:4 }}>{s}</div></div>
           ))}
         </div>
         <div style={{ marginBottom:16 }}>
@@ -368,64 +548,26 @@ function FuelLogsPage({ user }) {
           </select>
         </div>
         <div className="card">
-          <div className="card-header"><div className="card-title">Fuel History</div><span style={{ fontSize:12, color:'var(--text2)' }}>{filtered.length} entries</span></div>
+          <div className="card-header"><div className="card-title">Fuel History</div><span style={{ fontSize:12, color:'var(--text2)', fontWeight:600 }}>{filtered.length} entries</span></div>
           {filtered.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}><div style={{ fontSize:36, marginBottom:12 }}>⛽</div><div>No fuel logs yet</div></div> : (
             <table className="table">
               <thead><tr><th>Vehicle</th><th>Date</th><th>Liters</th><th>Cost/L</th><th>Total</th><th>Mileage</th><th>Station</th><th>By</th></tr></thead>
-              <tbody>
-                {[...filtered].reverse().map(l=>(
-                  <tr key={l.id}>
-                    <td style={{ fontFamily:'DM Mono,monospace', color:'var(--blue)', fontSize:13 }}>{l.fleetVehicle?.plate||'—'}</td>
-                    <td style={{ color:'var(--text2)' }}>{l.date}</td>
-                    <td style={{ fontWeight:600 }}>{l.liters}L</td>
-                    <td style={{ color:'var(--text2)' }}>{l.costPerLiter?`${l.costPerLiter} RWF`:'—'}</td>
-                    <td style={{ fontFamily:'DM Mono,monospace', color:'var(--accent)' }}>{(l.totalCost||0).toLocaleString()} RWF</td>
-                    <td style={{ color:'var(--text2)' }}>{l.mileageAtFill?`${l.mileageAtFill.toLocaleString()} km`:'—'}</td>
-                    <td style={{ color:'var(--text2)' }}>{l.station||'—'}</td>
-                    <td style={{ color:'var(--text2)' }}>{l.filledBy||'—'}</td>
-                  </tr>
-                ))}
-              </tbody>
+              <tbody>{[...filtered].reverse().map(l=>(
+                <tr key={l.id}>
+                  <td style={{ fontFamily:'DM Mono,monospace', color:'var(--blue)', fontSize:13, fontWeight:700 }}>{l.fleetVehicle?.plate||'—'}</td>
+                  <td style={{ color:'var(--text2)' }}>{l.date}</td>
+                  <td style={{ fontWeight:700 }}>{l.liters}L</td>
+                  <td style={{ color:'var(--text2)' }}>{l.costPerLiter?`${l.costPerLiter} RWF`:'—'}</td>
+                  <td style={{ fontFamily:'DM Mono,monospace', color:'var(--green)', fontWeight:700 }}>{(l.totalCost||0).toLocaleString()} RWF</td>
+                  <td style={{ color:'var(--text2)' }}>{l.mileageAtFill?`${l.mileageAtFill.toLocaleString()} km`:'—'}</td>
+                  <td style={{ color:'var(--text2)' }}>{l.station||'—'}</td>
+                  <td style={{ color:'var(--text2)' }}>{l.filledBy||'—'}</td>
+                </tr>
+              ))}</tbody>
             </table>
           )}
         </div>
       </div>
-
-      {showReport && (
-        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowReport(false)}>
-          <div className="modal" style={{ maxWidth:480 }}>
-            <div className="modal-header"><div className="modal-title">📊 Generate Fuel Report</div><X onClick={()=>setShowReport(false)}/></div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label className="form-label">Report Type</label>
-                <select className="form-input" style={{ appearance:'auto' }} value={reportType} onChange={e=>setReportType(e.target.value)}>
-                  <option value="range">Date Range</option><option value="month">By Month</option>
-                </select>
-              </div>
-              {reportType==='range' ? (
-                <div className="form-row" style={{ marginBottom:14 }}>
-                  <div><label className="form-label">From Date</label><input className="form-input" type="date" value={reportFrom} onChange={e=>setReportFrom(e.target.value)}/></div>
-                  <div><label className="form-label">To Date</label><input className="form-input" type="date" value={reportTo} onChange={e=>setReportTo(e.target.value)}/></div>
-                </div>
-              ) : (
-                <div className="form-group">
-                  <label className="form-label">Select Month</label>
-                  <input className="form-input" type="month" value={reportMonth} onChange={e=>setReportMonth(e.target.value)}/>
-                </div>
-              )}
-              <div style={{ background:'var(--surface2)', borderRadius:8, padding:12, fontSize:13, color:'var(--text2)', marginTop:8 }}>
-                <strong style={{ color:'var(--text)' }}>{getReportData().length}</strong> entries found for selected period
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={()=>setShowReport(false)}>Cancel</button>
-              <button className="btn btn-blue" onClick={exportExcel}>📥 Export Excel</button>
-              <button className="btn btn-accent" onClick={exportPDF}>📄 Export PDF</button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {showAdd && (
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowAdd(false)}>
           <div className="modal" style={{ maxWidth:520 }}>
@@ -452,7 +594,7 @@ function FuelLogsPage({ user }) {
             </div>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={()=>setShowAdd(false)}>Cancel</button>
-              <button className="btn btn-accent" onClick={handleAdd}>Log Fill</button>
+              <button className="btn btn-blue" onClick={handleAdd}>Log Fill</button>
             </div>
           </div>
         </div>
@@ -472,10 +614,8 @@ function InventoryPage({ user }) {
   const empty = { name:'', category:'PART', description:'', quantity:0, minQuantity:5, unitPrice:0, unit:'pcs', supplier:'', location:'' }
   const [form, setForm] = useState(empty)
   const sf = (k,v) => setForm(f=>({...f,[k]:v}))
-
   useEffect(()=>{ fetchItems() },[])
   const fetchItems = async () => { try { const r=await api.get('/inventory'); setItems(r.data) } catch(e){console.error(e)} }
-
   const handleSave = async () => {
     if (!form.name) { alert('Item name required'); return }
     try {
@@ -484,17 +624,14 @@ function InventoryPage({ user }) {
       fetchItems(); setShowAdd(false); setEditing(null); setForm(empty)
     } catch { alert('Failed to save item') }
   }
-
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this item?')) return
     try { await api.delete(`/inventory/${id}`); fetchItems() } catch { alert('Failed to delete') }
   }
-
   const filtered = items.filter(i => {
     const q=search.toLowerCase()
     return (catFilter==='ALL'||i.category===catFilter) && (!q||i.name?.toLowerCase().includes(q)||i.supplier?.toLowerCase().includes(q))
   })
-
   return (
     <>
       <div className="page-header">
@@ -503,8 +640,8 @@ function InventoryPage({ user }) {
       </div>
       <div className="page-content">
         <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:20 }}>
-          {[['Total',items.length,'var(--blue)'],['In Stock',items.filter(i=>i.status==='In_Stock').length,'var(--green)'],['Low Stock',items.filter(i=>i.status==='Low_Stock').length,'var(--accent)'],['Out of Stock',items.filter(i=>i.status==='Out_of_Stock').length,'var(--red)']].map(([l,v,c])=>(
-            <div key={l} className="stat-card" style={{ padding:'16px 18px' }}><div style={{ fontSize:12, color:'var(--text2)', marginBottom:6 }}>{l}</div><div style={{ fontFamily:'Syne,sans-serif', fontSize:26, fontWeight:800, color:c }}>{v}</div></div>
+          {[['Total',items.length,'var(--blue)'],['In Stock',items.filter(i=>i.status==='In_Stock').length,'var(--green)'],['Low Stock',items.filter(i=>i.status==='Low_Stock').length,'#f59e0b'],['Out of Stock',items.filter(i=>i.status==='Out_of_Stock').length,'var(--red)']].map(([l,v,c])=>(
+            <div key={l} className="stat-card" style={{ padding:'16px 18px' }}><div style={{ fontSize:12, color:'var(--text2)', marginBottom:6, fontWeight:600 }}>{l}</div><div style={{ fontFamily:'Nunito,sans-serif', fontSize:26, fontWeight:800, color:c }}>{v}</div></div>
           ))}
         </div>
         <div style={{ display:'flex', gap:10, marginBottom:16 }}>
@@ -512,33 +649,29 @@ function InventoryPage({ user }) {
           <div style={{ display:'flex', gap:4, background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, padding:4 }}>
             {['ALL','PART','TOOL','CONSUMABLE'].map(c=>(
               <button key={c} className="tab-btn" onClick={()=>setCatFilter(c)}
-                style={{ background:catFilter===c?'var(--accent)':'transparent', color:catFilter===c?'#fff':'var(--text2)', padding:'6px 14px' }}>{c}</button>
+                style={{ background:catFilter===c?'var(--blue)':'transparent', color:catFilter===c?'#fff':'var(--text2)', padding:'6px 14px' }}>{c}</button>
             ))}
           </div>
         </div>
         <div className="card">
-          <div className="card-header"><div className="card-title">Stock List</div><span style={{ fontSize:12, color:'var(--text2)' }}>{filtered.length} items</span></div>
+          <div className="card-header"><div className="card-title">Stock List</div><span style={{ fontSize:12, color:'var(--text2)', fontWeight:600 }}>{filtered.length} items</span></div>
           {filtered.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}><div style={{ fontSize:36, marginBottom:12 }}>📦</div><div>No items found</div></div> : (
             <table className="table">
               <thead><tr><th>Item</th><th>Category</th><th>Qty</th><th>Unit Price</th><th>Location</th><th>Status</th>{canEdit&&<th>Actions</th>}</tr></thead>
-              <tbody>
-                {filtered.map(item=>{
-                  const st=INV_STATUS[item.status]||INV_STATUS['In_Stock']
-                  return (
-                    <tr key={item.id}>
-                      <td><div style={{ fontWeight:500 }}>{item.name}</div>{item.supplier&&<div style={{ fontSize:11, color:'var(--text3)' }}>{item.supplier}</div>}</td>
-                      <td><span style={{ fontSize:11, background:'var(--surface2)', color:'var(--text2)', borderRadius:6, padding:'3px 8px' }}>{item.category}</span></td>
-                      <td style={{ fontFamily:'DM Mono,monospace' }}>{item.quantity} {item.unit}</td>
-                      <td style={{ fontFamily:'DM Mono,monospace', color:'var(--accent)' }}>{(item.unitPrice||0).toLocaleString()} RWF</td>
-                      <td style={{ color:'var(--text2)', fontSize:13 }}>{item.location||'—'}</td>
-                      <td><span style={{ fontSize:11, fontWeight:600, borderRadius:20, padding:'3px 10px', background:st.bg, color:st.color }}>{item.status?.replace('_',' ')}</span></td>
-                      {canEdit&&<td><div style={{ display:'flex', gap:6 }}>
-                        <button className="btn btn-ghost" style={{ padding:'5px 10px', fontSize:12 }} onClick={()=>{ setForm({...item}); setEditing(item); setShowAdd(true) }}>Edit</button>
-                        <button className="btn btn-danger" style={{ padding:'5px 10px', fontSize:12 }} onClick={()=>handleDelete(item.id)}>Del</button>
-                      </div></td>}
-                    </tr>
-                  )
-                })}
+              <tbody>{filtered.map(item=>{ const st=INV_STATUS[item.status]||INV_STATUS['In_Stock']; return (
+                <tr key={item.id}>
+                  <td><div style={{ fontWeight:600 }}>{item.name}</div>{item.supplier&&<div style={{ fontSize:11, color:'var(--text3)' }}>{item.supplier}</div>}</td>
+                  <td><span style={{ fontSize:11, background:'var(--surface2)', color:'var(--text2)', borderRadius:6, padding:'3px 8px', fontWeight:600 }}>{item.category}</span></td>
+                  <td style={{ fontFamily:'DM Mono,monospace', fontWeight:600 }}>{item.quantity} {item.unit}</td>
+                  <td style={{ fontFamily:'DM Mono,monospace', color:'var(--green)' }}>{(item.unitPrice||0).toLocaleString()} RWF</td>
+                  <td style={{ color:'var(--text2)', fontSize:13 }}>{item.location||'—'}</td>
+                  <td><span style={{ fontSize:11, fontWeight:700, borderRadius:20, padding:'3px 10px', background:st.bg, color:st.color }}>{item.status?.replace('_',' ')}</span></td>
+                  {canEdit&&<td><div style={{ display:'flex', gap:6 }}>
+                    <button className="btn btn-ghost" style={{ padding:'5px 10px', fontSize:12 }} onClick={()=>{ setForm({...item}); setEditing(item); setShowAdd(true) }}>Edit</button>
+                    <button className="btn btn-danger" style={{ padding:'5px 10px', fontSize:12 }} onClick={()=>handleDelete(item.id)}>Del</button>
+                  </div></td>}
+                </tr>
+              )})}
               </tbody>
             </table>
           )}
@@ -567,7 +700,7 @@ function InventoryPage({ user }) {
                 </div>
               </div>
               <div className="form-row" style={{ marginBottom:14 }}>
-                <div><label className="form-label">Min Qty (alert threshold)</label><input className="form-input" type="number" value={form.minQuantity} onChange={e=>sf('minQuantity',parseInt(e.target.value)||0)}/></div>
+                <div><label className="form-label">Min Qty</label><input className="form-input" type="number" value={form.minQuantity} onChange={e=>sf('minQuantity',parseInt(e.target.value)||0)}/></div>
                 <div><label className="form-label">Price (RWF)</label><input className="form-input" type="text" value={form.unitPrice} onChange={e=>sf('unitPrice',parseInt(e.target.value)||0)}/></div>
               </div>
               <div className="form-row">
@@ -608,14 +741,14 @@ function StaffPage() {
       <div className="page-header"><div><div className="page-title">👥 Staff Management</div><div className="page-sub">Manage team accounts</div></div><button className="btn btn-success" onClick={()=>setShowModal(true)}>+ Add Staff</button></div>
       <div className="page-content">
         <div className="card">
-          <div className="card-header"><div className="card-title">Team Members</div><span style={{ fontSize:12, color:'var(--text2)' }}>{staff.length} members</span></div>
+          <div className="card-header"><div className="card-title">Team Members</div><span style={{ fontSize:12, color:'var(--text2)', fontWeight:600 }}>{staff.length} members</span></div>
           <table className="table">
             <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead>
             <tbody>{staff.map(s=>{ const rc=ROLE_CONFIG[s.role]; return (
               <tr key={s.id}>
-                <td style={{ fontWeight:500 }}>{s.name}</td>
+                <td style={{ fontWeight:600 }}>{s.name}</td>
                 <td style={{ color:'var(--text2)', fontFamily:'DM Mono,monospace', fontSize:13 }}>{s.email}</td>
-                <td><span style={{ display:'inline-flex', alignItems:'center', padding:'3px 10px', borderRadius:20, fontSize:12, fontWeight:600, background:rc?.bg, color:rc?.color }}>{rc?.label}</span></td>
+                <td><span style={{ display:'inline-flex', alignItems:'center', padding:'3px 10px', borderRadius:20, fontSize:12, fontWeight:700, background:rc?.bg, color:rc?.color }}>{rc?.label}</span></td>
                 <td><button className="btn btn-danger" style={{ padding:'6px 12px', fontSize:12 }} onClick={()=>handleDelete(s.id)}>Remove</button></td>
               </tr>
             )})}</tbody>
@@ -653,7 +786,7 @@ function VehicleModal({ vehicle, onSave, onClose }) {
       <div className="modal" style={{ maxHeight:'90vh', overflowY:'auto', maxWidth:560 }}>
         <div className="modal-header"><div className="modal-title">{vehicle?'Edit Vehicle':'Register New Vehicle'}</div><X onClick={onClose}/></div>
         <div className="modal-body">
-          <div style={{ fontSize:11, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:14, paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Vehicle Details</div>
+          <div style={{ fontSize:11, fontWeight:800, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:14, paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Vehicle Details</div>
           <div className="form-row" style={{ marginBottom:14 }}>
             <div><label className="form-label">Plate *</label><input className="form-input" value={form.plate} onChange={e=>s('plate',e.target.value.toUpperCase())} placeholder="KCA 123A"/></div>
             <div><label className="form-label">Status *</label><select className="form-input" style={{ appearance:'auto' }} value={form.status} onChange={e=>s('status',e.target.value)}>{['Ready','In_Service','Awaiting_Parts','Completed'].map(x=><option key={x}>{x}</option>)}</select></div>
@@ -671,7 +804,7 @@ function VehicleModal({ vehicle, onSave, onClose }) {
             <div><label className="form-label">Mileage (km) *</label><input className="form-input" type="number" value={form.mileage} onChange={e=>s('mileage',e.target.value)}/></div>
           </div>
           <div className="form-group"><label className="form-label">License Identification</label><input className="form-input" value={form.vin} onChange={e=>s('vin',e.target.value.toUpperCase())} style={{ fontFamily:'DM Mono,monospace' }}/></div>
-          <div style={{ fontSize:11, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', margin:'20px 0 14px', paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Owner Information</div>
+          <div style={{ fontSize:11, fontWeight:800, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', margin:'20px 0 14px', paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Owner Information</div>
           <div className="form-row" style={{ marginBottom:14 }}>
             <div><label className="form-label">Owner Name *</label><input className="form-input" value={form.ownerName} onChange={e=>s('ownerName',e.target.value)} placeholder="Full name"/></div>
             <div><label className="form-label">Phone *</label><input className="form-input" value={form.ownerPhone} onChange={e=>s('ownerPhone',e.target.value)} placeholder="+250 788 000 000"/></div>
@@ -721,7 +854,7 @@ function ServiceModal({ onSave, onClose, currentUser }) {
 
 // ─── FLEET MODAL ──────────────────────────────────────────────────────────────
 function FleetModal({ vehicle, onSave, onClose }) {
-  const empty = { plate:'', make:'', model:'',cardNumber:'', year:new Date().getFullYear(), color:'', vin:'', type:'Sedan', mileage:0, driverName:'', driverPhone:'', driverLicense:'', insuranceCompany:'', insuranceNumber:'', insuranceExpiry:'', inspectionExpiry:'', status:'Active' }
+  const empty = { plate:'', make:'', model:'', cardNumber:'', year:new Date().getFullYear(), color:'', vin:'', type:'Sedan', mileage:0, driverName:'', driverPhone:'', driverLicense:'', insuranceCompany:'', insuranceNumber:'', insuranceExpiry:'', inspectionExpiry:'', status:'Active' }
   const [form, setForm] = useState(vehicle||empty)
   const s = (k,v) => setForm(f=>({...f,[k]:v}))
   return (
@@ -729,7 +862,7 @@ function FleetModal({ vehicle, onSave, onClose }) {
       <div className="modal" style={{ maxHeight:'90vh', overflowY:'auto', maxWidth:580 }}>
         <div className="modal-header"><div className="modal-title">{vehicle?'Edit Fleet Vehicle':'Add Fleet Vehicle'}</div><X onClick={onClose}/></div>
         <div className="modal-body">
-          <div style={{ fontSize:11, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:14, paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Vehicle Details</div>
+          <div style={{ fontSize:11, fontWeight:800, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:14, paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Vehicle Details</div>
           <div className="form-row" style={{ marginBottom:14 }}>
             <div><label className="form-label">Plate *</label><input className="form-input" value={form.plate} onChange={e=>s('plate',e.target.value.toUpperCase())} placeholder="RAA 001A"/></div>
             <div><label className="form-label">Status *</label><select className="form-input" style={{ appearance:'auto' }} value={form.status} onChange={e=>s('status',e.target.value)}>{['Active','In_Maintenance','Out_of_Service'].map(x=><option key={x}>{x}</option>)}</select></div>
@@ -750,13 +883,13 @@ function FleetModal({ vehicle, onSave, onClose }) {
             <div><label className="form-label">Type *</label><select className="form-input" style={{ appearance:'auto' }} value={form.type} onChange={e=>s('type',e.target.value)}>{['Sedan','SUV','Pickup Truck','Van','Minibus','Truck','Motorcycle'].map(t=><option key={t}>{t}</option>)}</select></div>
             <div><label className="form-label">Mileage (km) *</label><input className="form-input" type="number" value={form.mileage} onChange={e=>s('mileage',e.target.value)}/></div>
           </div>
-          <div style={{ fontSize:11, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', margin:'20px 0 14px', paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Assigned Driver</div>
+          <div style={{ fontSize:11, fontWeight:800, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', margin:'20px 0 14px', paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Assigned Driver</div>
           <div className="form-row" style={{ marginBottom:14 }}>
             <div><label className="form-label">Driver Name *</label><input className="form-input" value={form.driverName} onChange={e=>s('driverName',e.target.value)}/></div>
             <div><label className="form-label">Driver Phone *</label><input className="form-input" value={form.driverPhone} onChange={e=>s('driverPhone',e.target.value)}/></div>
           </div>
           <div className="form-group"><label className="form-label">License Identification *</label><input className="form-input" value={form.driverLicense} onChange={e=>s('driverLicense',e.target.value)}/></div>
-          <div style={{ fontSize:11, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', margin:'20px 0 14px', paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Insurance & Documents</div>
+          <div style={{ fontSize:11, fontWeight:800, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', margin:'20px 0 14px', paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Insurance & Documents</div>
           <div className="form-row" style={{ marginBottom:14 }}>
             <div><label className="form-label">Insurance Company *</label><input className="form-input" value={form.insuranceCompany} onChange={e=>s('insuranceCompany',e.target.value)}/></div>
             <div><label className="form-label">Insurance Number *</label><input className="form-input" value={form.insuranceNumber} onChange={e=>s('insuranceNumber',e.target.value)}/></div>
@@ -785,51 +918,46 @@ function VehicleDetail({ vehicle, user, onBack, onUpdate }) {
   const [history, setHistory] = useState([])
   const ss = STATUS_STYLE[vehicle.status]||STATUS_STYLE['Ready']
   const canEdit = user.role==='manager'||user.role==='supervisor'
-  const totalSpend = (history).reduce((s,h)=>s+(h.cost||0),0)
-
+  const totalSpend = history.reduce((s,h)=>s+(h.cost||0),0)
   useEffect(() => {
-    api.get(`/vehicles/${vehicle.id}/history`)
-      .then(r => setHistory(Array.isArray(r.data) ? r.data : []))
+    api.get(`/vehicles/${vehicle.id}/history`).then(r => setHistory(Array.isArray(r.data) ? r.data : []))
   }, [vehicle.id])
-
   const addService = async (entry) => {
     try { await api.post(`/vehicles/${vehicle.id}/history`,entry); const r=await api.get(`/vehicles/${vehicle.id}`); const h=await api.get(`/vehicles/${vehicle.id}/history`); onUpdate({...r.data, serviceHistory: h.data}); setShowService(false) }
     catch { alert('Failed to log service') }
   }
   const saveEdit = async (data) => {
-    try { const r=await api.put(`/vehicles/${vehicle.id}`,data); onUpdate(r.data); setShowEdit(false) }
-    catch { alert('Failed to update') }
+    try { const r=await api.put(`/vehicles/${vehicle.id}`,data); onUpdate(r.data); setShowEdit(false) } catch { alert('Failed to update') }
   }
   const deleteVehicle = async () => {
     if(!window.confirm('Are you sure you want to delete this vehicle?')) return
     try { await api.delete(`/vehicles/${vehicle.id}`); onBack() } catch { alert('Failed to delete vehicle') }
   }
-
   return (
     <>
       <div className="page-header">
         <div>
-          <button onClick={onBack} style={{ background:'none', border:'none', color:'var(--text2)', cursor:'pointer', fontFamily:'DM Sans,sans-serif', fontSize:14, marginBottom:12, padding:0 }}>← Back to Vehicles</button>
+          <button onClick={onBack} style={{ background:'none', border:'none', color:'var(--text2)', cursor:'pointer', fontFamily:'Nunito,sans-serif', fontSize:14, marginBottom:12, padding:0, fontWeight:600 }}>← Back to Vehicles</button>
           <div className="page-title">🚗 {vehicle.make} {vehicle.model}</div>
           <div style={{ display:'flex', alignItems:'center', gap:10, marginTop:8 }}>
-            <span style={{ fontFamily:'DM Mono,monospace', color:'var(--accent)', fontSize:15 }}>{vehicle.plate}</span>
-            <span style={{ display:'inline-flex', alignItems:'center', gap:6, fontSize:12, fontWeight:600, borderRadius:20, padding:'4px 10px', background:ss.bg, color:ss.color }}>
+            <span style={{ fontFamily:'DM Mono,monospace', color:'var(--blue)', fontSize:15, fontWeight:700 }}>{vehicle.plate}</span>
+            <span style={{ display:'inline-flex', alignItems:'center', gap:6, fontSize:12, fontWeight:700, borderRadius:20, padding:'4px 10px', background:ss.bg, color:ss.color }}>
               <span style={{ width:6, height:6, borderRadius:'50%', background:ss.dot, display:'inline-block' }}/>{vehicle.status?.replace('_',' ')}
             </span>
           </div>
         </div>
         <div style={{ display:'flex', gap:10 }}>
           {canEdit&&<button className="btn btn-ghost" onClick={()=>setShowEdit(true)}>Edit</button>}
-          {canEdit&&<button style={{ backgroundColor:'var(--red)', color:'white', border:'none', padding:'8px 16px', borderRadius:'8px', cursor:'pointer', fontFamily:'DM Sans,sans-serif', fontWeight:600, fontSize:14 }} onClick={deleteVehicle}>Delete</button>}
+          {canEdit&&<button style={{ backgroundColor:'var(--red)', color:'white', border:'none', padding:'8px 16px', borderRadius:'8px', cursor:'pointer', fontFamily:'Nunito,sans-serif', fontWeight:700, fontSize:14 }} onClick={deleteVehicle}>Delete</button>}
           <button className="btn btn-blue" onClick={()=>setShowService(true)}>+ Log Service</button>
         </div>
       </div>
       <div className="page-content">
         <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:20 }}>
-          {[['Total Services',(history).length,'All time'],['Total Spend',totalSpend.toLocaleString(),'RWF'],['Mileage',Number(vehicle.mileage||0).toLocaleString(),'km'],['Year',vehicle.year,vehicle.color]].map(([l,v,s])=>(
+          {[['Total Services',history.length,'All time'],['Total Spend',totalSpend.toLocaleString(),'RWF'],['Mileage',Number(vehicle.mileage||0).toLocaleString(),'km'],['Year',vehicle.year,vehicle.color]].map(([l,v,s])=>(
             <div key={l} className="card" style={{ padding:'18px 20px' }}>
-              <div style={{ fontSize:12, color:'var(--text2)', marginBottom:8 }}>{l}</div>
-              <div style={{ fontFamily:'Syne,sans-serif', fontSize:24, fontWeight:800, color:'var(--text)' }}>{v}</div>
+              <div style={{ fontSize:12, color:'var(--text2)', marginBottom:8, fontWeight:600 }}>{l}</div>
+              <div style={{ fontFamily:'Nunito,sans-serif', fontSize:24, fontWeight:800, color:'var(--text)' }}>{v}</div>
               <div style={{ fontSize:12, color:'var(--text3)', marginTop:4 }}>{s}</div>
             </div>
           ))}
@@ -840,7 +968,7 @@ function VehicleDetail({ vehicle, user, onBack, onUpdate }) {
             <div style={{ padding:20 }}>
               {[['Make',vehicle.make],['Model',vehicle.model],['Year',vehicle.year],['Color',vehicle.color],['Type',vehicle.type],['Plate',vehicle.plate],['VIN',vehicle.vin||'—'],['Mileage',`${Number(vehicle.mileage||0).toLocaleString()} km`]].map(([k,v])=>(
                 <div key={k} style={{ display:'flex', justifyContent:'space-between', padding:'8px 0', borderBottom:'1px solid var(--border)' }}>
-                  <span style={{ fontSize:13, color:'var(--text2)' }}>{k}</span><span style={{ fontSize:13, fontWeight:500 }}>{v}</span>
+                  <span style={{ fontSize:13, color:'var(--text2)', fontWeight:600 }}>{k}</span><span style={{ fontSize:13, fontWeight:600 }}>{v}</span>
                 </div>
               ))}
             </div>
@@ -850,26 +978,26 @@ function VehicleDetail({ vehicle, user, onBack, onUpdate }) {
             <div style={{ padding:20 }}>
               {[['Name',vehicle.ownerName],['Phone',vehicle.ownerPhone||'—'],['Email',vehicle.ownerEmail||'—'],['Company',vehicle.ownerCompany||'—']].map(([k,v])=>(
                 <div key={k} style={{ display:'flex', justifyContent:'space-between', padding:'8px 0', borderBottom:'1px solid var(--border)' }}>
-                  <span style={{ fontSize:13, color:'var(--text2)' }}>{k}</span><span style={{ fontSize:13, fontWeight:500 }}>{v}</span>
+                  <span style={{ fontSize:13, color:'var(--text2)', fontWeight:600 }}>{k}</span><span style={{ fontSize:13, fontWeight:600 }}>{v}</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
         <div className="card">
-          <div className="card-header"><div className="card-title">Service & Repair History</div><span style={{ fontSize:12, color:'var(--text2)' }}>{history.length} records</span></div>
+          <div className="card-header"><div className="card-title">Service & Repair History</div><span style={{ fontSize:12, color:'var(--text2)', fontWeight:600 }}>{history.length} records</span></div>
           {history.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}><div style={{ fontSize:36, marginBottom:12 }}>📋</div><div>No service records yet</div></div>
             : [...history].reverse().map(h=>(
               <div key={h.id} style={{ padding:'16px 20px', borderBottom:'1px solid var(--border)', display:'flex', gap:16 }}>
                 <div style={{ width:36, height:36, borderRadius:'50%', background:'var(--surface2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>🔧</div>
                 <div style={{ flex:1 }}>
-                  <div style={{ fontSize:14, fontWeight:600, marginBottom:3 }}>{h.type}</div>
+                  <div style={{ fontSize:14, fontWeight:700, marginBottom:3 }}>{h.type}</div>
                   <div style={{ fontSize:13, color:'var(--text2)', marginBottom:6 }}>{h.description}</div>
                   {h.parts?.length>0&&<div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>{h.parts.map((p,i)=><span key={i} style={{ fontSize:11, background:'var(--surface2)', color:'var(--text3)', borderRadius:4, padding:'2px 8px' }}>{p}</span>)}</div>}
                   <div style={{ fontSize:12, color:'var(--text3)', marginTop:6 }}>by {h.mechanic}</div>
                 </div>
                 <div style={{ textAlign:'right', flexShrink:0 }}>
-                  <div style={{ fontFamily:'DM Mono,monospace', fontSize:14, color:'var(--accent)' }}>{(h.cost||0).toLocaleString()} RWF</div>
+                  <div style={{ fontFamily:'DM Mono,monospace', fontSize:14, color:'var(--green)', fontWeight:700 }}>{(h.cost||0).toLocaleString()} RWF</div>
                   <div style={{ fontSize:11, color:'var(--text3)', marginTop:3 }}>{h.date}</div>
                 </div>
               </div>
@@ -892,6 +1020,7 @@ function VehiclesPage({ user }) {
   const [selected, setSelected] = useState(null)
   const [showAdd, setShowAdd] = useState(false)
   const [showAddFleet, setShowAddFleet] = useState(false)
+  const [editFleet, setEditFleet] = useState(null)
   const [loading, setLoading] = useState(true)
   const canAdd = user.role==='manager'||user.role==='supervisor'
 
@@ -899,7 +1028,7 @@ function VehiclesPage({ user }) {
   const fetchVehicles = async () => { try { const r=await api.get('/vehicles'); setVehicles(Array.isArray(r.data) ? r.data : r.data?.content || []) } catch { alert('Failed to load vehicles') } setLoading(false) }
   const fetchFleet = async () => { try { const r=await api.get('/fleet'); setFleet(Array.isArray(r.data) ? r.data : r.data?.content || []) } catch(e){console.error(e)} }
   const addVehicle = async (data) => { try { await api.post('/vehicles',data); fetchVehicles(); setShowAdd(false) } catch { alert('Failed') } }
-  const addFleetVehicle = async (data) => { try { await api.post('/fleet',data); fetchFleet(); setShowAddFleet(false) } catch { alert('Failed') } }
+  const addFleetVehicle = async (data) => { try { if (editFleet) await api.put(`/fleet/${editFleet.id}`,data); else await api.post('/fleet',data); fetchFleet(); setShowAddFleet(false); setEditFleet(null) } catch { alert('Failed') } }
   const updateVehicle = (u) => { setVehicles(p=>p.map(v=>v.id===u.id?u:v)); setSelected(u) }
 
   const filtered = (vehicles||[]).filter(v => {
@@ -915,13 +1044,13 @@ function VehiclesPage({ user }) {
         <div><div className="page-title">Vehicles</div><div className="page-sub">{tab==='garage'?`${vehicles.length} garage vehicles`:`${fleet.length} fleet vehicles`}</div></div>
         <div style={{ display:'flex', gap:10 }}>
           {tab==='garage'&&<button className="btn btn-success" onClick={()=>setShowAdd(true)}>+ Register Vehicle</button>}
-          {canAdd&&tab==='fleet'&&<button className="btn btn-blue" onClick={()=>setShowAddFleet(true)}>+ Add Fleet Vehicle</button>}
+          {canAdd&&tab==='fleet'&&<button className="btn btn-blue" onClick={()=>{ setEditFleet(null); setShowAddFleet(true) }}>+ Add Fleet Vehicle</button>}
         </div>
       </div>
       <div className="page-content">
         <div style={{ display:'flex', gap:4, marginBottom:20, background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, padding:4, width:'fit-content' }}>
           {[['garage','🚗','Garage'],['fleet','🚛','Fleet']].map(([key,icon,label])=>(
-            <button key={key} className="tab-btn" onClick={()=>setTab(key)} style={{ background:tab===key?'var(--accent)':'transparent', color:tab===key?'#fff':'var(--text2)' }}>{icon} {label}</button>
+            <button key={key} className="tab-btn" onClick={()=>setTab(key)} style={{ background:tab===key?'var(--blue)':'transparent', color:tab===key?'#fff':'var(--text2)' }}>{icon} {label}</button>
           ))}
         </div>
 
@@ -930,14 +1059,14 @@ function VehiclesPage({ user }) {
             <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:20 }}>
               {Object.entries(STATUS_STYLE).map(([status,ss])=>(
                 <div key={status} className="card" style={{ padding:'16px 20px', cursor:'pointer', borderColor:filter===status?ss.dot:undefined }} onClick={()=>setFilter(filter===status?'All':status)}>
-                  <div style={{ fontSize:12, color:'var(--text2)', marginBottom:6 }}>{status.replace('_',' ')}</div>
-                  <div style={{ fontFamily:'Syne,sans-serif', fontSize:26, fontWeight:800, color:ss.dot }}>{vehicles.filter(v=>v.status===status).length}</div>
+                  <div style={{ fontSize:12, color:'var(--text2)', marginBottom:6, fontWeight:600 }}>{status.replace('_',' ')}</div>
+                  <div style={{ fontFamily:'Nunito,sans-serif', fontSize:26, fontWeight:800, color:ss.dot }}>{vehicles.filter(v=>v.status===status).length}</div>
                 </div>
               ))}
             </div>
             <div style={{ display:'flex', gap:10, marginBottom:16 }}>
-              <input style={{ flex:1, background:'var(--surface)', border:'1px solid var(--border)', borderRadius:8, padding:'10px 14px', color:'var(--text)', fontFamily:'DM Sans,sans-serif', fontSize:14, outline:'none' }} placeholder="Search plate, make, model, owner..." value={search} onChange={e=>setSearch(e.target.value)}/>
-              <select style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:8, padding:'10px 14px', color:'var(--text)', fontFamily:'DM Sans,sans-serif', fontSize:14, outline:'none' }} value={filter} onChange={e=>setFilter(e.target.value)}>
+              <input style={{ flex:1, background:'var(--surface)', border:'1px solid var(--border)', borderRadius:8, padding:'10px 14px', color:'var(--text)', fontFamily:'Nunito,sans-serif', fontSize:14, outline:'none' }} placeholder="Search plate, make, model, owner..." value={search} onChange={e=>setSearch(e.target.value)}/>
+              <select style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:8, padding:'10px 14px', color:'var(--text)', fontFamily:'Nunito,sans-serif', fontSize:14, outline:'none' }} value={filter} onChange={e=>setFilter(e.target.value)}>
                 <option value="All">All Status</option>{Object.keys(STATUS_STYLE).map(s=><option key={s}>{s}</option>)}
               </select>
             </div>
@@ -946,17 +1075,17 @@ function VehiclesPage({ user }) {
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:16 }}>
                 {filtered.map(v=>{ const ss=STATUS_STYLE[v.status]||STATUS_STYLE['Ready']; return (
                   <div key={v.id} onClick={()=>setSelected(v)} style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, padding:20, cursor:'pointer', transition:'all 0.2s', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}
-                    onMouseEnter={e=>{ e.currentTarget.style.borderColor='var(--accent)'; e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,0.1)' }} onMouseLeave={e=>{ e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,0.05)' }}>
-                    <div style={{ fontFamily:'DM Mono,monospace', fontSize:18, color:'var(--accent)', marginBottom:4 }}>{v.plate}</div>
-                    <div style={{ fontFamily:'Syne,sans-serif', fontSize:16, fontWeight:700, marginBottom:10 }}>{v.make} {v.model}</div>
-                    <div style={{ display:'flex', gap:8, marginBottom:12, flexWrap:'wrap' }}>{[v.year,v.type,v.color].filter(Boolean).map((m,i)=><span key={i} style={{ fontSize:12, color:'var(--text2)', background:'var(--surface2)', borderRadius:6, padding:'3px 8px' }}>{m}</span>)}</div>
+                    onMouseEnter={e=>{ e.currentTarget.style.borderColor='var(--blue)'; e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,0.1)' }} onMouseLeave={e=>{ e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,0.05)' }}>
+                    <div style={{ fontFamily:'DM Mono,monospace', fontSize:18, color:'var(--blue)', marginBottom:4, fontWeight:700 }}>{v.plate}</div>
+                    <div style={{ fontFamily:'Nunito,sans-serif', fontSize:16, fontWeight:800, marginBottom:10 }}>{v.make} {v.model}</div>
+                    <div style={{ display:'flex', gap:8, marginBottom:12, flexWrap:'wrap' }}>{[v.year,v.type,v.color].filter(Boolean).map((m,i)=><span key={i} style={{ fontSize:12, color:'var(--text2)', background:'var(--surface2)', borderRadius:6, padding:'3px 8px', fontWeight:600 }}>{m}</span>)}</div>
                     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-                      <span style={{ display:'inline-flex', alignItems:'center', gap:6, fontSize:12, fontWeight:600, borderRadius:20, padding:'4px 10px', background:ss.bg, color:ss.color }}><span style={{ width:6, height:6, borderRadius:'50%', background:ss.dot, display:'inline-block' }}/>{v.status?.replace('_',' ')}</span>
-                      <span style={{ fontSize:12, color:'var(--text3)' }}>{(v.serviceHistory||[]).length} services</span>
+                      <span style={{ display:'inline-flex', alignItems:'center', gap:6, fontSize:12, fontWeight:700, borderRadius:20, padding:'4px 10px', background:ss.bg, color:ss.color }}><span style={{ width:6, height:6, borderRadius:'50%', background:ss.dot, display:'inline-block' }}/>{v.status?.replace('_',' ')}</span>
+                      <span style={{ fontSize:12, color:'var(--text3)', fontWeight:600 }}>{(v.serviceHistory||[]).length} services</span>
                     </div>
                     <div style={{ display:'flex', alignItems:'center', gap:8, paddingTop:12, borderTop:'1px solid var(--border)' }}>
-                      <div style={{ width:28, height:28, background:'var(--surface3)', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:700, color:'var(--text2)' }}>{v.ownerName?.[0]}</div>
-                      <div><div style={{ fontSize:13, fontWeight:500 }}>{v.ownerName}</div>{v.ownerCompany&&<div style={{ fontSize:11, color:'var(--text2)' }}>{v.ownerCompany}</div>}</div>
+                      <div style={{ width:28, height:28, background:'var(--blue)', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:800, color:'#fff' }}>{v.ownerName?.[0]}</div>
+                      <div><div style={{ fontSize:13, fontWeight:600 }}>{v.ownerName}</div>{v.ownerCompany&&<div style={{ fontSize:11, color:'var(--text2)' }}>{v.ownerCompany}</div>}</div>
                     </div>
                   </div>
                 )})}
@@ -972,14 +1101,18 @@ function VehiclesPage({ user }) {
               <div key={v.id} style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, padding:20, transition:'all 0.2s', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}
                 onMouseEnter={e=>{ e.currentTarget.style.borderColor='var(--blue)'; e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,0.1)' }} onMouseLeave={e=>{ e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,0.05)' }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:10 }}>
-                  <div><div style={{ fontFamily:'DM Mono,monospace', fontSize:16, color:'var(--blue)', marginBottom:3 }}>{v.plate}</div><div style={{ fontFamily:'Syne,sans-serif', fontSize:15, fontWeight:700 }}>{v.make} {v.model}</div></div>
-                  <span style={{ display:'inline-flex', alignItems:'center', gap:5, fontSize:11, fontWeight:600, borderRadius:20, padding:'3px 8px', background:ss.bg, color:ss.color }}><span style={{ width:5, height:5, borderRadius:'50%', background:ss.dot, display:'inline-block' }}/>{v.status?.replace('_',' ')}</span>
+                  <div><div style={{ fontFamily:'DM Mono,monospace', fontSize:16, color:'var(--blue)', marginBottom:3, fontWeight:700 }}>{v.plate}</div><div style={{ fontFamily:'Nunito,sans-serif', fontSize:15, fontWeight:800 }}>{v.make} {v.model}</div></div>
+                  <span style={{ display:'inline-flex', alignItems:'center', gap:5, fontSize:11, fontWeight:700, borderRadius:20, padding:'3px 8px', background:ss.bg, color:ss.color }}><span style={{ width:5, height:5, borderRadius:'50%', background:ss.dot, display:'inline-block' }}/>{v.status?.replace('_',' ')}</span>
                 </div>
-                <div style={{ display:'flex', gap:8, marginBottom:12, flexWrap:'wrap' }}>{[v.year,v.type,v.color].filter(Boolean).map((m,i)=><span key={i} style={{ fontSize:11, color:'var(--text2)', background:'var(--surface2)', borderRadius:6, padding:'2px 8px' }}>{m}</span>)}</div>
-                {v.driverName&&<div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 0', borderTop:'1px solid var(--border)', borderBottom:'1px solid var(--border)', margin:'10px 0' }}><span style={{ fontSize:16 }}>👤</span><div><div style={{ fontSize:13, fontWeight:500 }}>{v.driverName}</div><div style={{ fontSize:11, color:'var(--text2)' }}>{v.driverPhone}</div></div></div>}
+                <div style={{ display:'flex', gap:8, marginBottom:12, flexWrap:'wrap' }}>{[v.year,v.type,v.color].filter(Boolean).map((m,i)=><span key={i} style={{ fontSize:11, color:'var(--text2)', background:'var(--surface2)', borderRadius:6, padding:'2px 8px', fontWeight:600 }}>{m}</span>)}</div>
+                {v.driverName&&<div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 0', borderTop:'1px solid var(--border)', borderBottom:'1px solid var(--border)', margin:'10px 0' }}><span style={{ fontSize:16 }}>👤</span><div><div style={{ fontSize:13, fontWeight:600 }}>{v.driverName}</div><div style={{ fontSize:11, color:'var(--text2)' }}>{v.driverPhone}</div></div></div>}
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginTop:10 }}>
-                  <div style={{ background:'var(--surface2)', borderRadius:8, padding:'8px 10px' }}><div style={{ fontSize:10, color:'var(--text3)', marginBottom:2 }}>MILEAGE</div><div style={{ fontSize:13, fontWeight:600 }}>{Number(v.mileage||0).toLocaleString()} km</div></div>
-                  <div style={{ background:'var(--surface2)', borderRadius:8, padding:'8px 10px' }}><div style={{ fontSize:10, color:'var(--text3)', marginBottom:2 }}>INS. EXPIRY</div><div style={{ fontSize:13, fontWeight:600 }}>{v.insuranceExpiry||'—'}</div></div>
+                  <div style={{ background:'var(--surface2)', borderRadius:8, padding:'8px 10px' }}><div style={{ fontSize:10, color:'var(--text3)', marginBottom:2, fontWeight:700 }}>MILEAGE</div><div style={{ fontSize:13, fontWeight:700 }}>{Number(v.mileage||0).toLocaleString()} km</div></div>
+                  <div style={{ background:'var(--surface2)', borderRadius:8, padding:'8px 10px' }}><div style={{ fontSize:10, color:'var(--text3)', marginBottom:2, fontWeight:700 }}>INS. EXPIRY</div><div style={{ fontSize:13, fontWeight:700 }}>{v.insuranceExpiry||'—'}</div></div>
+                </div>
+                <div style={{ marginTop:10, display:'flex', justifyContent:'flex-end', gap:8 }}>
+                  <button className="btn btn-ghost" style={{ padding:'6px 14px', fontSize:12 }} onClick={e=>{ e.stopPropagation(); setEditFleet(v); setShowAddFleet(true) }}>Edit</button>
+                  <button className="btn btn-danger" style={{ padding:'6px 14px', fontSize:12 }} onClick={async e=>{ e.stopPropagation(); if (!window.confirm('Delete this fleet vehicle?')) return; try { await api.delete(`/fleet/${v.id}`); fetchFleet() } catch { alert('Failed to delete') } }}>Delete</button>
                 </div>
               </div>
             )})}
@@ -988,7 +1121,7 @@ function VehiclesPage({ user }) {
         )}
       </div>
       {showAdd&&<VehicleModal onSave={addVehicle} onClose={()=>setShowAdd(false)}/>}
-      {showAddFleet&&<FleetModal onSave={addFleetVehicle} onClose={()=>setShowAddFleet(false)}/>}
+      {showAddFleet&&<FleetModal vehicle={editFleet} onSave={addFleetVehicle} onClose={()=>{ setShowAddFleet(false); setEditFleet(null) }}/>}
     </>
   )
 }
@@ -1011,6 +1144,7 @@ export default function App() {
             {activeTab==='fuel'&&<FuelLogsPage user={user}/>}
             {activeTab==='inventory'&&<InventoryPage user={user}/>}
             {activeTab==='staff'&&user.role==='manager'&&<StaffPage/>}
+            {activeTab==='reports'&&user.role==='manager'&&<ReportsPage/>}
           </div>
         </div>
       )}
