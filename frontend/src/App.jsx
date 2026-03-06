@@ -103,10 +103,10 @@ function LoginPage({ onLogin }) {
       <div className="login-card">
         <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:32 }}>
           <img src="/canvas.png" style={{ width:46, height:46, borderRadius:8, objectFit:'cover' }} />
-          <div style={{ fontFamily:'Nunito, Calibri Light, Calibri, sans-serif', fontSize:20, fontWeight:800, color:'var(--text)' }}>ERI-<span style={{ color:'var(--blue)' }}>RWANDA</span></div>
+          <div style={{ fontFamily:'Nunito, Calibri Light, Calibri, sans-serif', fontSize:20, fontWeight:800, color:'var(--black)' }}>ERI-<span style={{ color:'var(--blue)' }}>RWANDA</span></div>
         </div>
-        <div style={{ fontFamily:'Nunito, Calibri Light, Calibri, sans-serif', fontSize:24, fontWeight:800, marginBottom:6, color:'var(--text)' }}>Welcome back</div>
-        <div style={{ fontFamily:'Nunito, Calibri Light, Calibri, sans-serif', fontSize:15, fontWeight:500, marginBottom:6, color:'var(--text)' }}>ERI-RWANDA Garage Management System</div>
+        <div style={{ fontFamily:'Nunito, Calibri Light, Calibri, sans-serif', fontSize:24, fontWeight:800, marginBottom:6, color:'var(--black)' }}>Welcome back</div>
+        <div style={{ fontFamily:'Nunito, Calibri Light, Calibri, sans-serif', fontSize:15, fontWeight:500, marginBottom:6, color:'var(--black)' }}>ERI-RWANDA Garage Management System</div>
         <div style={{ color:'var(--text2)', fontSize:13, marginBottom:28 }}>Sign in to your garage management portal</div>
         {error && <div className="error-msg">{error}</div>}
         <div className="form-group"><label className="form-label">Email</label><input className="form-input" type="email" placeholder="you@garage.com" value={email} onChange={e => { setEmail(e.target.value); setError('') }} /></div>
