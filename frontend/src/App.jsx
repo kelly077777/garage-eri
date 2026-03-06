@@ -7,7 +7,7 @@ const styles = `
   :root {
     --bg: #f4f5f7; --surface: #ffffff; --surface2: #f0f1f4; --surface3: #e8eaef;
     --border: #e2e4ea; --text: #111318; --text2: #5a5f72; --text3: #9096ab;
-    --accent: #e6940a; --accent2: #f5a623; --blue: #2563eb; --green: #059669; --red: #dc2626;
+    --accent: #000000;; --accent2: #f5a623; --blue: #2563eb; --green: #059669; --red: #dc2626;
   }
   body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
   .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); position: relative; overflow: hidden; }
@@ -130,16 +130,16 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout }) {
   return (
     <div className="sidebar">
       <div style={{ padding:'24px 20px 20px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', gap:10 }}>
-        <img src="/canvas.png" style={{ width:46, height:46, borderRadius:8, objectFit:'cover' }} />
-        <div style={{ fontFamily:'Syne,sans-serif', fontSize:16, fontWeight:800, color:'var(--text)' }}>ERI-<span style={{ color:'var(--accent)' }}>RWANDA</span></div>
+        <img src="/canvas.png" style={{ width:86, height:86, borderRadius:8, objectFit:'cover' }} />
+        <div style={{ fontFamily:'Calibri Light (Headings)', fontSize:16, fontWeight:800, color:'var(--text)' }}>ERI-<span style={{ color:'var(--accent)' }}>RWANDA</span></div>
       </div>
       <nav style={{ flex:1, padding:'16px 10px', display:'flex', flexDirection:'column', gap:2 }}>
         <div style={{ padding:'8px 12px 6px', fontSize:10, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.1em' }}>Main</div>
-        {N('dashboard','📊','Dashboard')}
-        {N('vehicles','🚗','Vehicles')}
-        {user.role === 'manager' && N('fuel','⛽','Fuel Logs')}
-        {N('inventory','📦','Inventory')}
-        {user.role === 'manager' && N('staff','👥','Staff')}
+        {N('dashboard','','Dashboard')}
+        {N('vehicles','','Vehicles')}
+        {user.role === 'manager' && N('fuel','','Fuel Logs')}
+        {N('inventory','','Inventory')}
+        {user.role === 'manager' && N('staff','','Staff')}
       </nav>
       <div style={{ padding:16, borderTop:'1px solid var(--border)' }}>
         <div style={{ display:'flex', alignItems:'center', gap:10, padding:10, background:'var(--surface2)', borderRadius:10, marginBottom:10 }}>
@@ -167,11 +167,11 @@ function DashboardPage() {
   const lowStock = (d.inventory||[]).filter(i => i.status==='Low_Stock'||i.status==='Out_of_Stock')
 
   const stats = [
-    { label:'Garage Vehicles', value:d.vehicles.length, sub:`${d.vehicles.filter(v=>v.status==='In_Service').length} in service`, icon:'🚗', color:'var(--text)' },
-    { label:'Fleet Vehicles', value:d.fleet.length, sub:`${d.fleet.filter(f=>f.status==='Active').length} active`, icon:'🚛', color:'var(--text)' },
-    { label:'Fuel Consumption', value:totalFuelCost.toLocaleString()+' RWF', sub:'All time', icon:'⛽', color:'var(--accent)' },
-    { label:'Staff Members', value:d.staff.length, sub:`${d.staff.filter(s=>s.role==='mechanic').length} mechanics`, icon:'👥', color:'var(--text)' },
-    { label:'Inventory Items', value:d.inventory.length, sub:`${lowStock.length} low/out of stock`, icon:'📦', color:lowStock.length>0?'var(--red)':'var(--text)' },
+    { label:'Garage Vehicles', value:d.vehicles.length, sub:`${d.vehicles.filter(v=>v.status==='In_Service').length} in service`, icon:'', color:'var(--text)' },
+    { label:'Fleet Vehicles', value:d.fleet.length, sub:`${d.fleet.filter(f=>f.status==='Active').length} active`, icon:'', color:'var(--text)' },
+    { label:'Fuel Consumption', value:totalFuelCost.toLocaleString()+' RWF', sub:'All time', icon:'', color:'var(--accent)' },
+    { label:'Staff Members', value:d.staff.length, sub:`${d.staff.filter(s=>s.role==='mechanic').length} mechanics`, icon:'', color:'var(--text)' },
+    { label:'Inventory Items', value:d.inventory.length, sub:`${lowStock.length} low/out of stock`, icon:'', color:lowStock.length>0?'var(--red)':'var(--text)' },
   ]
 
   return (
@@ -184,7 +184,7 @@ function DashboardPage() {
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
                 <div>
                   <div style={{ fontSize:13, color:'var(--text2)', marginBottom:8 }}>{s.label}</div>
-                  <div style={{ fontFamily:'Times New Roman', fontSize:26, fontWeight:800, color:s.color }}>{s.value}</div>
+                  <div style={{ fontFamily:'Calibri Light (Headings)', fontSize:16, fontWeight:800, color:s.color }}>{s.value}</div>
                   <div style={{ fontSize:12, color:'var(--text3)', marginTop:4 }}>{s.sub}</div>
                 </div>
                 <div style={{ fontSize:28, background:'var(--surface2)', borderRadius:10, width:48, height:48, display:'flex', alignItems:'center', justifyContent:'center' }}>{s.icon}</div>
