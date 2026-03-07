@@ -274,11 +274,11 @@ function ReportsPage() {
       })).catch(e => console.error(e))
   }, [])
   const reportTabs = [
-    { key:'fleet', label:'Fleet Vehicles', icon:'🚛' },
-    { key:'garage', label:'Garage Vehicles', icon:'🚗' },
-    { key:'fuel', label:'Fuel Logs', icon:'⛽' },
-    { key:'inventory', label:'Inventory', icon:'📦' },
-    { key:'staff', label:'Staff', icon:'👥' },
+    { key:'fleet', label:'Fleet Reports', icon:'🚛' },
+    { key:'garage', label:'Garage Reports', icon:'🚗' },
+    { key:'fuel', label:'Fuel Reports', icon:'⛽' },
+    { key:'inventory', label:'Inventory Reports', icon:'📦' },
+    { key:'staff', label:'Staff Reports', icon:'👥' },
   ]
   const q = search.toLowerCase()
   const filteredFleet = data.fleet.filter(v => !q || v.plate?.toLowerCase().includes(q) || v.make?.toLowerCase().includes(q) || v.model?.toLowerCase().includes(q) || v.driverName?.toLowerCase().includes(q))
