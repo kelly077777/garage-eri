@@ -10,8 +10,8 @@ const styles = `
     --accent: #0a0909; --accent2: #f5a623; --blue: #2563eb; --green: #059669; --red: #dc2626;
   }
   body { background: var(--bg); color: var(--text); font-family: 'Nunito', 'Calibri Light', Calibri, sans-serif; min-height: 100vh; }
-  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); position: relative; overflow: hidden; }
-  .login-card { position: relative; width: 420px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 48px; animation: slideUp 0.5s ease; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+  .login-card { position: relative; width: 440px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 48px; animation: slideUp 0.5s ease; box-shadow: 0 8px 40px rgba(0,0,0,0.15); }
   @keyframes slideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
   .form-label { display: block; font-size: 12px; font-weight: 700; color: var(--text2); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
   .form-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; color: var(--text); font-family: 'Nunito', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; }
@@ -99,15 +99,19 @@ function LoginPage({ onLogin }) {
     setLoading(false)
   }
   return (
-    <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'100vh', width:'100%', background:'linear-gradient(135deg, #2d3748 0%, #1a202c 40%, #2b4c7e 70%, #1e3a5f 100%)' }}>
-      <div className="login-card">
-        <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:32 }}>
-          <img src="/canvas.png" style={{ width:46, height:46, borderRadius:8, objectFit:'cover' }} />
-          <div style={{ fontFamily:'Nunito, Calibri Light, Calibri, sans-serif', fontSize:20, fontWeight:800, color:'var(--black)' }}>ERI-<span style={{ color:'var(--black)' }}>RWANDA</span></div>
+    <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'100vh', width:'100%', backgroundImage:'url(/Page.png)', backgroundSize:'cover', backgroundPosition:'center', position:'relative' }}>
+      <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg, rgba(10,15,30,0.82) 0%, rgba(20,30,60,0.75) 100%)', backdropFilter:'blur(1px)' }} />
+      <div className="login-card" style={{ position:'relative', zIndex:1 }}>
+        {/* Large centered logo + title */}
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginBottom:36 }}>
+          <div style={{ width:96, height:96, borderRadius:20, overflow:'hidden', marginBottom:18, boxShadow:'0 4px 20px rgba(0,0,0,0.18)', border:'3px solid rgba(255,255,255,0.15)', flexShrink:0 }}>
+            <img src="/canvas.png" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+          </div>
+          <div style={{ fontFamily:'Nunito, Calibri Light, Calibri, sans-serif', fontSize:22, fontWeight:800, color:'var(--text)', textAlign:'center', letterSpacing:'-0.3px', lineHeight:1.3 }}>
+            ERI-RWANDA<br/>
+            <span style={{ color:'var(--blue)', fontSize:18 }}>Fleet Management System</span>
+          </div>
         </div>
-        <div style={{ fontFamily:'Nunito, Calibri Light, Calibri, sans-serif', fontSize:24, fontWeight:800, marginBottom:6, color:'var(--black)' }}>Welcome back</div>
-        <div style={{ fontFamily:'Nunito, Calibri Light, Calibri, sans-serif', fontSize:15, fontWeight:500, marginBottom:6, color:'var(--black)' }}>ERI-RWANDA Garage Management System</div>
-        <div style={{ color:'var(--text2)', fontSize:13, marginBottom:28 }}>Sign in to your garage management portal</div>
         {error && <div className="error-msg">{error}</div>}
         <div className="form-group"><label className="form-label">Email</label><input className="form-input" type="email" placeholder="you@garage.com" value={email} onChange={e => { setEmail(e.target.value); setError('') }} /></div>
         <div className="form-group"><label className="form-label">Password</label><input className="form-input" type="password" placeholder="••••••••" value={password} onChange={e => { setPassword(e.target.value); setError('') }} onKeyDown={e => e.key === 'Enter' && handleLogin()} /></div>
@@ -128,13 +132,19 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout }) {
   )
   return (
     <div className="sidebar">
-      <div style={{ padding:'24px 20px 20px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', gap:10 }}>
-        <img src="/canvas.png" style={{ width:40, height:40, borderRadius:8, objectFit:'cover' }} />
-        <div style={{ fontFamily:'Nunito, Calibri Light, Calibri, sans-serif', fontSize:15, fontWeight:800, color:'var(--text)' }}>ERI-<span style={{ color:'var(--black)' }}>RWANDA</span></div>
+      {/* Logo area — white, big & clean */}
+      <div style={{ padding:'24px 16px 20px', borderBottom:'1px solid var(--border)', display:'flex', flexDirection:'column', alignItems:'center', gap:12, background:'#ffffff' }}>
+        <div style={{ width:80, height:80, borderRadius:18, overflow:'hidden', border:'2px solid var(--border)', boxShadow:'0 2px 12px rgba(0,0,0,0.10)', flexShrink:0 }}>
+          <img src="/canvas.png" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+        </div>
+        <div style={{ textAlign:'center', lineHeight:1.4 }}>
+          <div style={{ fontFamily:'Nunito, Calibri Light, Calibri, sans-serif', fontSize:15, fontWeight:800, color:'var(--text)', letterSpacing:'0.01em' }}>ERI-RWANDA</div>
+          <div style={{ fontSize:11, fontWeight:600, color:'var(--text2)' }}>Fleet Management</div>
+        </div>
       </div>
       <nav style={{ flex:1, padding:'16px 10px', display:'flex', flexDirection:'column', gap:2 }}>
         <div style={{ padding:'8px 12px 6px', fontSize:10, fontWeight:800, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.1em' }}>Main</div>
-        {N('dashboard','📊','Dashboard')}
+        {user.role === 'manager' && N('dashboard','📊','Dashboard')}
         {N('vehicles','🚗','Vehicles')}
         {user.role === 'manager' && N('fuel','⛽','Fuel Logs')}
         {N('inventory','📦','Inventory')}
@@ -143,8 +153,8 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout }) {
       </nav>
       <div style={{ padding:16, borderTop:'1px solid var(--border)' }}>
         <div style={{ display:'flex', alignItems:'center', gap:10, padding:10, background:'var(--surface2)', borderRadius:10, marginBottom:10 }}>
-          <div style={{ width:34, height:34, borderRadius:'50%', background:rc.color, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Nunito,sans-serif', fontWeight:800, fontSize:13, color:'#fff' }}>{initials}</div>
-          <div><div style={{ fontSize:13, fontWeight:700, color:'var(--text)' }}>{user.name}</div><div style={{ fontSize:11, color:'var(--text2)' }}>{rc.label}</div></div>
+          <div style={{ width:34, height:34, borderRadius:'50%', background:rc.color, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Nunito,sans-serif', fontWeight:800, fontSize:13, color:'#fff', flexShrink:0 }}>{initials}</div>
+          <div style={{ minWidth:0 }}><div style={{ fontSize:13, fontWeight:700, color:'var(--text)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{user.name}</div><div style={{ fontSize:11, color:'var(--text2)' }}>{rc.label}</div></div>
         </div>
         <button onClick={onLogout} style={{ width:'100%', background:'transparent', border:'1px solid var(--border)', color:'var(--text2)', borderRadius:8, padding:8, fontSize:13, cursor:'pointer', fontFamily:'Nunito,sans-serif', fontWeight:600 }}>Sign Out →</button>
       </div>
@@ -168,11 +178,11 @@ function DashboardPage() {
   const totalFuelCost = (d.fuel||[]).reduce((s,f) => s+(f.totalCost||0), 0)
   const lowStock = (d.inventory||[]).filter(i => i.status==='Low_Stock'||i.status==='Out_of_Stock')
   const stats = [
-    { label:'Garage Vehicles', value:d.vehicles.length, sub:`${d.vehicles.filter(v=>v.status==='In_Service').length} in service`, icon:'', color:'var(--black)' },
-    { label:'Fleet Vehicles', value:d.fleet.length, sub:`${d.fleet.filter(f=>f.status==='Active').length} active`, icon:'', color:'var(--black)' },
-    { label:'Fuel Consumption', value:totalFuelCost.toLocaleString()+' RWF', sub:'All time', icon:'', color:'var(--black)' },
-    { label:'Staff Members', value:d.staff.length, sub:`${d.staff.filter(s=>s.role==='mechanic').length} mechanics`, icon:'', color:'var(--black)' },
-    { label:'Inventory Items', value:d.inventory.length, sub:`${lowStock.length} low/out of stock`, icon:'', color:lowStock.length>0?'var(--red)':'var(--black)' },
+    { label:'Garage Vehicles', value:d.vehicles.length, sub:`${d.vehicles.filter(v=>v.status==='In_Service').length} in service`, color:'var(--blue)' },
+    { label:'Fleet Vehicles', value:d.fleet.length, sub:`${d.fleet.filter(f=>f.status==='Active').length} active`, color:'var(--blue)' },
+    { label:'Fuel Consumption', value:totalFuelCost.toLocaleString()+' RWF', sub:'All time', color:'var(--green)' },
+    { label:'Staff Members', value:d.staff.length, sub:`${d.staff.filter(s=>s.role==='mechanic').length} mechanics`, color:'var(--text)' },
+    { label:'Inventory Items', value:d.inventory.length, sub:`${lowStock.length} low/out of stock`, color:lowStock.length>0?'var(--red)':'var(--text)' },
   ]
   return (
     <>
@@ -181,14 +191,9 @@ function DashboardPage() {
         <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, marginBottom:24 }}>
           {stats.map(s => (
             <div key={s.label} className="stat-card">
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
-                <div>
-                  <div style={{ fontSize:13, color:'var(--black)', marginBottom:8, fontWeight:600 }}>{s.label}</div>
-                  <div style={{ fontFamily:'Nunito, Calibri Light, Calibri, sans-serif', fontSize:26, fontWeight:800, color:s.color }}>{s.value}</div>
-                  <div style={{ fontSize:12, color:'var(--black)', marginTop:4 }}>{s.sub}</div>
-                </div>
-               {/* <div style={{ fontSize:28, background:'var(--surface2)', borderRadius:10, width:48, height:48, display:'flex', alignItems:'center', justifyContent:'center' }}>{s.icon}</div>*/}
-              </div>
+              <div style={{ fontSize:13, color:'var(--text2)', marginBottom:8, fontWeight:600 }}>{s.label}</div>
+              <div style={{ fontFamily:'Nunito, Calibri Light, Calibri, sans-serif', fontSize:26, fontWeight:800, color:s.color }}>{s.value}</div>
+              <div style={{ fontSize:12, color:'var(--text3)', marginTop:4 }}>{s.sub}</div>
             </div>
           ))}
         </div>
@@ -258,7 +263,6 @@ function ReportsPage() {
   const [activeReport, setActiveReport] = useState('fleet')
   const [search, setSearch] = useState('')
   const [data, setData] = useState({ vehicles:[], fleet:[], fuel:[], inventory:[], staff:[] })
-
   useEffect(() => {
     Promise.all([api.get('/vehicles'), api.get('/fleet'), api.get('/fleet/fuel/all'), api.get('/inventory'), api.get('/auth/users')])
       .then(([v,f,fuel,inv,s]) => setData({
@@ -269,7 +273,6 @@ function ReportsPage() {
         staff: Array.isArray(s.data) ? s.data : s.data?.content || []
       })).catch(e => console.error(e))
   }, [])
-
   const reportTabs = [
     { key:'fleet', label:'Fleet Vehicles', icon:'🚛' },
     { key:'garage', label:'Garage Vehicles', icon:'🚗' },
@@ -277,25 +280,12 @@ function ReportsPage() {
     { key:'inventory', label:'Inventory', icon:'📦' },
     { key:'staff', label:'Staff', icon:'👥' },
   ]
-
   const q = search.toLowerCase()
-
-  const filteredFleet = data.fleet.filter(v =>
-    !q || v.plate?.toLowerCase().includes(q) || v.make?.toLowerCase().includes(q) || v.model?.toLowerCase().includes(q) || v.driverName?.toLowerCase().includes(q)
-  )
-  const filteredGarage = data.vehicles.filter(v =>
-    !q || v.plate?.toLowerCase().includes(q) || v.make?.toLowerCase().includes(q) || v.model?.toLowerCase().includes(q) || v.ownerName?.toLowerCase().includes(q)
-  )
-  const filteredFuel = data.fuel.filter(f =>
-    !q || f.fleetVehicle?.plate?.toLowerCase().includes(q) || f.station?.toLowerCase().includes(q) || f.filledBy?.toLowerCase().includes(q)
-  )
-  const filteredInventory = data.inventory.filter(i =>
-    !q || i.name?.toLowerCase().includes(q) || i.category?.toLowerCase().includes(q) || i.supplier?.toLowerCase().includes(q)
-  )
-  const filteredStaff = data.staff.filter(s =>
-    !q || s.name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q) || s.role?.toLowerCase().includes(q)
-  )
-
+  const filteredFleet = data.fleet.filter(v => !q || v.plate?.toLowerCase().includes(q) || v.make?.toLowerCase().includes(q) || v.model?.toLowerCase().includes(q) || v.driverName?.toLowerCase().includes(q))
+  const filteredGarage = data.vehicles.filter(v => !q || v.plate?.toLowerCase().includes(q) || v.make?.toLowerCase().includes(q) || v.model?.toLowerCase().includes(q) || v.ownerName?.toLowerCase().includes(q))
+  const filteredFuel = data.fuel.filter(f => !q || f.fleetVehicle?.plate?.toLowerCase().includes(q) || f.station?.toLowerCase().includes(q) || f.filledBy?.toLowerCase().includes(q))
+  const filteredInventory = data.inventory.filter(i => !q || i.name?.toLowerCase().includes(q) || i.category?.toLowerCase().includes(q) || i.supplier?.toLowerCase().includes(q))
+  const filteredStaff = data.staff.filter(s => !q || s.name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q) || s.role?.toLowerCase().includes(q))
   const exportCSV = (rows, headers, filename) => {
     const csv = [headers, ...rows].map(r => r.map(c => `"${c??''}"`).join(',')).join('\n')
     const blob = new Blob([csv], { type:'text/csv' })
@@ -303,17 +293,15 @@ function ReportsPage() {
     const a = document.createElement('a'); a.href=url; a.download=`${filename}-${new Date().toISOString().split('T')[0]}.csv`; a.click()
     URL.revokeObjectURL(url)
   }
-
   const exportPDF = (title, headers, rows) => {
     const tableRows = rows.map(r => `<tr>${r.map(c=>`<td>${c??'—'}</td>`).join('')}</tr>`).join('')
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
     <style>body{font-family:Calibri,sans-serif;padding:30px;color:#111}h1{font-size:20px;margin-bottom:4px}p{color:#555;font-size:12px;margin:2px 0}table{width:100%;border-collapse:collapse;margin-top:16px;font-size:12px}th{background:#2563eb;color:#fff;padding:8px;text-align:left}td{padding:7px 8px;border-bottom:1px solid #eee}tr:nth-child(even) td{background:#f8faff}.footer{margin-top:16px;font-size:11px;color:#888}</style>
     </head><body><h1>📋 ${title}</h1><p>Generated: ${new Date().toLocaleString()}</p><p>Total Records: ${rows.length}</p>
     <table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${tableRows}</tbody></table>
-    <div class="footer">ERI-RWANDA Garage Management System</div></body></html>`
+    <div class="footer">ERI-RWANDA Fleet Management System</div></body></html>`
     const w = window.open('','_blank'); w.document.write(html); w.document.close(); w.print()
   }
-
   const handleExportCSV = () => {
     if (activeReport==='fleet') exportCSV(filteredFleet.map(v=>[v.plate,v.make,v.model,v.year,v.color,v.type,v.status,v.driverName,v.driverPhone,v.mileage,v.insuranceCompany,v.insuranceExpiry]),['Plate','Make','Model','Year','Color','Type','Status','Driver','Phone','Mileage','Insurance Co.','Ins. Expiry'],'fleet-vehicles')
     else if (activeReport==='garage') exportCSV(filteredGarage.map(v=>[v.plate,v.make,v.model,v.year,v.color,v.type,v.status,v.ownerName,v.ownerPhone,v.ownerEmail,v.mileage]),['Plate','Make','Model','Year','Color','Type','Status','Owner','Phone','Email','Mileage'],'garage-vehicles')
@@ -321,7 +309,6 @@ function ReportsPage() {
     else if (activeReport==='inventory') exportCSV(filteredInventory.map(i=>[i.name,i.category,i.quantity,i.unit,i.minQuantity,i.unitPrice,i.status,i.supplier,i.location]),['Name','Category','Qty','Unit','Min Qty','Unit Price','Status','Supplier','Location'],'inventory')
     else if (activeReport==='staff') exportCSV(filteredStaff.map(s=>[s.name,s.email,s.role]),['Name','Email','Role'],'staff')
   }
-
   const handleExportPDF = () => {
     if (activeReport==='fleet') exportPDF('Fleet Vehicles Report',['Plate','Make','Model','Year','Status','Driver','Phone','Mileage','Ins. Expiry'],filteredFleet.map(v=>[v.plate,v.make,v.model,v.year,v.status,v.driverName,v.driverPhone,v.mileage,v.insuranceExpiry]))
     else if (activeReport==='garage') exportPDF('Garage Vehicles Report',['Plate','Make','Model','Year','Status','Owner','Phone','Mileage'],filteredGarage.map(v=>[v.plate,v.make,v.model,v.year,v.status,v.ownerName,v.ownerPhone,v.mileage]))
@@ -329,9 +316,7 @@ function ReportsPage() {
     else if (activeReport==='inventory') exportPDF('Inventory Report',['Name','Category','Qty','Unit Price (RWF)','Status','Supplier','Location'],filteredInventory.map(i=>[i.name,i.category,`${i.quantity} ${i.unit}`,i.unitPrice,i.status,i.supplier,i.location]))
     else if (activeReport==='staff') exportPDF('Staff Report',['Name','Email','Role'],filteredStaff.map(s=>[s.name,s.email,s.role]))
   }
-
   const currentCount = {fleet:filteredFleet.length,garage:filteredGarage.length,fuel:filteredFuel.length,inventory:filteredInventory.length,staff:filteredStaff.length}[activeReport]
-
   return (
     <>
       <div className="page-header">
@@ -342,7 +327,6 @@ function ReportsPage() {
         </div>
       </div>
       <div className="page-content">
-        {/* Report type tabs */}
         <div style={{ display:'flex', gap:4, marginBottom:20, background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, padding:4, width:'fit-content', flexWrap:'wrap' }}>
           {reportTabs.map(t => (
             <button key={t.key} className="tab-btn" onClick={()=>{ setActiveReport(t.key); setSearch('') }}
@@ -351,18 +335,14 @@ function ReportsPage() {
             </button>
           ))}
         </div>
-
-        {/* Search bar */}
         <div style={{ marginBottom:16, display:'flex', gap:10, alignItems:'center' }}>
           <div style={{ position:'relative', flex:1, maxWidth:400 }}>
             <span style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:'var(--text3)', fontSize:16 }}>🔍</span>
-            <input className="form-input" style={{ paddingLeft:38 }} placeholder={`Search by plate number, name...`} value={search} onChange={e=>setSearch(e.target.value)}/>
+            <input className="form-input" style={{ paddingLeft:38 }} placeholder="Search by plate number, name..." value={search} onChange={e=>setSearch(e.target.value)}/>
           </div>
           {search && <button className="btn btn-ghost" style={{ padding:'10px 14px' }} onClick={()=>setSearch('')}>✕ Clear</button>}
           <span style={{ fontSize:13, color:'var(--text2)', fontWeight:600 }}>{currentCount} records found</span>
         </div>
-
-        {/* Fleet Vehicles Table */}
         {activeReport==='fleet' && (
           <div className="card">
             <div className="card-header"><div className="card-title">🚛 Fleet Vehicles</div></div>
@@ -389,8 +369,6 @@ function ReportsPage() {
             )}
           </div>
         )}
-
-        {/* Garage Vehicles Table */}
         {activeReport==='garage' && (
           <div className="card">
             <div className="card-header"><div className="card-title">🚗 Garage Vehicles</div></div>
@@ -417,15 +395,11 @@ function ReportsPage() {
             )}
           </div>
         )}
-
-        {/* Fuel Logs Table */}
         {activeReport==='fuel' && (
           <div className="card">
             <div className="card-header">
               <div className="card-title">⛽ Fuel Logs</div>
-              <span style={{ fontFamily:'DM Mono,monospace', fontSize:13, color:'var(--green)', fontWeight:700 }}>
-                Total: {filteredFuel.reduce((s,f)=>s+(f.totalCost||0),0).toLocaleString()} RWF
-              </span>
+              <span style={{ fontFamily:'DM Mono,monospace', fontSize:13, color:'var(--green)', fontWeight:700 }}>Total: {filteredFuel.reduce((s,f)=>s+(f.totalCost||0),0).toLocaleString()} RWF</span>
             </div>
             {filteredFuel.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}>No fuel logs found</div> : (
               <div style={{ overflowX:'auto' }}>
@@ -449,8 +423,6 @@ function ReportsPage() {
             )}
           </div>
         )}
-
-        {/* Inventory Table */}
         {activeReport==='inventory' && (
           <div className="card">
             <div className="card-header"><div className="card-title">📦 Inventory</div></div>
@@ -476,8 +448,6 @@ function ReportsPage() {
             )}
           </div>
         )}
-
-        {/* Staff Table */}
         {activeReport==='staff' && (
           <div className="card">
             <div className="card-header"><div className="card-title">👥 Staff Members</div></div>
@@ -508,24 +478,64 @@ function FuelLogsPage({ user }) {
   const [logs, setLogs] = useState([])
   const [fleet, setFleet] = useState([])
   const [showAdd, setShowAdd] = useState(false)
+  const [editing, setEditing] = useState(null)
   const [filterVehicle, setFilterVehicle] = useState('all')
-  const [form, setForm] = useState({ fleetVehicleId:'', date:new Date().toISOString().split('T')[0], liters:'', costPerLiter:'', totalCost:'', mileageAtFill:'', filledBy:user.name, station:'' })
+  const emptyForm = { fleetVehicleId:'', date:new Date().toISOString().split('T')[0], liters:'', costPerLiter:'', totalCost:'', mileageAtFill:'', filledBy:user.name, station:'' }
+  const [form, setForm] = useState(emptyForm)
   const sf = (k,v) => setForm(f=>({...f,[k]:v}))
+
   useEffect(() => { fetchData() }, [])
   const fetchData = async () => {
     try {
       const [l,f] = await Promise.all([api.get('/fleet/fuel/all'), api.get('/fleet')])
-      setLogs(l.data); setFleet(f.data)
-      if (f.data.length>0) setForm(fr=>({...fr, fleetVehicleId:f.data[0].id}))
+      setLogs(Array.isArray(l.data) ? l.data : [])
+      setFleet(Array.isArray(f.data) ? f.data : [])
+      if (f.data.length > 0) setForm(fr => ({...fr, fleetVehicleId: f.data[0].id}))
     } catch(e) { console.error(e) }
   }
-  const handleAdd = async () => {
-    if (!form.fleetVehicleId||!form.liters||!form.date) { alert('Vehicle, date and liters required'); return }
-    try {
-      await api.post(`/fleet/${form.fleetVehicleId}/fuel`, { ...form, liters:parseFloat(form.liters), costPerLiter:parseInt(form.costPerLiter)||0, totalCost:parseInt(form.totalCost)||0, mileageAtFill:parseInt(form.mileageAtFill)||0 })
-      fetchData(); setShowAdd(false)
-    } catch { alert('Failed to log fuel') }
+
+  const openAdd = () => {
+    setEditing(null)
+    setForm(emptyForm)
+    setShowAdd(true)
   }
+
+  const openEdit = (log) => {
+    setEditing(log)
+    setForm({
+      fleetVehicleId: log.fleetVehicle?.id || '',
+      date: log.date || '',
+      liters: log.liters || '',
+      costPerLiter: log.costPerLiter || '',
+      totalCost: log.totalCost || '',
+      mileageAtFill: log.mileageAtFill || '',
+      filledBy: log.filledBy || user.name,
+      station: log.station || ''
+    })
+    setShowAdd(true)
+  }
+
+  const handleSave = async () => {
+    if (!form.fleetVehicleId || !form.liters || !form.date) { alert('Vehicle, date and liters required'); return }
+    const payload = { ...form, liters: parseFloat(form.liters), costPerLiter: parseInt(form.costPerLiter)||0, totalCost: parseInt(form.totalCost)||0, mileageAtFill: parseInt(form.mileageAtFill)||0 }
+    try {
+      if (editing) {
+        await api.put(`/fleet/${form.fleetVehicleId}/fuel/${editing.id}`, payload)
+      } else {
+        await api.post(`/fleet/${form.fleetVehicleId}/fuel`, payload)
+      }
+      fetchData(); setShowAdd(false); setEditing(null)
+    } catch { alert('Failed to save fuel log') }
+  }
+
+  const handleDelete = async (log) => {
+    if (!window.confirm('Delete this fuel log entry?')) return
+    try {
+      await api.delete(`/fleet/${log.fleetVehicle?.id}/fuel/${log.id}`)
+      fetchData()
+    } catch { alert('Failed to delete fuel log') }
+  }
+
   const filtered = filterVehicle==='all' ? logs : logs.filter(l=>l.fleetVehicle?.id===parseInt(filterVehicle))
   const totalL = filtered.reduce((s,l)=>s+(l.liters||0),0)
   const totalC = filtered.reduce((s,l)=>s+(l.totalCost||0),0)
@@ -533,7 +543,7 @@ function FuelLogsPage({ user }) {
     <>
       <div className="page-header">
         <div><div className="page-title">⛽ Fuel Logs</div><div className="page-sub">Track fuel consumption for fleet vehicles</div></div>
-        <button className="btn btn-blue" onClick={()=>setShowAdd(true)}>+ Log Fuel Fill</button>
+        <button className="btn btn-blue" onClick={openAdd}>+ Log Fuel Fill</button>
       </div>
       <div className="page-content">
         <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, marginBottom:20 }}>
@@ -551,7 +561,7 @@ function FuelLogsPage({ user }) {
           <div className="card-header"><div className="card-title">Fuel History</div><span style={{ fontSize:12, color:'var(--text2)', fontWeight:600 }}>{filtered.length} entries</span></div>
           {filtered.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}><div style={{ fontSize:36, marginBottom:12 }}>⛽</div><div>No fuel logs yet</div></div> : (
             <table className="table">
-              <thead><tr><th>Vehicle</th><th>Date</th><th>Liters</th><th>Cost/L</th><th>Total</th><th>Mileage</th><th>Station</th><th>By</th></tr></thead>
+              <thead><tr><th>Vehicle</th><th>Date</th><th>Liters</th><th>Cost/L</th><th>Total</th><th>Mileage</th><th>Station</th><th>By</th><th>Actions</th></tr></thead>
               <tbody>{[...filtered].reverse().map(l=>(
                 <tr key={l.id}>
                   <td style={{ fontFamily:'DM Mono,monospace', color:'var(--blue)', fontSize:13, fontWeight:700 }}>{l.fleetVehicle?.plate||'—'}</td>
@@ -560,8 +570,14 @@ function FuelLogsPage({ user }) {
                   <td style={{ color:'var(--text2)' }}>{l.costPerLiter?`${l.costPerLiter} RWF`:'—'}</td>
                   <td style={{ fontFamily:'DM Mono,monospace', color:'var(--green)', fontWeight:700 }}>{(l.totalCost||0).toLocaleString()} RWF</td>
                   <td style={{ color:'var(--text2)' }}>{l.mileageAtFill?`${l.mileageAtFill.toLocaleString()} km`:'—'}</td>
-                  <td style={{ color:'var(--text2)' }}>{l.station||'—'}</td>
+                  <td>{l.station||'—'}</td>
                   <td style={{ color:'var(--text2)' }}>{l.filledBy||'—'}</td>
+                  <td>
+                    <div style={{ display:'flex', gap:6 }}>
+                      <button className="btn btn-ghost" style={{ padding:'5px 10px', fontSize:12 }} onClick={() => openEdit(l)}>Edit</button>
+                      <button className="btn btn-danger" style={{ padding:'5px 10px', fontSize:12 }} onClick={() => handleDelete(l)}>Del</button>
+                    </div>
+                  </td>
                 </tr>
               ))}</tbody>
             </table>
@@ -571,7 +587,10 @@ function FuelLogsPage({ user }) {
       {showAdd && (
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowAdd(false)}>
           <div className="modal" style={{ maxWidth:520 }}>
-            <div className="modal-header"><div className="modal-title">Log Fuel Fill</div><X onClick={()=>setShowAdd(false)}/></div>
+            <div className="modal-header">
+              <div className="modal-title">{editing ? 'Edit Fuel Log' : 'Log Fuel Fill'}</div>
+              <X onClick={()=>{ setShowAdd(false); setEditing(null) }}/>
+            </div>
             <div className="modal-body">
               <div className="form-group"><label className="form-label">Fleet Vehicle *</label>
                 <select className="form-input" style={{ appearance:'auto' }} value={form.fleetVehicleId} onChange={e=>sf('fleetVehicleId',e.target.value)}>
@@ -593,8 +612,8 @@ function FuelLogsPage({ user }) {
               <div className="form-group"><label className="form-label">Filled By</label><input className="form-input" value={form.filledBy} onChange={e=>sf('filledBy',e.target.value)}/></div>
             </div>
             <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={()=>setShowAdd(false)}>Cancel</button>
-              <button className="btn btn-blue" onClick={handleAdd}>Log Fill</button>
+              <button className="btn btn-ghost" onClick={()=>{ setShowAdd(false); setEditing(null) }}>Cancel</button>
+              <button className="btn btn-blue" onClick={handleSave}>{editing ? 'Save Changes' : 'Log Fill'}</button>
             </div>
           </div>
         </div>
@@ -722,23 +741,59 @@ function InventoryPage({ user }) {
 // ─── STAFF ────────────────────────────────────────────────────────────────────
 function StaffPage() {
   const [staff, setStaff] = useState([])
-  const [showModal, setShowModal] = useState(false)
-  const [form, setForm] = useState({ name:'', email:'', password:'', role:'mechanic' })
-  const [error, setError] = useState('')
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingStaff, setEditingStaff] = useState(null)
+  const [addForm, setAddForm] = useState({ name:'', email:'', password:'', role:'mechanic' })
+  const [editForm, setEditForm] = useState({ name:'', email:'', newPassword:'', role:'mechanic' })
+  const [addError, setAddError] = useState('')
+  const [editError, setEditError] = useState('')
   const [loading, setLoading] = useState(false)
+
   useEffect(()=>{ fetchStaff() },[])
   const fetchStaff = async () => { try { const r=await api.get('/auth/users'); setStaff(r.data) } catch { setStaff([]) } }
+
   const handleCreate = async () => {
-    if (!form.name||!form.email||!form.password) { setError('All fields required'); return }
-    setLoading(true); setError('')
-    try { await api.post('/auth/register',form); setForm({name:'',email:'',password:'',role:'mechanic'}); setShowModal(false); fetchStaff() }
-    catch { setError('Failed. Email may already exist.') }
+    if (!addForm.name||!addForm.email||!addForm.password) { setAddError('All fields required'); return }
+    setLoading(true); setAddError('')
+    try {
+      await api.post('/auth/register', addForm)
+      setAddForm({name:'',email:'',password:'',role:'mechanic'})
+      setShowAddModal(false); fetchStaff()
+    } catch { setAddError('Failed. Email may already exist.') }
     setLoading(false)
   }
-  const handleDelete = async (id) => { if (!window.confirm('Delete?')) return; try { await api.delete(`/auth/users/${id}`); fetchStaff() } catch { alert('Failed') } }
+
+  const openEdit = (s) => {
+    setEditingStaff(s)
+    setEditForm({ name: s.name, email: s.email, newPassword: '', role: s.role })
+    setEditError('')
+    setShowEditModal(true)
+  }
+
+  const handleEdit = async () => {
+    if (!editForm.name || !editForm.email) { setEditError('Name and email are required'); return }
+    setLoading(true); setEditError('')
+    try {
+      const payload = { name: editForm.name, email: editForm.email, role: editForm.role }
+      if (editForm.newPassword.trim()) payload.password = editForm.newPassword.trim()
+      await api.put(`/auth/users/${editingStaff.id}`, payload)
+      setShowEditModal(false); fetchStaff()
+    } catch { setEditError('Failed to update. Try again.') }
+    setLoading(false)
+  }
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Remove this staff member?')) return
+    try { await api.delete(`/auth/users/${id}`); fetchStaff() } catch { alert('Failed') }
+  }
+
   return (
     <>
-      <div className="page-header"><div><div className="page-title">👥 Staff Management</div><div className="page-sub">Manage team accounts</div></div><button className="btn btn-success" onClick={()=>setShowModal(true)}>+ Add Staff</button></div>
+      <div className="page-header">
+        <div><div className="page-title">👥 Staff Management</div><div className="page-sub">Manage team accounts and credentials</div></div>
+        <button className="btn btn-success" onClick={()=>setShowAddModal(true)}>+ Add Staff</button>
+      </div>
       <div className="page-content">
         <div className="card">
           <div className="card-header"><div className="card-title">Team Members</div><span style={{ fontSize:12, color:'var(--text2)', fontWeight:600 }}>{staff.length} members</span></div>
@@ -749,26 +804,79 @@ function StaffPage() {
                 <td style={{ fontWeight:600 }}>{s.name}</td>
                 <td style={{ color:'var(--text2)', fontFamily:'DM Mono,monospace', fontSize:13 }}>{s.email}</td>
                 <td><span style={{ display:'inline-flex', alignItems:'center', padding:'3px 10px', borderRadius:20, fontSize:12, fontWeight:700, background:rc?.bg, color:rc?.color }}>{rc?.label}</span></td>
-                <td><button className="btn btn-danger" style={{ padding:'6px 12px', fontSize:12 }} onClick={()=>handleDelete(s.id)}>Remove</button></td>
+                <td>
+                  <div style={{ display:'flex', gap:6 }}>
+                    <button className="btn btn-ghost" style={{ padding:'6px 12px', fontSize:12 }} onClick={()=>openEdit(s)}>✏️ Edit</button>
+                    <button className="btn btn-danger" style={{ padding:'6px 12px', fontSize:12 }} onClick={()=>handleDelete(s.id)}>Remove</button>
+                  </div>
+                </td>
               </tr>
             )})}</tbody>
           </table>
         </div>
       </div>
-      {showModal && (
-        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowModal(false)}>
+
+      {/* ── Add Staff Modal ── */}
+      {showAddModal && (
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowAddModal(false)}>
           <div className="modal">
-            <div className="modal-header"><div className="modal-title">Add Staff Member</div><X onClick={()=>setShowModal(false)}/></div>
+            <div className="modal-header"><div className="modal-title">Add Staff Member</div><X onClick={()=>setShowAddModal(false)}/></div>
             <div className="modal-body">
-              {error&&<div className="error-msg">{error}</div>}
+              {addError && <div className="error-msg">{addError}</div>}
               <div className="form-row" style={{ marginBottom:14 }}>
-                <div><label className="form-label">Full Name</label><input className="form-input" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/></div>
-                <div><label className="form-label">Role</label><select className="form-input" style={{ appearance:'auto' }} value={form.role} onChange={e=>setForm(f=>({...f,role:e.target.value}))}><option value="mechanic">Mechanic</option><option value="supervisor">Supervisor</option><option value="manager">Manager</option></select></div>
+                <div><label className="form-label">Full Name</label><input className="form-input" value={addForm.name} onChange={e=>setAddForm(f=>({...f,name:e.target.value}))}/></div>
+                <div><label className="form-label">Role</label>
+                  <select className="form-input" style={{ appearance:'auto' }} value={addForm.role} onChange={e=>setAddForm(f=>({...f,role:e.target.value}))}>
+                    <option value="mechanic">Mechanic</option><option value="supervisor">Supervisor</option><option value="manager">Manager</option>
+                  </select>
+                </div>
               </div>
-              <div className="form-group"><label className="form-label">Email</label><input className="form-input" type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))}/></div>
-              <div className="form-group"><label className="form-label">Password</label><input className="form-input" type="password" value={form.password} onChange={e=>setForm(f=>({...f,password:e.target.value}))}/></div>
+              <div className="form-group"><label className="form-label">Email</label><input className="form-input" type="email" value={addForm.email} onChange={e=>setAddForm(f=>({...f,email:e.target.value}))}/></div>
+              <div className="form-group"><label className="form-label">Password</label><input className="form-input" type="password" value={addForm.password} onChange={e=>setAddForm(f=>({...f,password:e.target.value}))}/></div>
             </div>
-            <div className="modal-footer"><button className="btn btn-ghost" onClick={()=>setShowModal(false)}>Cancel</button><button className="btn btn-success" onClick={handleCreate} disabled={loading}>{loading?'Creating...':'Create'}</button></div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={()=>setShowAddModal(false)}>Cancel</button>
+              <button className="btn btn-success" onClick={handleCreate} disabled={loading}>{loading?'Creating...':'Create'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Edit Staff Modal ── */}
+      {showEditModal && editingStaff && (
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowEditModal(false)}>
+          <div className="modal">
+            <div className="modal-header"><div className="modal-title">Edit Staff Member</div><X onClick={()=>setShowEditModal(false)}/></div>
+            <div className="modal-body">
+              {editError && <div className="error-msg">{editError}</div>}
+              <div style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:10, padding:'12px 16px', marginBottom:20, display:'flex', alignItems:'center', gap:12 }}>
+                <div style={{ width:40, height:40, borderRadius:'50%', background:ROLE_CONFIG[editingStaff.role]?.color||'var(--blue)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontWeight:800, fontSize:16, flexShrink:0 }}>
+                  {editingStaff.name?.split(' ').map(n=>n[0]).join('')}
+                </div>
+                <div>
+                  <div style={{ fontSize:14, fontWeight:700 }}>{editingStaff.name}</div>
+                  <div style={{ fontSize:12, color:'var(--text2)' }}>Editing account details</div>
+                </div>
+              </div>
+              <div className="form-row" style={{ marginBottom:14 }}>
+                <div><label className="form-label">Full Name</label><input className="form-input" value={editForm.name} onChange={e=>setEditForm(f=>({...f,name:e.target.value}))}/></div>
+                <div><label className="form-label">Role</label>
+                  <select className="form-input" style={{ appearance:'auto' }} value={editForm.role} onChange={e=>setEditForm(f=>({...f,role:e.target.value}))}>
+                    <option value="mechanic">Mechanic</option><option value="supervisor">Supervisor</option><option value="manager">Manager</option>
+                  </select>
+                </div>
+              </div>
+              <div className="form-group"><label className="form-label">Email (Username)</label><input className="form-input" type="email" value={editForm.email} onChange={e=>setEditForm(f=>({...f,email:e.target.value}))}/></div>
+              <div className="form-group">
+                <label className="form-label">New Password</label>
+                <input className="form-input" type="password" placeholder="Leave blank to keep current password" value={editForm.newPassword} onChange={e=>setEditForm(f=>({...f,newPassword:e.target.value}))}/>
+                <div style={{ fontSize:11, color:'var(--text3)', marginTop:5 }}>🔒 Only fill this in if you want to change the password</div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={()=>setShowEditModal(false)}>Cancel</button>
+              <button className="btn btn-blue" onClick={handleEdit} disabled={loading}>{loading?'Saving...':'Save Changes'}</button>
+            </div>
           </div>
         </div>
       )}
@@ -1053,7 +1161,6 @@ function VehiclesPage({ user }) {
             <button key={key} className="tab-btn" onClick={()=>setTab(key)} style={{ background:tab===key?'var(--blue)':'transparent', color:tab===key?'#fff':'var(--text2)' }}>{icon} {label}</button>
           ))}
         </div>
-
         {tab==='garage'&&(
           <>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:20 }}>
@@ -1093,7 +1200,6 @@ function VehiclesPage({ user }) {
             )}
           </>
         )}
-
         {tab==='fleet'&&(
           fleet.length===0?<div className="card" style={{ padding:48, textAlign:'center', color:'var(--text3)' }}><div style={{ fontSize:40, marginBottom:12 }}>🚛</div><div>No fleet vehicles yet</div></div>:(
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:16 }}>
@@ -1130,16 +1236,20 @@ function VehiclesPage({ user }) {
 export default function App() {
   const [user, setUser] = useState(null)
   const [activeTab, setActiveTab] = useState('dashboard')
-  useEffect(()=>{ const s=localStorage.getItem('user'); if(s) setUser(JSON.parse(s)) },[])
-  const handleLogout = () => { localStorage.removeItem('token'); localStorage.removeItem('user'); setUser(null) }
+  useEffect(()=>{
+    const s=localStorage.getItem('user')
+    if(s){ const u=JSON.parse(s); setUser(u); if(u.role!=='manager') setActiveTab('vehicles') }
+  },[])
+  const handleLogin = (u) => { setUser(u); setActiveTab(u.role==='manager'?'dashboard':'vehicles') }
+  const handleLogout = () => { localStorage.removeItem('token'); localStorage.removeItem('user'); setUser(null); setActiveTab('dashboard') }
   return (
     <>
       <style>{styles}</style>
-      {!user?<LoginPage onLogin={setUser}/>:(
+      {!user?<LoginPage onLogin={handleLogin}/>:(
         <div className="app">
           <Sidebar user={user} activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout}/>
           <div className="main">
-            {activeTab==='dashboard'&&<DashboardPage/>}
+            {activeTab==='dashboard'&&user.role==='manager'&&<DashboardPage/>}
             {activeTab==='vehicles'&&<VehiclesPage user={user}/>}
             {activeTab==='fuel'&&<FuelLogsPage user={user}/>}
             {activeTab==='inventory'&&<InventoryPage user={user}/>}
