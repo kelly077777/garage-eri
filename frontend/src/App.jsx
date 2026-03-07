@@ -99,7 +99,7 @@ function LoginPage({ onLogin }) {
     setLoading(false)
   }
   return (
-    <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'100vh', width:'100%', backgroundImage:'url(/Page.png)', backgroundSize:'cover', backgroundPosition:'center', position:'relative' }}>
+    <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'100vh', width:'100%', backgroundImage:'url(/Page.jpg)', backgroundSize:'cover', backgroundPosition:'center', position:'relative' }}>
       <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg, rgba(10,15,30,0.82) 0%, rgba(20,30,60,0.75) 100%)', backdropFilter:'blur(1px)' }} />
       <div className="login-card" style={{ position:'relative', zIndex:1 }}>
         {/* Large centered logo + title */}
@@ -121,13 +121,36 @@ function LoginPage({ onLogin }) {
   )
 }
 
+
+// ─── EXPIRY HELPERS ───────────────────────────────────────────────────────────
+function getDaysUntil(dateStr) {
+  if (!dateStr) return null
+  const diff = new Date(dateStr) - new Date()
+  return Math.ceil(diff / (1000 * 60 * 60 * 24))
+}
+function getExpiryAlerts(fleet, warningDays = 7) {
+  const alerts = []
+  fleet.forEach(v => {
+    const insDays = getDaysUntil(v.insuranceExpiry)
+    const inspDays = getDaysUntil(v.inspectionExpiry)
+    if (insDays !== null && insDays <= warningDays) {
+      alerts.push({ id:`ins-${v.id}`, plate: v.plate, type:'Insurance', expiry: v.insuranceExpiry, days: insDays, expired: insDays < 0 })
+    }
+    if (inspDays !== null && inspDays <= warningDays) {
+      alerts.push({ id:`insp-${v.id}`, plate: v.plate, type:'Inspection', expiry: v.inspectionExpiry, days: inspDays, expired: inspDays < 0 })
+    }
+  })
+  return alerts
+}
+
 // ─── SIDEBAR ──────────────────────────────────────────────────────────────────
-function Sidebar({ user, activeTab, setActiveTab, onLogout }) {
+function Sidebar({ user, activeTab, setActiveTab, onLogout, alertCount }) {
   const rc = ROLE_CONFIG[user.role]
   const initials = user.name.split(' ').map(n => n[0]).join('')
-  const N = (key, icon, label) => (
+  const N = (key, icon, label, badge) => (
     <button key={key} className={`nav-item ${activeTab === key ? 'active' : ''}`} onClick={() => setActiveTab(key)}>
-      <span>{icon}</span> {label}
+      <span>{icon}</span> <span style={{ flex:1 }}>{label}</span>
+      {badge > 0 && <span style={{ background:'#dc2626', color:'#fff', borderRadius:20, fontSize:10, fontWeight:800, padding:'2px 7px', minWidth:18, textAlign:'center' }}>{badge}</span>}
     </button>
   )
   return (
@@ -144,7 +167,8 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout }) {
       </div>
       <nav style={{ flex:1, padding:'16px 10px', display:'flex', flexDirection:'column', gap:2 }}>
         <div style={{ padding:'8px 12px 6px', fontSize:10, fontWeight:800, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.1em' }}>Main</div>
-        {user.role === 'manager' && N('dashboard','📊','Dashboard')}
+        {user.role === 'manager' && N('dashboard','📊','Dashboard', alertCount)}
+        {(user.role === 'supervisor' || user.role === 'mechanic') && N('alerts','🔔','Alerts', alertCount)}
         {N('vehicles','🚗','Vehicles')}
         {user.role === 'manager' && N('fuel','⛽','Fuel Logs')}
         {N('inventory','📦','Inventory')}
@@ -163,20 +187,25 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout }) {
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
-function DashboardPage() {
+function DashboardPage({ onAlertsChange }) {
   const [d, setD] = useState({ vehicles:[], fleet:[], fuel:[], inventory:[], staff:[] })
   useEffect(() => {
     Promise.all([api.get('/vehicles'), api.get('/fleet'), api.get('/fleet/fuel/all'), api.get('/inventory'), api.get('/auth/users')])
-      .then(([v,f,fuel,inv,s]) => setD({
-        vehicles: Array.isArray(v.data) ? v.data : v.data?.content || [],
-        fleet: Array.isArray(f.data) ? f.data : f.data?.content || [],
-        fuel: Array.isArray(fuel.data) ? fuel.data : fuel.data?.content || [],
-        inventory: Array.isArray(inv.data) ? inv.data : inv.data?.content || [],
-        staff: Array.isArray(s.data) ? s.data : s.data?.content || []
-      })).catch(e => console.error(e))
+      .then(([v,f,fuel,inv,s]) => {
+        const fleetData = Array.isArray(f.data) ? f.data : f.data?.content || []
+        setD({
+          vehicles: Array.isArray(v.data) ? v.data : v.data?.content || [],
+          fleet: fleetData,
+          fuel: Array.isArray(fuel.data) ? fuel.data : fuel.data?.content || [],
+          inventory: Array.isArray(inv.data) ? inv.data : inv.data?.content || [],
+          staff: Array.isArray(s.data) ? s.data : s.data?.content || []
+        })
+        if (onAlertsChange) onAlertsChange(getExpiryAlerts(fleetData).length)
+      }).catch(e => console.error(e))
   }, [])
   const totalFuelCost = (d.fuel||[]).reduce((s,f) => s+(f.totalCost||0), 0)
   const lowStock = (d.inventory||[]).filter(i => i.status==='Low_Stock'||i.status==='Out_of_Stock')
+  const expiryAlerts = getExpiryAlerts(d.fleet)
   const stats = [
     { label:'Garage Vehicles', value:d.vehicles.length, sub:`${d.vehicles.filter(v=>v.status==='In_Service').length} in service`, color:'var(--blue)' },
     { label:'Fleet Vehicles', value:d.fleet.length, sub:`${d.fleet.filter(f=>f.status==='Active').length} active`, color:'var(--blue)' },
@@ -197,6 +226,40 @@ function DashboardPage() {
             </div>
           ))}
         </div>
+        {/* ── Expiry Alerts ── */}
+        {expiryAlerts.length > 0 && (
+          <div className="card" style={{ marginBottom:16, borderColor:'#fca5a5', borderWidth:1 }}>
+            <div className="card-header" style={{ background:'#fff7f7' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                <span style={{ fontSize:20 }}>🚨</span>
+                <div className="card-title" style={{ color:'#dc2626' }}>Document Expiry Alerts</div>
+              </div>
+              <span style={{ fontSize:12, fontWeight:700, color:'#dc2626', background:'#fee2e2', borderRadius:20, padding:'3px 10px' }}>{expiryAlerts.length} alert{expiryAlerts.length>1?'s':''}</span>
+            </div>
+            <div>
+              {expiryAlerts.map(a => (
+                <div key={a.id} style={{ padding:'12px 20px', borderBottom:'1px solid #fee2e2', display:'flex', alignItems:'center', justifyContent:'space-between', background: a.expired ? '#fff5f5' : '#fffbeb' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                    <span style={{ fontSize:18 }}>{a.type==='Insurance' ? '🛡️' : '🔍'}</span>
+                    <div>
+                      <div style={{ fontSize:13, fontWeight:700 }}>
+                        <span style={{ fontFamily:'DM Mono,monospace', color:'var(--blue)' }}>{a.plate}</span>
+                        <span style={{ color:'var(--text2)', marginLeft:8 }}>— {a.type}</span>
+                      </div>
+                      <div style={{ fontSize:11, color:'var(--text3)', marginTop:2 }}>Expires: {a.expiry}</div>
+                    </div>
+                  </div>
+                  <span style={{ fontSize:12, fontWeight:800, borderRadius:20, padding:'4px 12px',
+                    background: a.expired ? '#fee2e2' : '#fef3c7',
+                    color: a.expired ? '#dc2626' : '#92400e' }}>
+                    {a.expired ? `Expired ${Math.abs(a.days)}d ago` : a.days === 0 ? 'Expires TODAY' : `${a.days}d left`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
           <div className="card">
             <div className="card-header"><div className="card-title">Garage Vehicle Status</div></div>
@@ -258,6 +321,108 @@ function DashboardPage() {
   )
 }
 
+
+// ─── ALERTS DASHBOARD (Supervisor & Mechanic) ─────────────────────────────────
+function AlertsDashboard({ onAlertsChange }) {
+  const [fleet, setFleet] = useState([])
+  useEffect(() => {
+    api.get('/fleet').then(r => {
+      const data = Array.isArray(r.data) ? r.data : r.data?.content || []
+      setFleet(data)
+      if (onAlertsChange) onAlertsChange(getExpiryAlerts(data).length)
+    }).catch(e => console.error(e))
+  }, [])
+  const alerts = getExpiryAlerts(fleet)
+  const expired = alerts.filter(a => a.expired)
+  const upcoming = alerts.filter(a => !a.expired)
+  return (
+    <>
+      <div className="page-header">
+        <div>
+          <div className="page-title">🔔 Alerts</div>
+          <div className="page-sub">Document expiry alerts for fleet vehicles</div>
+        </div>
+        {alerts.length > 0 && (
+          <span style={{ background:'#fee2e2', color:'#dc2626', borderRadius:20, fontSize:13, fontWeight:800, padding:'6px 16px', border:'1px solid #fca5a5' }}>
+            {alerts.length} alert{alerts.length>1?'s':''}
+          </span>
+        )}
+      </div>
+      <div className="page-content">
+        {alerts.length === 0 ? (
+          <div className="card" style={{ padding:64, textAlign:'center' }}>
+            <div style={{ fontSize:48, marginBottom:16 }}>✅</div>
+            <div style={{ fontSize:18, fontWeight:800, color:'var(--text)', marginBottom:8 }}>All documents are valid</div>
+            <div style={{ fontSize:14, color:'var(--text2)' }}>No insurance or inspection expiring within 7 days</div>
+          </div>
+        ) : (
+          <>
+            {expired.length > 0 && (
+              <div style={{ marginBottom:20 }}>
+                <div style={{ fontSize:12, fontWeight:800, color:'#dc2626', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:10, display:'flex', alignItems:'center', gap:8 }}>
+                  <span>🚨</span> Already Expired ({expired.length})
+                </div>
+                <div className="card" style={{ borderColor:'#fca5a5' }}>
+                  {expired.map((a, i) => (
+                    <div key={a.id} style={{ padding:'16px 20px', borderBottom: i < expired.length-1 ? '1px solid #fee2e2' : 'none', display:'flex', alignItems:'center', justifyContent:'space-between', background:'#fff5f5' }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+                        <div style={{ width:44, height:44, borderRadius:12, background:'#fee2e2', display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, flexShrink:0 }}>
+                          {a.type==='Insurance' ? '🛡️' : '🔍'}
+                        </div>
+                        <div>
+                          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:3 }}>
+                            <span style={{ fontFamily:'DM Mono,monospace', fontSize:15, fontWeight:800, color:'var(--blue)' }}>{a.plate}</span>
+                            <span style={{ fontSize:12, fontWeight:700, background:'var(--surface2)', color:'var(--text2)', borderRadius:6, padding:'2px 8px' }}>{a.type}</span>
+                          </div>
+                          <div style={{ fontSize:12, color:'var(--text3)' }}>Expired on: <strong>{a.expiry}</strong></div>
+                        </div>
+                      </div>
+                      <span style={{ fontSize:13, fontWeight:800, borderRadius:20, padding:'6px 14px', background:'#fee2e2', color:'#dc2626', border:'1px solid #fca5a5' }}>
+                        Expired {Math.abs(a.days)}d ago
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {upcoming.length > 0 && (
+              <div>
+                <div style={{ fontSize:12, fontWeight:800, color:'#92400e', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:10, display:'flex', alignItems:'center', gap:8 }}>
+                  <span>⚠️</span> Expiring Within 7 Days ({upcoming.length})
+                </div>
+                <div className="card" style={{ borderColor:'#fcd34d' }}>
+                  {upcoming.map((a, i) => (
+                    <div key={a.id} style={{ padding:'16px 20px', borderBottom: i < upcoming.length-1 ? '1px solid #fef3c7' : 'none', display:'flex', alignItems:'center', justifyContent:'space-between', background:'#fffbeb' }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+                        <div style={{ width:44, height:44, borderRadius:12, background:'#fef3c7', display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, flexShrink:0 }}>
+                          {a.type==='Insurance' ? '🛡️' : '🔍'}
+                        </div>
+                        <div>
+                          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:3 }}>
+                            <span style={{ fontFamily:'DM Mono,monospace', fontSize:15, fontWeight:800, color:'var(--blue)' }}>{a.plate}</span>
+                            <span style={{ fontSize:12, fontWeight:700, background:'var(--surface2)', color:'var(--text2)', borderRadius:6, padding:'2px 8px' }}>{a.type}</span>
+                          </div>
+                          <div style={{ fontSize:12, color:'var(--text3)' }}>Expires on: <strong>{a.expiry}</strong></div>
+                        </div>
+                      </div>
+                      <span style={{ fontSize:13, fontWeight:800, borderRadius:20, padding:'6px 14px',
+                        background: a.days === 0 ? '#fee2e2' : '#fef3c7',
+                        color: a.days === 0 ? '#dc2626' : '#92400e',
+                        border: a.days === 0 ? '1px solid #fca5a5' : '1px solid #fcd34d' }}>
+                        {a.days === 0 ? 'Expires TODAY' : `${a.days}d left`}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </>
+  )
+}
+
 // ─── REPORTS PAGE ─────────────────────────────────────────────────────────────
 function ReportsPage() {
   const [activeReport, setActiveReport] = useState('fleet')
@@ -274,11 +439,11 @@ function ReportsPage() {
       })).catch(e => console.error(e))
   }, [])
   const reportTabs = [
-    { key:'fleet', label:'Fleet Reports', icon:'🚛' },
-    { key:'garage', label:'Garage Reports', icon:'🚗' },
-    { key:'fuel', label:'Fuel Reports', icon:'⛽' },
-    { key:'inventory', label:'Inventory Reports', icon:'📦' },
-    { key:'staff', label:'Staff Reports', icon:'👥' },
+    { key:'fleet', label:'Fleet Vehicles', icon:'🚛' },
+    { key:'garage', label:'Garage Vehicles', icon:'🚗' },
+    { key:'fuel', label:'Fuel Logs', icon:'⛽' },
+    { key:'inventory', label:'Inventory', icon:'📦' },
+    { key:'staff', label:'Staff', icon:'👥' },
   ]
   const q = search.toLowerCase()
   const filteredFleet = data.fleet.filter(v => !q || v.plate?.toLowerCase().includes(q) || v.make?.toLowerCase().includes(q) || v.model?.toLowerCase().includes(q) || v.driverName?.toLowerCase().includes(q))
@@ -886,14 +1051,56 @@ function StaffPage() {
 
 // ─── VEHICLE MODAL ────────────────────────────────────────────────────────────
 function VehicleModal({ vehicle, onSave, onClose }) {
-  const empty = { plate:'', make:'', model:'', year:new Date().getFullYear(), color:'', vin:'', type:'Sedan', ownerName:'', ownerPhone:'', ownerEmail:'', ownerCompany:'', status:'Ready', mileage:0 }
+  const empty = { plate:'', make:'', model:'', year:new Date().getFullYear(), color:'', vin:'', type:'Sedan', ownerName:'', ownerPhone:'', ownerEmail:'', ownerCompany:'', status:'Ready', mileage:0, driverName:'', driverPhone:'', driverLicense:'' }
   const [form, setForm] = useState(vehicle||empty)
+  const [fleet, setFleet] = useState([])
+  const [selectedFleetId, setSelectedFleetId] = useState('')
   const s = (k,v) => setForm(f=>({...f,[k]:v}))
+
+  useEffect(() => {
+    if (!vehicle) {
+      api.get('/fleet').then(r => setFleet(Array.isArray(r.data) ? r.data : r.data?.content || [])).catch(()=>{})
+    }
+  }, [])
+
+  const handleFleetSelect = (id) => {
+    setSelectedFleetId(id)
+    if (!id) { setForm(empty); return }
+    const fv = fleet.find(f => String(f.id) === String(id))
+    if (fv) {
+      setForm(f => ({
+        ...f,
+        plate: fv.plate || '',
+        make: fv.make || '',
+        model: fv.model || '',
+        year: fv.year || new Date().getFullYear(),
+        color: fv.color || '',
+        type: fv.type || 'Sedan',
+        mileage: fv.mileage || 0,
+        vin: fv.vin || '',
+        driverName: fv.driverName || '',
+        driverPhone: fv.driverPhone || '',
+        driverLicense: fv.driverLicense || '',
+      }))
+    }
+  }
+
   return (
     <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div className="modal" style={{ maxHeight:'90vh', overflowY:'auto', maxWidth:560 }}>
         <div className="modal-header"><div className="modal-title">{vehicle?'Edit Vehicle':'Register New Vehicle'}</div><X onClick={onClose}/></div>
         <div className="modal-body">
+          {!vehicle && fleet.length > 0 && (
+            <div className="form-group" style={{ marginBottom:20 }}>
+              <label className="form-label" style={{ color:'var(--blue)' }}>🚛 Pre-fill from Fleet Vehicle (optional)</label>
+              <select className="form-input" style={{ appearance:'auto', borderColor: selectedFleetId ? 'var(--blue)' : 'var(--border)', background: selectedFleetId ? 'rgba(37,99,235,0.04)' : 'var(--surface2)' }}
+                value={selectedFleetId} onChange={e => handleFleetSelect(e.target.value)}>
+                <option value="">— Type manually / Register new vehicle —</option>
+                {fleet.map(v => <option key={v.id} value={v.id}>{v.plate} — {v.make} {v.model} ({v.year})</option>)}
+              </select>
+              {selectedFleetId && <div style={{ fontSize:11, color:'var(--blue)', marginTop:5, fontWeight:600 }}>✅ Pre-filled from fleet — you can still edit any field below</div>}
+            </div>
+          )}
           <div style={{ fontSize:11, fontWeight:800, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:14, paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Vehicle Details</div>
           <div className="form-row" style={{ marginBottom:14 }}>
             <div><label className="form-label">Plate *</label><input className="form-input" value={form.plate} onChange={e=>s('plate',e.target.value.toUpperCase())} placeholder="KCA 123A"/></div>
@@ -911,7 +1118,7 @@ function VehicleModal({ vehicle, onSave, onClose }) {
             <div><label className="form-label">Type *</label><select className="form-input" style={{ appearance:'auto' }} value={form.type} onChange={e=>s('type',e.target.value)}>{['Sedan','SUV','Pickup Truck','Van','Minibus','Truck','Motorcycle'].map(t=><option key={t}>{t}</option>)}</select></div>
             <div><label className="form-label">Mileage (km) *</label><input className="form-input" type="number" value={form.mileage} onChange={e=>s('mileage',e.target.value)}/></div>
           </div>
-          <div className="form-group"><label className="form-label">License Identification</label><input className="form-input" value={form.vin} onChange={e=>s('vin',e.target.value.toUpperCase())} style={{ fontFamily:'DM Mono,monospace' }}/></div>
+
           <div style={{ fontSize:11, fontWeight:800, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', margin:'20px 0 14px', paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Owner Information</div>
           <div className="form-row" style={{ marginBottom:14 }}>
             <div><label className="form-label">Owner Name *</label><input className="form-input" value={form.ownerName} onChange={e=>s('ownerName',e.target.value)} placeholder="Full name"/></div>
@@ -921,10 +1128,16 @@ function VehicleModal({ vehicle, onSave, onClose }) {
             <div><label className="form-label">Email *</label><input className="form-input" value={form.ownerEmail} onChange={e=>s('ownerEmail',e.target.value)}/></div>
             <div><label className="form-label">Company *</label><input className="form-input" value={form.ownerCompany} onChange={e=>s('ownerCompany',e.target.value)}/></div>
           </div>
+          <div style={{ fontSize:11, fontWeight:800, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', margin:'20px 0 14px', paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Driver Information</div>
+          <div className="form-row" style={{ marginBottom:14 }}>
+            <div><label className="form-label">Driver Name</label><input className="form-input" value={form.driverName} onChange={e=>s('driverName',e.target.value)} placeholder="Full name"/></div>
+            <div><label className="form-label">Driver Phone</label><input className="form-input" value={form.driverPhone} onChange={e=>s('driverPhone',e.target.value)} placeholder="+250 788 000 000"/></div>
+          </div>
+
         </div>
         <div className="modal-footer">
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn btn-success" onClick={()=>{ if (!form.plate||!form.make||!form.model||!form.ownerName){alert('Plate, Make, Model, Owner required');return} onSave(form) }}>{vehicle?'Save Changes':'Register Vehicle'}</button>
+          <button className="btn btn-success" onClick={()=>onSave(form)}>{vehicle?'Save Changes':'Register Vehicle'}</button>
         </div>
       </div>
     </div>
@@ -1236,20 +1449,22 @@ function VehiclesPage({ user }) {
 export default function App() {
   const [user, setUser] = useState(null)
   const [activeTab, setActiveTab] = useState('dashboard')
+  const [alertCount, setAlertCount] = useState(0)
   useEffect(()=>{
     const s=localStorage.getItem('user')
-    if(s){ const u=JSON.parse(s); setUser(u); if(u.role!=='manager') setActiveTab('vehicles') }
+    if(s){ const u=JSON.parse(s); setUser(u); if(u.role!=='manager') setActiveTab('alerts') }
   },[])
-  const handleLogin = (u) => { setUser(u); setActiveTab(u.role==='manager'?'dashboard':'vehicles') }
+  const handleLogin = (u) => { setUser(u); setActiveTab(u.role==='manager'?'dashboard':'alerts') }
   const handleLogout = () => { localStorage.removeItem('token'); localStorage.removeItem('user'); setUser(null); setActiveTab('dashboard') }
   return (
     <>
       <style>{styles}</style>
       {!user?<LoginPage onLogin={handleLogin}/>:(
         <div className="app">
-          <Sidebar user={user} activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout}/>
+          <Sidebar user={user} activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} alertCount={alertCount}/>
           <div className="main">
-            {activeTab==='dashboard'&&user.role==='manager'&&<DashboardPage/>}
+            {activeTab==='dashboard'&&user.role==='manager'&&<DashboardPage onAlertsChange={setAlertCount}/>}
+            {activeTab==='alerts'&&(user.role==='supervisor'||user.role==='mechanic')&&<AlertsDashboard onAlertsChange={setAlertCount}/>}
             {activeTab==='vehicles'&&<VehiclesPage user={user}/>}
             {activeTab==='fuel'&&<FuelLogsPage user={user}/>}
             {activeTab==='inventory'&&<InventoryPage user={user}/>}
