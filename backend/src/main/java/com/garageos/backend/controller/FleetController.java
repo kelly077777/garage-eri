@@ -10,7 +10,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/fleet")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:5174", "https://inquisitive-kataifi-41bdfe.netlify.app"})
+@CrossOrigin(origins = {"http://localhost:5173", "https://inquisitive-kataifi-41bdfe.netlify.app"})
 public class FleetController {
 
     private final FleetVehicleRepository fleetRepo;
@@ -79,5 +79,30 @@ public ResponseEntity<?> getFuel(@PathVariable Long id) {
 public List<FuelLog> getAllFuelLogs() {
     return fuelRepo.findAll();
 } 
+    // Update fuel log
+@PutMapping("/{id}/fuel/{fuelId}")
+public ResponseEntity<?> updateFuel(
+        @PathVariable Long id,
+        @PathVariable Long fuelId,
+        @RequestBody FuelLog log) {
+    return fuelRepo.findById(fuelId).map(existing -> {
+        existing.setDate(log.getDate());
+        existing.setLiters(log.getLiters());
+        existing.setCostPerLiter(log.getCostPerLiter());
+        existing.setTotalCost(log.getTotalCost());
+        existing.setMileageAtFill(log.getMileageAtFill());
+        existing.setStation(log.getStation());
+        existing.setFilledBy(log.getFilledBy());
+        return ResponseEntity.ok(fuelRepo.save(existing));
+    }).orElse(ResponseEntity.notFound().build());
+}
 
+// Delete fuel log
+@DeleteMapping("/{id}/fuel/{fuelId}")
+public ResponseEntity<?> deleteFuel(
+        @PathVariable Long id,
+        @PathVariable Long fuelId) {
+    fuelRepo.deleteById(fuelId);
+    return ResponseEntity.ok().build();
+}
 }
