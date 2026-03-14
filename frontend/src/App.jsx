@@ -505,9 +505,10 @@ function ExpensesPage() {
         const domain = String(row[4] || '').trim().toUpperCase()
         const amount = parseFloat(row[5]) || 0
 
-        // Skip header/empty rows
-        if (!rawDate || !reason || !amount) { skipped++; continue }
+        // Skip only truly empty rows or header rows
+        if (!rawDate) { skipped++; continue }
         if (String(rawDate).toUpperCase() === 'DATE' || String(reason).toUpperCase() === 'REASON') { skipped++; continue }
+        if (!reason && !amount) { skipped++; continue }
 
         // Parse date — handles both Date objects and strings like "13/2/2026" or "28/2/2026"
         let dateStr = ''
