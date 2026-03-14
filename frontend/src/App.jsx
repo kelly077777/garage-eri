@@ -170,6 +170,7 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout, alertCount }) {
         {user.role === 'manager' && N('fuel','⛽','Fuel Logs')}
         {N('inventory','📦','Inventory')}
         {user.role === 'manager' && N('staff','👥','Staff')}
+        {user.role === 'manager' && N('expenses','💰','Expenses')}
         {user.role === 'manager' && N('reports','📋','Reports')}
       </nav>
       <div style={{ padding:16, borderTop:'1px solid var(--border)' }}>
@@ -413,6 +414,323 @@ function AlertsDashboard({ onAlertsChange }) {
           </>
         )}
       </div>
+    </>
+  )
+}
+
+
+// ─── EXPENSES PAGE ────────────────────────────────────────────────────────────
+function ExpensesPage() {
+  const [expenses, setExpenses] = useState([])
+  const [showAdd, setShowAdd] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [importResult, setImportResult] = useState(null)
+  const [selectedMonth, setSelectedMonth] = useState('')
+  const [deleteMonth, setDeleteMonth] = useState('')
+  const [filterMonth, setFilterMonth] = useState('ALL')
+  const [filterDomain, setFilterDomain] = useState('ALL')
+  const [search, setSearch] = useState('')
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
+  const DOMAINS = ['GENERAL','TYRE','TRANSPORT','PARKING','WIREMAN','MODIFICATION']
+  const DOMAIN_STYLE = {
+    'GENERAL': { bg:'#eff6ff', color:'#1d4ed8' },
+    'TYRE': { bg:'#fef3c7', color:'#92400e' },
+    'TIYRE': { bg:'#fef3c7', color:'#92400e' },
+    'TRANSPORT': { bg:'#f0fdf4', color:'#166534' },
+    'PARKING': { bg:'#f5f3ff', color:'#6d28d9' },
+    'WIREMAN': { bg:'#fff7ed', color:'#c2410c' },
+    'MODIFICATION': { bg:'#fdf2f8', color:'#9d174d' },
+  }
+  const empty = { date:'', plate:'', assignment:'', reason:'', domain:'GENERAL', amount:'' }
+  const [form, setForm] = useState(empty)
+  const sf = (k,v) => setForm(f=>({...f,[k]:v}))
+
+  useEffect(() => { fetchExpenses() }, [])
+  const fetchExpenses = async () => {
+    try { const r = await api.get('/expenses'); setExpenses(Array.isArray(r.data) ? r.data : []) }
+    catch(e) { console.error(e) }
+  }
+
+  const handleSave = async () => {
+    if (!form.date || !form.reason || !form.amount) { alert('Date, Reason and Amount are required'); return }
+    try {
+      await api.post('/expenses', { ...form, amount: parseInt(form.amount)||0 })
+      fetchExpenses(); setShowAdd(false); setForm(empty)
+    } catch { alert('Failed to save expense') }
+  }
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this expense?')) return
+    try { await api.delete(`/expenses/${id}`); fetchExpenses() }
+    catch { alert('Failed to delete') }
+  }
+
+  const handleDeleteMonth = async () => {
+    if (!deleteMonth) return
+    const monthIndex = MONTHS.indexOf(deleteMonth) + 1
+    const toDelete = expenses.filter(e => e.date && new Date(e.date).getMonth() + 1 === monthIndex)
+    if (toDelete.length === 0) { alert(`No expenses found for ${deleteMonth}`); return }
+    if (!window.confirm(`Delete all ${toDelete.length} expense records for ${deleteMonth}? This cannot be undone.`)) return
+    setDeleting(true)
+    let success = 0
+    for (const exp of toDelete) {
+      try { await api.delete(`/expenses/${exp.id}`); success++ } catch {}
+    }
+    setDeleting(false); setShowDeleteModal(false); setDeleteMonth('')
+    fetchExpenses()
+    alert(`Deleted ${success} of ${toDelete.length} records for ${deleteMonth}`)
+  }
+
+  const handleImportExcel = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setImporting(true); setImportResult(null)
+    try {
+      const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.1/package/xlsx.mjs')
+      const data = await file.arrayBuffer()
+      const wb = XLSX.read(data, { cellDates: true })
+      const ws = wb.Sheets[wb.SheetNames[0]]
+      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' })
+      let success = 0, failed = 0, skipped = 0, errors = []
+      const selectedMonthIndex = MONTHS.indexOf(selectedMonth) + 1
+
+      for (const row of rows) {
+        const rawDate = row[0]
+        const plate = String(row[1] || '').trim()
+        const assignment = String(row[2] || '').trim()
+        const reason = String(row[3] || '').trim()
+        const domain = String(row[4] || '').trim().toUpperCase()
+        const amount = parseFloat(row[5]) || 0
+
+        // Skip header/empty rows
+        if (!rawDate || !reason || !amount) { skipped++; continue }
+        if (String(rawDate).toUpperCase() === 'DATE' || String(reason).toUpperCase() === 'REASON') { skipped++; continue }
+
+        // Parse date
+        let dateStr = ''
+        if (rawDate instanceof Date) {
+          dateStr = rawDate.toISOString().split('T')[0]
+        } else if (typeof rawDate === 'string' && rawDate.match(/\d/)) {
+          // Handle formats like "28/2/2026"
+          const parts = rawDate.includes('/') ? rawDate.split('/') : rawDate.split('-')
+          if (parts.length === 3) {
+            const day = parts[0].padStart(2,'0')
+            const month = parts[1].padStart(2,'0')
+            const year = parts[2]
+            dateStr = `${year}-${month}-${day}`
+          }
+        }
+        if (!dateStr) { skipped++; continue }
+
+        // Filter by selected month
+        const rowMonth = new Date(dateStr).getMonth() + 1
+        if (rowMonth !== selectedMonthIndex) { skipped++; continue }
+
+        try {
+          await api.post('/expenses', { date:dateStr, plate, assignment, reason, domain: domain || 'GENERAL', amount: Math.round(amount) })
+          success++
+        } catch { failed++; if (errors.length < 8) errors.push(`Failed: ${reason} on ${dateStr}`) }
+      }
+      setImportResult({ success, failed, skipped, errors })
+      if (success > 0) fetchExpenses()
+    } catch(err) {
+      setImportResult({ success:0, failed:1, skipped:0, errors:['Failed to read file: ' + err.message] })
+    }
+    setImporting(false); e.target.value = ''
+  }
+
+  // Filtered expenses
+  const filtered = expenses.filter(e => {
+    const q = search.toLowerCase()
+    const monthMatch = filterMonth === 'ALL' || (e.date && new Date(e.date).getMonth() === MONTHS.indexOf(filterMonth))
+    const domainMatch = filterDomain === 'ALL' || e.domain === filterDomain
+    const searchMatch = !q || e.plate?.toLowerCase().includes(q) || e.reason?.toLowerCase().includes(q) || e.assignment?.toLowerCase().includes(q)
+    return monthMatch && domainMatch && searchMatch
+  })
+
+  const totalAmount = filtered.reduce((s,e) => s+(e.amount||0), 0)
+
+  // Stats by domain
+  const byDomain = {}
+  filtered.forEach(e => { const d=e.domain||'GENERAL'; byDomain[d]=(byDomain[d]||0)+(e.amount||0) })
+
+  return (
+    <>
+      <div className="page-header">
+        <div><div className="page-title">Garage Expenses</div><div className="page-sub">Daily expense records — Manager only</div></div>
+        <div style={{ display:'flex', gap:10 }}>
+          <button className="btn btn-danger" style={{ fontSize:13 }} onClick={()=>{ setShowDeleteModal(true); setDeleteMonth('') }}>🗑 Delete by Month</button>
+          <button className="btn btn-ghost" onClick={()=>{ setShowImportModal(true); setImportResult(null) }} disabled={importing}>
+            {importing ? '⏳ Importing...' : '⬆ Import Excel'}
+          </button>
+          <button className="btn btn-success" onClick={()=>{ setForm(empty); setShowAdd(true) }}>+ Add Expense</button>
+        </div>
+      </div>
+      <div className="page-content">
+
+        {/* Import result banner */}
+        {importResult && (
+          <div style={{ marginBottom:16, padding:'14px 18px', borderRadius:12, border:`1px solid ${importResult.failed===0?'#86efac':'#fca5a5'}`, background: importResult.failed===0?'#f0fdf4':'#fff5f5', display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:16 }}>
+            <div style={{ flex:1 }}>
+              <div style={{ fontWeight:800, fontSize:14, color: importResult.failed===0?'#166534':'#dc2626', marginBottom:4 }}>
+                {importResult.failed===0?'✅':'⚠️'} Import Complete — {importResult.success} imported{importResult.failed>0?`, ${importResult.failed} failed`:''}{importResult.skipped>0?`, ${importResult.skipped} skipped`:''}
+              </div>
+              {importResult.errors.length>0 && <div style={{ fontSize:12, color:'#dc2626' }}>{importResult.errors.map((e,i)=><div key={i}>• {e}</div>)}</div>}
+            </div>
+            <button onClick={()=>setImportResult(null)} style={{ background:'none', border:'none', cursor:'pointer', fontSize:18, color:'#9096ab' }}>✕</button>
+          </div>
+        )}
+
+        {/* Stat cards */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:20 }}>
+          <div className="stat-card"><div style={{ fontSize:12, color:'var(--text2)', marginBottom:6, fontWeight:600 }}>Total Expenses</div><div style={{ fontSize:22, fontWeight:800, color:'var(--red)' }}>{totalAmount.toLocaleString()}</div><div style={{ fontSize:11, color:'var(--text3)' }}>RWF</div></div>
+          <div className="stat-card"><div style={{ fontSize:12, color:'var(--text2)', marginBottom:6, fontWeight:600 }}>Records</div><div style={{ fontSize:22, fontWeight:800, color:'var(--blue)' }}>{filtered.length}</div><div style={{ fontSize:11, color:'var(--text3)' }}>entries</div></div>
+          <div className="stat-card"><div style={{ fontSize:12, color:'var(--text2)', marginBottom:6, fontWeight:600 }}>General Repairs</div><div style={{ fontSize:22, fontWeight:800, color:'#1d4ed8' }}>{(byDomain['GENERAL']||0).toLocaleString()}</div><div style={{ fontSize:11, color:'var(--text3)' }}>RWF</div></div>
+          <div className="stat-card"><div style={{ fontSize:12, color:'var(--text2)', marginBottom:6, fontWeight:600 }}>Transport</div><div style={{ fontSize:22, fontWeight:800, color:'#166534' }}>{(byDomain['TRANSPORT']||0).toLocaleString()}</div><div style={{ fontSize:11, color:'var(--text3)' }}>RWF</div></div>
+        </div>
+
+        {/* Filters */}
+        <div style={{ display:'flex', gap:10, marginBottom:16, flexWrap:'wrap' }}>
+          <input className="form-input" style={{ flex:1, minWidth:200 }} placeholder="Search plate, reason, assignment..." value={search} onChange={e=>setSearch(e.target.value)}/>
+          <select className="form-input" style={{ width:160, appearance:'auto' }} value={filterMonth} onChange={e=>setFilterMonth(e.target.value)}>
+            <option value="ALL">All Months</option>
+            {MONTHS.map(m=><option key={m} value={m}>{m}</option>)}
+          </select>
+          <select className="form-input" style={{ width:160, appearance:'auto' }} value={filterDomain} onChange={e=>setFilterDomain(e.target.value)}>
+            <option value="ALL">All Categories</option>
+            {DOMAINS.map(d=><option key={d} value={d}>{d}</option>)}
+          </select>
+        </div>
+
+        {/* Table */}
+        <div className="card">
+          <div className="card-header">
+            <div className="card-title">Expense Records</div>
+            <span style={{ fontFamily:'DM Mono,monospace', fontSize:13, color:'var(--red)', fontWeight:700 }}>Total: {totalAmount.toLocaleString()} RWF</span>
+          </div>
+          {filtered.length===0 ? (
+            <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}>
+              <div style={{ fontSize:36, marginBottom:12 }}>💰</div>
+              <div>No expense records found</div>
+            </div>
+          ) : (
+            <div style={{ overflowX:'auto' }}>
+              <table className="table">
+                <thead><tr><th>Date</th><th>Plate</th><th>Assignment</th><th>Reason</th><th>Category</th><th>Amount (RWF)</th><th>Actions</th></tr></thead>
+                <tbody>{filtered.map(e => {
+                  const ds = DOMAIN_STYLE[e.domain] || DOMAIN_STYLE['GENERAL']
+                  return (
+                    <tr key={e.id}>
+                      <td style={{ color:'var(--text2)' }}>{e.date}</td>
+                      <td style={{ fontFamily:'DM Mono,monospace', color:'var(--blue)', fontWeight:700 }}>{e.plate||'—'}</td>
+                      <td style={{ color:'var(--text2)' }}>{e.assignment||'—'}</td>
+                      <td style={{ fontWeight:600 }}>{e.reason}</td>
+                      <td><span style={{ fontSize:11, fontWeight:700, borderRadius:20, padding:'3px 10px', background:ds.bg, color:ds.color }}>{e.domain}</span></td>
+                      <td style={{ fontFamily:'DM Mono,monospace', fontWeight:700, color:'var(--red)' }}>{(e.amount||0).toLocaleString()}</td>
+                      <td><button className="btn btn-danger" style={{ padding:'5px 10px', fontSize:12 }} onClick={()=>handleDelete(e.id)}>Del</button></td>
+                    </tr>
+                  )
+                })}</tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Add Expense Modal ── */}
+      {showAdd && (
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowAdd(false)}>
+          <div className="modal" style={{ maxWidth:520 }}>
+            <div className="modal-header"><div className="modal-title">Add Expense</div><X onClick={()=>setShowAdd(false)}/></div>
+            <div className="modal-body">
+              <div style={{ fontSize:11, fontWeight:800, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:14, paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Same format as Excel — DATE, PLATE, ASSIGNMENT, REASON, DOMAIN, AMOUNT</div>
+              <div className="form-row" style={{ marginBottom:14 }}>
+                <div><label className="form-label">Date *</label><input className="form-input" type="date" value={form.date} onChange={e=>sf('date',e.target.value)}/></div>
+                <div><label className="form-label">Plate</label><input className="form-input" value={form.plate} onChange={e=>sf('plate',e.target.value.toUpperCase())} placeholder="e.g. RAG510W"/></div>
+              </div>
+              <div className="form-row" style={{ marginBottom:14 }}>
+                <div><label className="form-label">Assignment</label><input className="form-input" value={form.assignment} onChange={e=>sf('assignment',e.target.value)} placeholder="e.g. COLGATE, DELIVERY"/></div>
+                <div><label className="form-label">Domain / Category *</label>
+                  <select className="form-input" style={{ appearance:'auto' }} value={form.domain} onChange={e=>sf('domain',e.target.value)}>
+                    {[...DOMAINS,'TIYRE'].map(d=><option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="form-group"><label className="form-label">Reason *</label><input className="form-input" value={form.reason} onChange={e=>sf('reason',e.target.value)} placeholder="e.g. REPAIR TIRES"/></div>
+              <div className="form-group"><label className="form-label">Amount (RWF) *</label><input className="form-input" type="number" value={form.amount} onChange={e=>sf('amount',e.target.value)} placeholder="e.g. 15000"/></div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={()=>setShowAdd(false)}>Cancel</button>
+              <button className="btn btn-success" onClick={handleSave}>Save Expense</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Import Month Modal ── */}
+      {showImportModal && (
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowImportModal(false)}>
+          <div className="modal" style={{ maxWidth:420 }}>
+            <div className="modal-header"><div className="modal-title">Import Expenses Excel</div><X onClick={()=>setShowImportModal(false)}/></div>
+            <div className="modal-body">
+              <div style={{ marginBottom:20 }}>
+                <label className="form-label">Select Month to Import *</label>
+                <select className="form-input" style={{ appearance:'auto' }} value={selectedMonth} onChange={e=>setSelectedMonth(e.target.value)}>
+                  <option value="">— Select a month —</option>
+                  {MONTHS.map(m=><option key={m} value={m}>{m}</option>)}
+                </select>
+                {selectedMonth && <div style={{ fontSize:11, color:'var(--blue)', marginTop:6, fontWeight:600 }}>Only {selectedMonth} records will be imported from the file</div>}
+              </div>
+              <div style={{ background:'var(--surface2)', borderRadius:10, padding:'12px 14px', fontSize:13, color:'var(--text2)', lineHeight:1.6 }}>
+                <strong style={{ color:'var(--text)' }}>Excel format expected:</strong><br/>
+                DATE | PLATE | ASSIGNMENT | REASON | DOMAIN | AMOUNT
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={()=>setShowImportModal(false)}>Cancel</button>
+              <label className="btn btn-blue" style={{ cursor: selectedMonth?'pointer':'not-allowed', opacity: selectedMonth?1:0.5, position:'relative' }}>
+                Choose File & Import
+                <input type="file" accept=".xlsx,.xls" onChange={e=>{ if(selectedMonth){ setShowImportModal(false); handleImportExcel(e) } }} style={{ position:'absolute', inset:0, opacity:0, cursor: selectedMonth?'pointer':'not-allowed' }} disabled={!selectedMonth||importing}/>
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete by Month Modal ── */}
+      {showDeleteModal && (
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowDeleteModal(false)}>
+          <div className="modal" style={{ maxWidth:420 }}>
+            <div className="modal-header"><div className="modal-title" style={{ color:'var(--red)' }}>Delete by Month</div><X onClick={()=>setShowDeleteModal(false)}/></div>
+            <div className="modal-body">
+              <div style={{ marginBottom:20 }}>
+                <label className="form-label">Select Month to Delete *</label>
+                <select className="form-input" style={{ appearance:'auto' }} value={deleteMonth} onChange={e=>setDeleteMonth(e.target.value)}>
+                  <option value="">— Select a month —</option>
+                  {MONTHS.map(m => {
+                    const idx = MONTHS.indexOf(m) + 1
+                    const count = expenses.filter(e => e.date && new Date(e.date).getMonth()+1 === idx).length
+                    return <option key={m} value={m}>{m} {count>0?`(${count} records)`:'(no records)'}</option>
+                  })}
+                </select>
+                {deleteMonth && (()=>{ const idx=MONTHS.indexOf(deleteMonth)+1; const count=expenses.filter(e=>e.date&&new Date(e.date).getMonth()+1===idx).length; return <div style={{ fontSize:11, color:'#dc2626', marginTop:6, fontWeight:600 }}>⚠️ This will permanently delete {count} expense record{count!==1?'s':''} for {deleteMonth}</div> })()}
+              </div>
+              <div style={{ background:'#fff5f5', border:'1px solid #fca5a5', borderRadius:10, padding:'12px 14px', fontSize:13, color:'#dc2626' }}>
+                This action cannot be undone.
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={()=>setShowDeleteModal(false)}>Cancel</button>
+              <button className="btn" style={{ background:'var(--red)', color:'#fff', opacity:deleteMonth?1:0.5 }} onClick={handleDeleteMonth} disabled={!deleteMonth||deleting}>
+                {deleting?'Deleting...':'Delete All Records'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
@@ -1709,6 +2027,7 @@ export default function App() {
             {activeTab==='fuel'&&<FuelLogsPage user={user}/>}
             {activeTab==='inventory'&&<InventoryPage user={user}/>}
             {activeTab==='staff'&&user.role==='manager'&&<StaffPage/>}
+            {activeTab==='expenses'&&user.role==='manager'&&<ExpensesPage/>}
             {activeTab==='reports'&&user.role==='manager'&&<ReportsPage/>}
           </div>
         </div>
