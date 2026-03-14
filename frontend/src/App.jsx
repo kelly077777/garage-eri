@@ -509,21 +509,27 @@ function ExpensesPage() {
         if (!rawDate || !reason || !amount) { skipped++; continue }
         if (String(rawDate).toUpperCase() === 'DATE' || String(reason).toUpperCase() === 'REASON') { skipped++; continue }
 
-        // Parse date
+        // Parse date — handles both Date objects and strings like "13/2/2026" or "28/2/2026"
         let dateStr = ''
         if (rawDate instanceof Date) {
           dateStr = rawDate.toISOString().split('T')[0]
-        } else if (typeof rawDate === 'string' && rawDate.match(/\d/)) {
-          // Handle formats like "28/2/2026"
-          const parts = rawDate.includes('/') ? rawDate.split('/') : rawDate.split('-')
-          if (parts.length === 3) {
-            const day = parts[0].padStart(2,'0')
-            const month = parts[1].padStart(2,'0')
-            const year = parts[2]
-            dateStr = `${year}-${month}-${day}`
+        } else if (typeof rawDate === 'string' && rawDate.trim()) {
+          const raw = rawDate.trim()
+          if (raw.includes('/')) {
+            // Format: DD/MM/YYYY or D/M/YYYY
+            const parts = raw.split('/')
+            if (parts.length === 3) {
+              const day = parts[0].padStart(2,'0')
+              const month = parts[1].padStart(2,'0')
+              // Handle 2-digit year e.g. 23/2/2023 — keep as is, 4-digit year
+              const year = parts[2].length === 2 ? '20' + parts[2] : parts[2]
+              dateStr = `${year}-${month}-${day}`
+            }
+          } else if (raw.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            dateStr = raw
           }
         }
-        if (!dateStr) { skipped++; continue }
+        if (!dateStr || isNaN(new Date(dateStr).getTime())) { skipped++; continue }
 
         // Filter by selected month
         const rowMonth = new Date(dateStr).getMonth() + 1
