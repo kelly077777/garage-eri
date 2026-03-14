@@ -532,12 +532,16 @@ function ExpensesPage() {
         }
         if (!dateStr || isNaN(new Date(dateStr).getTime())) { skipped++; continue }
 
+        // Skip formula strings in amount (e.g. =SUM(...))
+        const cleanAmount = typeof amount === 'string' && amount.startsWith('=') ? 0 : parseFloat(amount) || 0
+        if (!cleanAmount) { skipped++; continue }
+
         // Filter by selected month
         const rowMonth = new Date(dateStr).getMonth() + 1
         if (rowMonth !== selectedMonthIndex) { skipped++; continue }
 
         try {
-          await api.post('/expenses', { date:dateStr, plate, assignment, reason, domain: domain || 'GENERAL', amount: Math.round(amount) })
+          await api.post('/expenses', { date:dateStr, plate, assignment, reason, domain: domain || 'GENERAL', amount: Math.round(cleanAmount) })
           success++
         } catch { failed++; if (errors.length < 8) errors.push(`Failed: ${reason} on ${dateStr}`) }
       }
