@@ -102,7 +102,6 @@ function LoginPage({ onLogin }) {
     <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'100vh', width:'100%', backgroundImage:'url(/Page.jpg)', backgroundSize:'cover', backgroundPosition:'center', position:'relative' }}>
       <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg, rgba(10,15,30,0.82) 0%, rgba(20,30,60,0.75) 100%)', backdropFilter:'blur(1px)' }} />
       <div className="login-card" style={{ position:'relative', zIndex:1 }}>
-        {/* Large centered logo + title */}
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginBottom:36 }}>
           <div style={{ width:96, height:96, borderRadius:20, overflow:'hidden', marginBottom:18, boxShadow:'0 4px 20px rgba(0,0,0,0.18)', border:'3px solid rgba(255,255,255,0.15)', flexShrink:0 }}>
             <img src="/canvas.png" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
@@ -120,7 +119,6 @@ function LoginPage({ onLogin }) {
     </div>
   )
 }
-
 
 // ─── EXPIRY HELPERS ───────────────────────────────────────────────────────────
 function getDaysUntil(dateStr) {
@@ -155,7 +153,6 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout, alertCount }) {
   )
   return (
     <div className="sidebar">
-      {/* Logo area — white, big & clean */}
       <div style={{ padding:'24px 16px 20px', borderBottom:'1px solid var(--border)', display:'flex', flexDirection:'column', alignItems:'center', gap:12, background:'#ffffff' }}>
         <div style={{ width:80, height:80, borderRadius:18, overflow:'hidden', border:'2px solid var(--border)', boxShadow:'0 2px 12px rgba(0,0,0,0.10)', flexShrink:0 }}>
           <img src="/canvas.png" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
@@ -226,7 +223,6 @@ function DashboardPage({ onAlertsChange }) {
             </div>
           ))}
         </div>
-        {/* ── Expiry Alerts ── */}
         {expiryAlerts.length > 0 && (
           <div className="card" style={{ marginBottom:16, borderColor:'#fca5a5', borderWidth:1 }}>
             <div className="card-header" style={{ background:'#fff7f7' }}>
@@ -259,7 +255,6 @@ function DashboardPage({ onAlertsChange }) {
             </div>
           </div>
         )}
-
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
           <div className="card">
             <div className="card-header"><div className="card-title">Garage Vehicle Status</div></div>
@@ -321,7 +316,6 @@ function DashboardPage({ onAlertsChange }) {
   )
 }
 
-
 // ─── ALERTS DASHBOARD (Supervisor & Mechanic) ─────────────────────────────────
 function AlertsDashboard({ onAlertsChange }) {
   const [fleet, setFleet] = useState([])
@@ -339,7 +333,7 @@ function AlertsDashboard({ onAlertsChange }) {
     <>
       <div className="page-header">
         <div>
-          <div className="page-title">🔔 Alerts</div>
+          <div className="page-title">Alerts</div>
           <div className="page-sub">Document expiry alerts for fleet vehicles</div>
         </div>
         {alerts.length > 0 && (
@@ -360,7 +354,7 @@ function AlertsDashboard({ onAlertsChange }) {
             {expired.length > 0 && (
               <div style={{ marginBottom:20 }}>
                 <div style={{ fontSize:12, fontWeight:800, color:'#dc2626', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:10, display:'flex', alignItems:'center', gap:8 }}>
-                  <span>🚨</span> Already Expired ({expired.length})
+                  Already Expired ({expired.length})
                 </div>
                 <div className="card" style={{ borderColor:'#fca5a5' }}>
                   {expired.map((a, i) => (
@@ -388,7 +382,7 @@ function AlertsDashboard({ onAlertsChange }) {
             {upcoming.length > 0 && (
               <div>
                 <div style={{ fontSize:12, fontWeight:800, color:'#92400e', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:10, display:'flex', alignItems:'center', gap:8 }}>
-                  <span>⚠️</span> Expiring Within 7 Days ({upcoming.length})
+                  Expiring Within 7 Days ({upcoming.length})
                 </div>
                 <div className="card" style={{ borderColor:'#fcd34d' }}>
                   {upcoming.map((a, i) => (
@@ -485,7 +479,7 @@ function ReportsPage() {
   return (
     <>
       <div className="page-header">
-        <div><div className="page-title">📋 Reports</div><div className="page-sub">Generate and export reports — Manager only</div></div>
+        <div><div className="page-title">Reports</div><div className="page-sub">Generate and export reports — Manager only</div></div>
         <div style={{ display:'flex', gap:10 }}>
           <button className="btn btn-ghost" onClick={handleExportCSV}>📥 Export CSV</button>
           <button className="btn btn-blue" onClick={handleExportPDF}>📄 Export PDF</button>
@@ -510,7 +504,7 @@ function ReportsPage() {
         </div>
         {activeReport==='fleet' && (
           <div className="card">
-            <div className="card-header"><div className="card-title">🚛 Fleet Vehicles</div></div>
+            <div className="card-header"><div className="card-title">Fleet Vehicles</div></div>
             {filteredFleet.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}>No fleet vehicles found</div> : (
               <div style={{ overflowX:'auto' }}>
                 <table className="table">
@@ -536,7 +530,7 @@ function ReportsPage() {
         )}
         {activeReport==='garage' && (
           <div className="card">
-            <div className="card-header"><div className="card-title">🚗 Garage Vehicles</div></div>
+            <div className="card-header"><div className="card-title">Garage Vehicles</div></div>
             {filteredGarage.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}>No garage vehicles found</div> : (
               <div style={{ overflowX:'auto' }}>
                 <table className="table">
@@ -563,7 +557,7 @@ function ReportsPage() {
         {activeReport==='fuel' && (
           <div className="card">
             <div className="card-header">
-              <div className="card-title">⛽ Fuel Logs</div>
+              <div className="card-title">Fuel Logs</div>
               <span style={{ fontFamily:'DM Mono,monospace', fontSize:13, color:'var(--green)', fontWeight:700 }}>Total: {filteredFuel.reduce((s,f)=>s+(f.totalCost||0),0).toLocaleString()} RWF</span>
             </div>
             {filteredFuel.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}>No fuel logs found</div> : (
@@ -590,7 +584,7 @@ function ReportsPage() {
         )}
         {activeReport==='inventory' && (
           <div className="card">
-            <div className="card-header"><div className="card-title">📦 Inventory</div></div>
+            <div className="card-header"><div className="card-title">Inventory</div></div>
             {filteredInventory.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}>No inventory items found</div> : (
               <div style={{ overflowX:'auto' }}>
                 <table className="table">
@@ -615,7 +609,7 @@ function ReportsPage() {
         )}
         {activeReport==='staff' && (
           <div className="card">
-            <div className="card-header"><div className="card-title">👥 Staff Members</div></div>
+            <div className="card-header"><div className="card-title">Staff Members</div></div>
             {filteredStaff.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}>No staff found</div> : (
               <div style={{ overflowX:'auto' }}>
                 <table className="table">
@@ -645,7 +639,15 @@ function FuelLogsPage({ user }) {
   const [showAdd, setShowAdd] = useState(false)
   const [editing, setEditing] = useState(null)
   const [filterVehicle, setFilterVehicle] = useState('all')
-  const emptyForm = { fleetVehicleId:'', date:new Date().toISOString().split('T')[0], liters:'', costPerLiter:'', totalCost:'', mileageAtFill:'', filledBy:user.name, station:'' }
+  const [importing, setImporting] = useState(false)
+  const [importResult, setImportResult] = useState(null)
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteMonth, setDeleteMonth] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [selectedMonth, setSelectedMonth] = useState('')
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
+  const emptyForm = { fleetVehicleId:'', date:'', liters:'', costPerLiter:'', totalCost:'', mileageAtFill:'', filledBy:'', station:'' }
   const [form, setForm] = useState(emptyForm)
   const sf = (k,v) => setForm(f=>({...f,[k]:v}))
 
@@ -654,17 +656,13 @@ function FuelLogsPage({ user }) {
     try {
       const [l,f] = await Promise.all([api.get('/fleet/fuel/all'), api.get('/fleet')])
       setLogs(Array.isArray(l.data) ? l.data : [])
-      setFleet(Array.isArray(f.data) ? f.data : [])
-      if (f.data.length > 0) setForm(fr => ({...fr, fleetVehicleId: f.data[0].id}))
+      const fleetData = Array.isArray(f.data) ? f.data : []
+      setFleet(fleetData)
+      if (fleetData.length > 0) setForm(fr => ({...fr, fleetVehicleId: fleetData[0].id}))
     } catch(e) { console.error(e) }
   }
 
-  const openAdd = () => {
-    setEditing(null)
-    setForm(emptyForm)
-    setShowAdd(true)
-  }
-
+  const openAdd = () => { setEditing(null); setForm(emptyForm); setShowAdd(true) }
   const openEdit = (log) => {
     setEditing(log)
     setForm({
@@ -684,33 +682,176 @@ function FuelLogsPage({ user }) {
     if (!form.fleetVehicleId || !form.liters || !form.date) { alert('Vehicle, date and liters required'); return }
     const payload = { ...form, liters: parseFloat(form.liters), costPerLiter: parseInt(form.costPerLiter)||0, totalCost: parseInt(form.totalCost)||0, mileageAtFill: parseInt(form.mileageAtFill)||0 }
     try {
-      if (editing) {
-        await api.put(`/fleet/${form.fleetVehicleId}/fuel/${editing.id}`, payload)
-      } else {
-        await api.post(`/fleet/${form.fleetVehicleId}/fuel`, payload)
-      }
+      if (editing) await api.put(`/fleet/${form.fleetVehicleId}/fuel/${editing.id}`, payload)
+      else await api.post(`/fleet/${form.fleetVehicleId}/fuel`, payload)
       fetchData(); setShowAdd(false); setEditing(null)
     } catch { alert('Failed to save fuel log') }
   }
 
   const handleDelete = async (log) => {
     if (!window.confirm('Delete this fuel log entry?')) return
+    try { await api.delete(`/fleet/${log.fleetVehicle?.id}/fuel/${log.id}`); fetchData() }
+    catch { alert('Failed to delete fuel log') }
+  }
+
+  // ── Delete by Month ──
+  const handleDeleteMonth = async () => {
+    if (!deleteMonth) return
+    const monthIndex = MONTHS.indexOf(deleteMonth) + 1
+    const toDelete = logs.filter(l => {
+      if (!l.date) return false
+      const m = new Date(l.date).getMonth() + 1
+      return m === monthIndex
+    })
+    if (toDelete.length === 0) { alert(`No fuel logs found for ${deleteMonth}`); return }
+    if (!window.confirm(`Delete all ${toDelete.length} fuel log entries for ${deleteMonth}? This cannot be undone.`)) return
+    setDeleting(true)
+    let success = 0
+    for (const log of toDelete) {
+      try {
+        await api.delete(`/fleet/${log.fleetVehicle?.id}/fuel/${log.id}`)
+        success++
+      } catch { console.error('Failed to delete', log.id) }
+    }
+    setDeleting(false)
+    setShowDeleteModal(false)
+    setDeleteMonth('')
+    fetchData()
+    alert(`Deleted ${success} of ${toDelete.length} records for ${deleteMonth}`)
+  }
+
+  // ── Tally Excel Import ──
+  const extractPlate = (particulars) => {
+    if (!particulars) return null
+    let raw = particulars.split(' - ')[0].split('(')[0].trim()
+    return raw.replace(/[\s\-]/g, '').toUpperCase()
+  }
+
+  const handleImportExcel = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setImporting(true)
+    setImportResult(null)
     try {
-      await api.delete(`/fleet/${log.fleetVehicle?.id}/fuel/${log.id}`)
-      fetchData()
-    } catch { alert('Failed to delete fuel log') }
+      const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.1/package/xlsx.mjs')
+      const data = await file.arrayBuffer()
+      const wb = XLSX.read(data, { cellDates: true })
+      const ws = wb.Sheets[wb.SheetNames[0]]
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' })
+
+      let success = 0, failed = 0, skipped = 0
+      const errors = []
+      const SKIP_KEYWORDS = ['opening balance', 'totals', 'closing balance', 'particulars', 'stock item', 'eri-rwanda', 'fuel -', 'date', 'plate number']
+
+      for (const row of rows) {
+        const rawDate = row[0]
+        const particulars = String(row[1] || '').trim()
+        const quantity = parseFloat(row[4]) || 0
+        const value = parseFloat(row[5]) || 0
+        const vchNo = String(row[3] || '').trim()
+
+        // Skip header/summary/empty rows
+        if (!rawDate || !particulars || !quantity) { skipped++; continue }
+        const lp = particulars.toLowerCase()
+        if (SKIP_KEYWORDS.some(k => lp.includes(k))) { skipped++; continue }
+
+        // Parse date
+        let dateStr = ''
+        if (rawDate instanceof Date) {
+          dateStr = rawDate.toISOString().split('T')[0]
+        } else if (typeof rawDate === 'string' && rawDate.match(/\d{4}-\d{2}-\d{2}/)) {
+          dateStr = rawDate
+        } else { skipped++; continue }
+
+        // Filter by selected month
+        const rowMonth = new Date(dateStr).getMonth() // 0-indexed
+        const selectedMonthIndex = MONTHS.indexOf(selectedMonth)
+        if (rowMonth !== selectedMonthIndex) { skipped++; continue }
+
+        // Extract plate and assignment label
+        const plateNorm = extractPlate(particulars)
+        const assignment = particulars.includes(' - ') ? particulars.split(' - ').slice(1).join(' - ').trim() : ''
+
+        if (!plateNorm || plateNorm.length < 5) { skipped++; continue }
+
+        // Match fleet vehicle — normalize both sides
+        const vehicle = fleet.find(v => v.plate?.replace(/[\s\-]/g, '').toUpperCase() === plateNorm)
+        if (!vehicle) {
+          failed++
+          if (errors.length < 8) errors.push(`Plate not in fleet: "${particulars}"`)
+          continue
+        }
+
+        // Cost per liter = value / quantity
+        const costPerLiter = quantity > 0 ? Math.round(value / quantity) : 0
+
+        try {
+          await api.post(`/fleet/${vehicle.id}/fuel`, {
+            date: dateStr,
+            liters: quantity,
+            costPerLiter,
+            totalCost: Math.round(value),
+            mileageAtFill: 0,
+            station: vchNo || '',
+            filledBy: assignment || 'Tally Import'
+          })
+          success++
+        } catch {
+          failed++
+          if (errors.length < 8) errors.push(`Save failed: ${particulars} on ${dateStr}`)
+        }
+      }
+
+      setImportResult({ success, failed, skipped, errors })
+      if (success > 0) fetchData()
+    } catch(err) {
+      setImportResult({ success:0, failed:1, skipped:0, errors:['Failed to read file: ' + err.message] })
+    }
+    setImporting(false)
+    e.target.value = ''
   }
 
   const filtered = filterVehicle==='all' ? logs : logs.filter(l=>l.fleetVehicle?.id===parseInt(filterVehicle))
   const totalL = filtered.reduce((s,l)=>s+(l.liters||0),0)
   const totalC = filtered.reduce((s,l)=>s+(l.totalCost||0),0)
+
   return (
     <>
       <div className="page-header">
-        <div><div className="page-title">⛽ Fuel Logs</div><div className="page-sub">Track fuel consumption for fleet vehicles</div></div>
-        <button className="btn btn-blue" onClick={openAdd}>+ Log Fuel Fill</button>
+        <div><div className="page-title">Fuel Logs</div><div className="page-sub">Track fuel consumption for fleet vehicles</div></div>
+        <div style={{ display:'flex', gap:10 }}>
+          <button className="btn btn-danger" style={{ fontSize:13 }} onClick={()=>{ setShowDeleteModal(true); setDeleteMonth('') }}>
+            🗑 Delete by Month
+          </button>
+          <button className="btn btn-ghost" onClick={()=>{ setShowImportModal(true); setImportResult(null) }} disabled={importing}>
+            {importing ? '⏳ Importing...' : '⬆ Import Tally Excel'}
+          </button>
+          <button className="btn btn-blue" onClick={openAdd}>+ Log Fuel Fill</button>
+        </div>
       </div>
       <div className="page-content">
+        {/* Import result banner */}
+        {importResult && (
+          <div style={{ marginBottom:16, padding:'14px 18px', borderRadius:12, border:`1px solid ${importResult.failed===0?'#86efac':'#fca5a5'}`, background: importResult.failed===0 ? '#f0fdf4':'#fff5f5', display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:16 }}>
+            <div style={{ flex:1 }}>
+              <div style={{ fontWeight:800, fontSize:14, color: importResult.failed===0?'#166534':'#dc2626', marginBottom:6 }}>
+                {importResult.failed===0 ? '✅' : '⚠️'} Import Complete — {importResult.success} imported{importResult.failed>0?`, ${importResult.failed} failed`:''}{importResult.skipped>0?`, ${importResult.skipped} skipped`:''}
+              </div>
+              {importResult.errors.length>0 && (
+                <div style={{ fontSize:12, color:'#dc2626', marginBottom:4 }}>
+                  {importResult.errors.map((e,i)=><div key={i}>• {e}</div>)}
+                </div>
+              )}
+              {importResult.failed>0 && (
+                <div style={{ fontSize:11, color:'#92400e', marginTop:4 }}>
+                  Tip: Make sure the fleet vehicle plates in the Excel match what is registered in the system. The importer normalizes spaces and dashes automatically.
+                </div>
+              )}
+            </div>
+            <button onClick={()=>setImportResult(null)} style={{ background:'none', border:'none', cursor:'pointer', fontSize:18, color:'#9096ab', flexShrink:0 }}>✕</button>
+          </div>
+        )}
+
         <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, marginBottom:20 }}>
           {[['Total Fills',filtered.length,'Log entries','var(--blue)'],['Total Liters',totalL.toFixed(1)+'L','Consumed','var(--green)'],['Total Cost',totalC.toLocaleString()+' RWF','Expenditure','var(--text)']].map(([l,v,s,c])=>(
             <div key={l} className="stat-card"><div style={{ fontSize:13, color:'var(--text2)', marginBottom:8, fontWeight:600 }}>{l}</div><div style={{ fontFamily:'Nunito,sans-serif', fontSize:24, fontWeight:800, color:c }}>{v}</div><div style={{ fontSize:12, color:'var(--text3)', marginTop:4 }}>{s}</div></div>
@@ -726,17 +867,15 @@ function FuelLogsPage({ user }) {
           <div className="card-header"><div className="card-title">Fuel History</div><span style={{ fontSize:12, color:'var(--text2)', fontWeight:600 }}>{filtered.length} entries</span></div>
           {filtered.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}><div style={{ fontSize:36, marginBottom:12 }}>⛽</div><div>No fuel logs yet</div></div> : (
             <table className="table">
-              <thead><tr><th>Vehicle</th><th>Date</th><th>Liters</th><th>Cost/L</th><th>Total</th><th>Mileage</th><th>Station</th><th>By</th><th>Actions</th></tr></thead>
+              <thead><tr><th>Date</th><th>Particulars (Plate)</th><th>Vch Type</th><th>Vch No.</th><th>Quantity (L)</th><th>Value (RWF)</th><th>Actions</th></tr></thead>
               <tbody>{[...filtered].reverse().map(l=>(
                 <tr key={l.id}>
-                  <td style={{ fontFamily:'DM Mono,monospace', color:'var(--blue)', fontSize:13, fontWeight:700 }}>{l.fleetVehicle?.plate||'—'}</td>
                   <td style={{ color:'var(--text2)' }}>{l.date}</td>
+                  <td style={{ fontFamily:'DM Mono,monospace', color:'var(--blue)', fontWeight:700 }}>{l.fleetVehicle?.plate||'—'}{l.filledBy&&l.filledBy!=='Tally Import'?<span style={{ fontFamily:'Nunito,sans-serif', color:'var(--text2)', fontWeight:500, marginLeft:6 }}>— {l.filledBy}</span>:null}</td>
+                  <td style={{ color:'var(--text2)', fontSize:12 }}>Consumption (Usage)</td>
+                  <td style={{ fontFamily:'DM Mono,monospace', fontSize:12, color:'var(--text3)' }}>{l.station||'—'}</td>
                   <td style={{ fontWeight:700 }}>{l.liters}L</td>
-                  <td style={{ color:'var(--text2)' }}>{l.costPerLiter?`${l.costPerLiter} RWF`:'—'}</td>
-                  <td style={{ fontFamily:'DM Mono,monospace', color:'var(--green)', fontWeight:700 }}>{(l.totalCost||0).toLocaleString()} RWF</td>
-                  <td style={{ color:'var(--text2)' }}>{l.mileageAtFill?`${l.mileageAtFill.toLocaleString()} km`:'—'}</td>
-                  <td>{l.station||'—'}</td>
-                  <td style={{ color:'var(--text2)' }}>{l.filledBy||'—'}</td>
+                  <td style={{ fontFamily:'DM Mono,monospace', color:'var(--green)', fontWeight:700 }}>{(l.totalCost||0).toLocaleString()}</td>
                   <td>
                     <div style={{ display:'flex', gap:6 }}>
                       <button className="btn btn-ghost" style={{ padding:'5px 10px', fontSize:12 }} onClick={() => openEdit(l)}>Edit</button>
@@ -749,6 +888,82 @@ function FuelLogsPage({ user }) {
           )}
         </div>
       </div>
+      {/* ── Delete by Month Modal ── */}
+      {showDeleteModal && (
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowDeleteModal(false)}>
+          <div className="modal" style={{ maxWidth:420 }}>
+            <div className="modal-header">
+              <div className="modal-title" style={{ color:'var(--red)' }}>Delete by Month</div>
+              <X onClick={()=>setShowDeleteModal(false)}/>
+            </div>
+            <div className="modal-body">
+              <div style={{ marginBottom:20 }}>
+                <label className="form-label">Select Month to Delete *</label>
+                <select className="form-input" style={{ appearance:'auto' }} value={deleteMonth} onChange={e=>setDeleteMonth(e.target.value)}>
+                  <option value="">— Select a month —</option>
+                  {MONTHS.map(m => {
+                    const monthIndex = MONTHS.indexOf(m) + 1
+                    const count = logs.filter(l => l.date && new Date(l.date).getMonth() + 1 === monthIndex).length
+                    return <option key={m} value={m}>{m} {count > 0 ? `(${count} records)` : '(no records)'}</option>
+                  })}
+                </select>
+                {deleteMonth && (() => {
+                  const monthIndex = MONTHS.indexOf(deleteMonth) + 1
+                  const count = logs.filter(l => l.date && new Date(l.date).getMonth() + 1 === monthIndex).length
+                  return <div style={{ fontSize:11, color:'#dc2626', marginTop:6, fontWeight:600 }}>
+                    ⚠️ This will permanently delete {count} fuel log record{count !== 1 ? 's' : ''} for {deleteMonth}
+                  </div>
+                })()}
+              </div>
+              <div style={{ background:'#fff5f5', border:'1px solid #fca5a5', borderRadius:10, padding:'12px 14px', fontSize:13, color:'#dc2626' }}>
+                This action cannot be undone. All fuel log entries for the selected month will be permanently deleted.
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={()=>setShowDeleteModal(false)}>Cancel</button>
+              <button className="btn" style={{ background:'var(--red)', color:'#fff', opacity: deleteMonth?1:0.5 }} onClick={handleDeleteMonth} disabled={!deleteMonth || deleting}>
+                {deleting ? 'Deleting...' : 'Delete All Records'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Import Month Modal ── */}
+      {showImportModal && (
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowImportModal(false)}>
+          <div className="modal" style={{ maxWidth:420 }}>
+            <div className="modal-header">
+              <div className="modal-title">Import Tally Excel</div>
+              <X onClick={()=>setShowImportModal(false)}/>
+            </div>
+            <div className="modal-body">
+              <div style={{ marginBottom:20 }}>
+                <label className="form-label">Select Month to Import *</label>
+                <select className="form-input" style={{ appearance:'auto' }} value={selectedMonth} onChange={e=>setSelectedMonth(e.target.value)}>
+                  <option value="">— Select a month —</option>
+                  {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+                {selectedMonth && <div style={{ fontSize:11, color:'var(--blue)', marginTop:6, fontWeight:600 }}>Only {selectedMonth} records will be imported from the file</div>}
+              </div>
+              <div style={{ background:'var(--surface2)', borderRadius:10, padding:'12px 14px', fontSize:13, color:'var(--text2)', lineHeight:1.6 }}>
+                <strong style={{ color:'var(--text)' }}>How it works:</strong><br/>
+                1. Select the month above<br/>
+                2. Click "Choose File" and pick your Tally Excel<br/>
+                3. Only records from that month will be imported
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={()=>setShowImportModal(false)}>Cancel</button>
+              <label className="btn btn-blue" style={{ cursor: selectedMonth ? 'pointer' : 'not-allowed', opacity: selectedMonth ? 1 : 0.5, position:'relative' }}>
+                Choose File & Import
+                <input type="file" accept=".xlsx,.xls" onChange={e=>{ if(selectedMonth){ setShowImportModal(false); handleImportExcel(e) } }} style={{ position:'absolute', inset:0, opacity:0, cursor: selectedMonth?'pointer':'not-allowed' }} disabled={!selectedMonth || importing}/>
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showAdd && (
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowAdd(false)}>
           <div className="modal" style={{ maxWidth:520 }}>
@@ -757,24 +972,21 @@ function FuelLogsPage({ user }) {
               <X onClick={()=>{ setShowAdd(false); setEditing(null) }}/>
             </div>
             <div className="modal-body">
-              <div className="form-group"><label className="form-label">Fleet Vehicle *</label>
+              <div style={{ fontSize:11, fontWeight:800, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:14, paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Same format as Tally Excel</div>
+              <div className="form-group"><label className="form-label">Particulars (Fleet Vehicle) *</label>
                 <select className="form-input" style={{ appearance:'auto' }} value={form.fleetVehicleId} onChange={e=>sf('fleetVehicleId',e.target.value)}>
                   {fleet.map(v=><option key={v.id} value={v.id}>{v.plate} — {v.make} {v.model}</option>)}
                 </select>
               </div>
               <div className="form-row" style={{ marginBottom:14 }}>
                 <div><label className="form-label">Date *</label><input className="form-input" type="date" value={form.date} onChange={e=>sf('date',e.target.value)}/></div>
-                <div><label className="form-label">Liters *</label><input className="form-input" type="number" placeholder="45.5" value={form.liters} onChange={e=>sf('liters',e.target.value)}/></div>
+                <div><label className="form-label">Vch No.</label><input className="form-input" placeholder="e.g. DIAOF/4301636" value={form.station} onChange={e=>sf('station',e.target.value)}/></div>
               </div>
               <div className="form-row" style={{ marginBottom:14 }}>
-                <div><label className="form-label">Cost per Liter (RWF)</label><input className="form-input" type="number" placeholder="1250" value={form.costPerLiter} onChange={e=>sf('costPerLiter',e.target.value)}/></div>
-                <div><label className="form-label">Total Cost (RWF)</label><input className="form-input" type="number" placeholder="56250" value={form.totalCost} onChange={e=>sf('totalCost',e.target.value)}/></div>
+                <div><label className="form-label">Quantity / Outwards (Liters) *</label><input className="form-input" type="number" placeholder="e.g. 175.5" value={form.liters} onChange={e=>sf('liters',e.target.value)}/></div>
+                <div><label className="form-label">Value (RWF) *</label><input className="form-input" type="number" placeholder="e.g. 333450" value={form.totalCost} onChange={e=>sf('totalCost',e.target.value)}/></div>
               </div>
-              <div className="form-row" style={{ marginBottom:14 }}>
-                <div><label className="form-label">Mileage at Fill (km)</label><input className="form-input" type="number" placeholder="Odometer" value={form.mileageAtFill} onChange={e=>sf('mileageAtFill',e.target.value)}/></div>
-                <div><label className="form-label">Station</label><input className="form-input" placeholder="Station name" value={form.station} onChange={e=>sf('station',e.target.value)}/></div>
-              </div>
-              <div className="form-group"><label className="form-label">Filled By</label><input className="form-input" value={form.filledBy} onChange={e=>sf('filledBy',e.target.value)}/></div>
+              <div className="form-group"><label className="form-label">Assignment (e.g. OXI, BLUEBAND)</label><input className="form-input" placeholder="Department or client" value={form.filledBy} onChange={e=>sf('filledBy',e.target.value)}/></div>
             </div>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={()=>{ setShowAdd(false); setEditing(null) }}>Cancel</button>
@@ -819,7 +1031,7 @@ function InventoryPage({ user }) {
   return (
     <>
       <div className="page-header">
-        <div><div className="page-title">📦 Inventory</div><div className="page-sub">Parts, tools and consumables</div></div>
+        <div><div className="page-title">Inventory</div><div className="page-sub">Parts, tools and consumables</div></div>
         {canEdit && <button className="btn btn-success" onClick={()=>{ setForm(empty); setEditing(null); setShowAdd(true) }}>+ Add Item</button>}
       </div>
       <div className="page-content">
@@ -861,6 +1073,8 @@ function InventoryPage({ user }) {
           )}
         </div>
       </div>
+
+
       {showAdd && (
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowAdd(false)}>
           <div className="modal" style={{ maxWidth:540, maxHeight:'90vh', overflowY:'auto' }}>
@@ -956,7 +1170,7 @@ function StaffPage() {
   return (
     <>
       <div className="page-header">
-        <div><div className="page-title">👥 Staff Management</div><div className="page-sub">Manage team accounts and credentials</div></div>
+        <div><div className="page-title">Staff Management</div><div className="page-sub">Manage team accounts and credentials</div></div>
         <button className="btn btn-success" onClick={()=>setShowAddModal(true)}>+ Add Staff</button>
       </div>
       <div className="page-content">
@@ -981,7 +1195,6 @@ function StaffPage() {
         </div>
       </div>
 
-      {/* ── Add Staff Modal ── */}
       {showAddModal && (
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowAddModal(false)}>
           <div className="modal">
@@ -1007,7 +1220,6 @@ function StaffPage() {
         </div>
       )}
 
-      {/* ── Edit Staff Modal ── */}
       {showEditModal && editingStaff && (
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowEditModal(false)}>
           <div className="modal">
@@ -1092,13 +1304,13 @@ function VehicleModal({ vehicle, onSave, onClose }) {
         <div className="modal-body">
           {!vehicle && fleet.length > 0 && (
             <div className="form-group" style={{ marginBottom:20 }}>
-              <label className="form-label" style={{ color:'var(--blue)' }}>🚛 Pre-fill from Fleet Vehicle (optional)</label>
+              <label className="form-label" style={{ color:'var(--blue)' }}>Pre-fill from Fleet Vehicle (optional)</label>
               <select className="form-input" style={{ appearance:'auto', borderColor: selectedFleetId ? 'var(--blue)' : 'var(--border)', background: selectedFleetId ? 'rgba(37,99,235,0.04)' : 'var(--surface2)' }}
                 value={selectedFleetId} onChange={e => handleFleetSelect(e.target.value)}>
                 <option value="">— Type manually / Register new vehicle —</option>
                 {fleet.map(v => <option key={v.id} value={v.id}>{v.plate} — {v.make} {v.model} ({v.year})</option>)}
               </select>
-              {selectedFleetId && <div style={{ fontSize:11, color:'var(--blue)', marginTop:5, fontWeight:600 }}>✅ Pre-filled from fleet — you can still edit any field below</div>}
+              {selectedFleetId && <div style={{ fontSize:11, color:'var(--blue)', marginTop:5, fontWeight:600 }}>Pre-filled from fleet — you can still edit any field below</div>}
             </div>
           )}
           <div style={{ fontSize:11, fontWeight:800, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:14, paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Vehicle Details</div>
@@ -1118,7 +1330,6 @@ function VehicleModal({ vehicle, onSave, onClose }) {
             <div><label className="form-label">Type *</label><select className="form-input" style={{ appearance:'auto' }} value={form.type} onChange={e=>s('type',e.target.value)}>{['Sedan','SUV','Pickup Truck','Van','Minibus','Truck','Motorcycle'].map(t=><option key={t}>{t}</option>)}</select></div>
             <div><label className="form-label">Mileage (km) *</label><input className="form-input" type="number" value={form.mileage} onChange={e=>s('mileage',e.target.value)}/></div>
           </div>
-
           <div style={{ fontSize:11, fontWeight:800, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', margin:'20px 0 14px', paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Owner Information</div>
           <div className="form-row" style={{ marginBottom:14 }}>
             <div><label className="form-label">Owner Name *</label><input className="form-input" value={form.ownerName} onChange={e=>s('ownerName',e.target.value)} placeholder="Full name"/></div>
@@ -1130,14 +1341,28 @@ function VehicleModal({ vehicle, onSave, onClose }) {
           </div>
           <div style={{ fontSize:11, fontWeight:800, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', margin:'20px 0 14px', paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Driver Information</div>
           <div className="form-row" style={{ marginBottom:14 }}>
-            <div><label className="form-label">Driver Name</label><input className="form-input" value={form.driverName} onChange={e=>s('driverName',e.target.value)} placeholder="Full name"/></div>
-            <div><label className="form-label">Driver Phone</label><input className="form-input" value={form.driverPhone} onChange={e=>s('driverPhone',e.target.value)} placeholder="+250 788 000 000"/></div>
+            <div><label className="form-label">Driver Name *</label><input className="form-input" value={form.driverName} onChange={e=>s('driverName',e.target.value)} placeholder="Full name"/></div>
+            <div><label className="form-label">Driver Phone *</label><input className="form-input" value={form.driverPhone} onChange={e=>s('driverPhone',e.target.value)} placeholder="+250 788 000 000"/></div>
           </div>
-
         </div>
         <div className="modal-footer">
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn btn-success" onClick={()=>onSave(form)}>{vehicle?'Save Changes':'Register Vehicle'}</button>
+          <button className="btn btn-success" onClick={()=>{
+            const missing = []
+            if (!form.plate) missing.push('Plate')
+            if (!form.make) missing.push('Make')
+            if (!form.model) missing.push('Model')
+            if (!form.color) missing.push('Color')
+            if (!form.mileage) missing.push('Mileage')
+            if (!form.ownerName) missing.push('Owner Name')
+            if (!form.ownerPhone) missing.push('Owner Phone')
+            if (!form.ownerEmail) missing.push('Owner Email')
+            if (!form.ownerCompany) missing.push('Company')
+            if (!form.driverName) missing.push('Driver Name')
+            if (!form.driverPhone) missing.push('Driver Phone')
+            if (missing.length > 0) { alert('Required fields missing:\n• ' + missing.join('\n• ')); return }
+            onSave(form)
+          }}>{vehicle?'Save Changes':'Register Vehicle'}</button>
         </div>
       </div>
     </div>
@@ -1225,7 +1450,22 @@ function FleetModal({ vehicle, onSave, onClose }) {
         </div>
         <div className="modal-footer">
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn btn-blue" onClick={()=>{ if (!form.plate||!form.make||!form.model||!form.driverName||!form.driverPhone||!form.insuranceCompany||!form.insuranceNumber||!form.insuranceExpiry){alert('Required fields missing');return} onSave(form) }}>{vehicle?'Save Changes':'Add Vehicle'}</button>
+          <button className="btn btn-blue" onClick={()=>{
+            const missing = []
+            if (!form.plate) missing.push('Plate')
+            if (!form.make) missing.push('Make')
+            if (!form.model) missing.push('Model')
+            if (!form.color) missing.push('Color')
+            if (!form.mileage) missing.push('Mileage')
+            if (!form.driverName) missing.push('Driver Name')
+            if (!form.driverPhone) missing.push('Driver Phone')
+            if (!form.insuranceCompany) missing.push('Insurance Company')
+            if (!form.insuranceNumber) missing.push('Insurance Number')
+            if (!form.insuranceExpiry) missing.push('Insurance Expiry')
+            if (!form.inspectionExpiry) missing.push('Inspection Expiry')
+            if (missing.length > 0) { alert('Required fields missing:\n• ' + missing.join('\n• ')); return }
+            onSave(form)
+          }}>{vehicle?'Save Changes':'Add Vehicle'}</button>
         </div>
       </div>
     </div>
@@ -1259,7 +1499,7 @@ function VehicleDetail({ vehicle, user, onBack, onUpdate }) {
       <div className="page-header">
         <div>
           <button onClick={onBack} style={{ background:'none', border:'none', color:'var(--text2)', cursor:'pointer', fontFamily:'Nunito,sans-serif', fontSize:14, marginBottom:12, padding:0, fontWeight:600 }}>← Back to Vehicles</button>
-          <div className="page-title">🚗 {vehicle.make} {vehicle.model}</div>
+          <div className="page-title">{vehicle.make} {vehicle.model}</div>
           <div style={{ display:'flex', alignItems:'center', gap:10, marginTop:8 }}>
             <span style={{ fontFamily:'DM Mono,monospace', color:'var(--blue)', fontSize:15, fontWeight:700 }}>{vehicle.plate}</span>
             <span style={{ display:'inline-flex', alignItems:'center', gap:6, fontSize:12, fontWeight:700, borderRadius:20, padding:'4px 10px', background:ss.bg, color:ss.color }}>
