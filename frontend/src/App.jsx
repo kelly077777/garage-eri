@@ -419,7 +419,7 @@ function AlertsDashboard({ onAlertsChange }) {
 }
 
 
-// ─── EXPENSES PAGE 
+// ─── EXPENSES PAGE ────────────────────────────────────────────────────────────
 function ExpensesPage() {
   const [expenses, setExpenses] = useState([])
   const [showAdd, setShowAdd] = useState(false)
@@ -513,16 +513,18 @@ function ExpensesPage() {
         // Parse date — handles both Date objects and strings like "13/2/2026" or "28/2/2026"
         let dateStr = ''
         if (rawDate instanceof Date) {
-          dateStr = rawDate.toISOString().split('T')[0]
+          // Use local date parts to avoid timezone shift
+          const y = rawDate.getFullYear()
+          const m = String(rawDate.getMonth()+1).padStart(2,'0')
+          const d = String(rawDate.getDate()).padStart(2,'0')
+          dateStr = `${y}-${m}-${d}`
         } else if (typeof rawDate === 'string' && rawDate.trim()) {
           const raw = rawDate.trim()
           if (raw.includes('/')) {
-            // Format: DD/MM/YYYY or D/M/YYYY
             const parts = raw.split('/')
             if (parts.length === 3) {
               const day = parts[0].padStart(2,'0')
               const month = parts[1].padStart(2,'0')
-              // Handle 2-digit year e.g. 23/2/2023 — keep as is, 4-digit year
               const year = parts[2].length === 2 ? '20' + parts[2] : parts[2]
               dateStr = `${year}-${month}-${day}`
             }
