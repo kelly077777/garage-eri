@@ -2016,7 +2016,7 @@ function VehiclesPage({ user }) {
   )
 }
 
-// ─── APP ──────────────────────────────────────────────────────────────────────
+// ─── AP
 export default function App() {
   const [user, setUser] = useState(null)
   const [activeTab, setActiveTab] = useState('dashboard')
