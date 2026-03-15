@@ -103,26 +103,16 @@ function LoginPage({ onLogin }) {
       <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.15)' }} />
       {/* Layout: left ad text + center card + right ad text */}
       <div style={{ position:'relative', zIndex:1, display:'flex', alignItems:'center', justifyContent:'center', width:'100%', maxWidth:1200, padding:'0 40px', gap:48 }}>
-        {/* Left ad */}
-        <div style={{ flex:1, textAlign:'left', maxWidth:280 }}>
-          <div style={{ fontSize:13, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>ERI-RWANDA LTD</div>
-          <div style={{ fontSize:30, fontWeight:800, color:'#ffffff', lineHeight:1.25, textShadow:'0 2px 12px rgba(0,0,0,0.5)', marginBottom:14, fontFamily:'Nunito,sans-serif' }}>
-            Your Trusted<br/>Importer &<br/>Distributor
-          </div>
-          <div style={{ width:50, height:3, background:'#2563eb', borderRadius:2, marginBottom:14 }}/>
-          <div style={{ fontSize:13, color:'rgba(255,255,255,0.85)', lineHeight:1.8, textShadow:'0 1px 6px rgba(0,0,0,0.4)', fontFamily:'Nunito,sans-serif' }}>
-            Bringing quality products<br/>across Rwanda with a<br/>reliable fleet since day one.
-          </div>
-        </div>
-        {/* Center login card */}
-        <div className="login-card" style={{ position:'relative', zIndex:1, background:'rgba(255,255,255,0.5)', backdropFilter:'blur(18px)', WebkitBackdropFilter:'blur(18px)', border:'1px solid rgba(255,255,255,0.5)', boxShadow:'0 8px 40px rgba(0,0,0,0.18)', flexShrink:0, width:400 }}>
-          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginBottom:36 }}>
-            <div style={{ width:96, height:96, borderRadius:20, overflow:'hidden', marginBottom:18, boxShadow:'0 4px 20px rgba(0,0,0,0.18)', border:'3px solid rgba(255,255,255,0.15)', flexShrink:0 }}>
+        <div style={{ flex:1 }}/>
+        {/* Center login card — smaller */}
+        <div className="login-card" style={{ position:'relative', zIndex:1, background:'rgba(255,255,255,0.5)', backdropFilter:'blur(18px)', WebkitBackdropFilter:'blur(18px)', border:'1px solid rgba(255,255,255,0.5)', boxShadow:'0 8px 40px rgba(0,0,0,0.18)', flexShrink:0, width:360, padding:36 }}>
+          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginBottom:28 }}>
+            <div style={{ width:72, height:72, borderRadius:16, overflow:'hidden', marginBottom:14, boxShadow:'0 4px 20px rgba(0,0,0,0.18)', border:'3px solid rgba(255,255,255,0.15)', flexShrink:0 }}>
               <img src="/canvas.png" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
             </div>
-            <div style={{ fontFamily:'Nunito, Calibri Light, Calibri, sans-serif', fontSize:22, fontWeight:800, color:'var(--text)', textAlign:'center', letterSpacing:'-0.3px', lineHeight:1.3 }}>
+            <div style={{ fontFamily:'Nunito, Calibri Light, Calibri, sans-serif', fontSize:20, fontWeight:800, color:'var(--text)', textAlign:'center', letterSpacing:'-0.3px', lineHeight:1.3 }}>
               ERI-RWANDA<br/>
-              <span style={{ color:'var(--blue)', fontSize:18 }}>Fleet Management System</span>
+              <span style={{ color:'var(--blue)', fontSize:15 }}>Fleet Management System</span>
             </div>
           </div>
           {error && <div className="error-msg">{error}</div>}
@@ -130,15 +120,15 @@ function LoginPage({ onLogin }) {
           <div className="form-group"><label className="form-label">Password</label><input className="form-input" type="password" placeholder="••••••••" value={password} onChange={e => { setPassword(e.target.value); setError('') }} onKeyDown={e => e.key === 'Enter' && handleLogin()} /></div>
           <button className="btn-primary" onClick={handleLogin} disabled={loading}>{loading ? 'Signing in...' : 'Sign In'}</button>
         </div>
-        {/* Right ad */}
-        <div style={{ flex:1, textAlign:'right', maxWidth:280 }}>
-          <div style={{ fontSize:13, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>Fleet Management</div>
-          <div style={{ fontSize:30, fontWeight:800, color:'#ffffff', lineHeight:1.25, textShadow:'0 2px 12px rgba(0,0,0,0.5)', marginBottom:14, fontFamily:'Nunito,sans-serif' }}>
-            Keeping the<br/>Fleet Moving<br/>Efficiently
+        {/* Right — ERI-RWANDA Company Ad */}
+        <div style={{ flex:1, textAlign:'right', maxWidth:260 }}>
+          <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>ERI-RWANDA LTD</div>
+          <div style={{ fontSize:28, fontWeight:800, color:'#ffffff', lineHeight:1.25, textShadow:'0 2px 12px rgba(0,0,0,0.5)', marginBottom:14, fontFamily:'Nunito,sans-serif' }}>
+            Your Trusted<br/>Importer &<br/>Distributor
           </div>
           <div style={{ width:50, height:3, background:'#2563eb', borderRadius:2, marginLeft:'auto', marginBottom:14 }}/>
           <div style={{ fontSize:13, color:'rgba(255,255,255,0.85)', lineHeight:1.8, textShadow:'0 1px 6px rgba(0,0,0,0.4)', fontFamily:'Nunito,sans-serif' }}>
-            Track vehicles, manage fuel,<br/>monitor expenses and keep<br/>your operations on the road.
+            Bringing quality products<br/>across Rwanda with a<br/>reliable fleet since day one.
           </div>
         </div>
       </div>
