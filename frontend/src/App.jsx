@@ -419,7 +419,7 @@ function AlertsDashboard({ onAlertsChange }) {
 }
 
 
-// ─── EXPENSES PAGE ────────────────────────────────────────────────────────────
+// ─── EXPENSES PAGE 
 function ExpensesPage() {
   const [expenses, setExpenses] = useState([])
   const [showAdd, setShowAdd] = useState(false)
