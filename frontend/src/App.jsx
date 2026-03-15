@@ -186,7 +186,7 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout, alertCount }) {
         {user.role === 'manager' && N('fuel','Fuel Logs')}
         {N('inventory','Inventory')}
         {user.role === 'manager' && N('staff','Staff')}
-        {user.role === 'manager' && N('expenses','Expenses')}
+        {(user.role === 'manager' || user.role === 'supervisor') && N('expenses','Expenses')}
         {user.role === 'manager' && N('reports','Reports')}
       </nav>
       <div style={{ padding:16, borderTop:'1px solid var(--border)' }}>
@@ -591,7 +591,7 @@ function ExpensesPage({ user }) {
       <div className="page-header">
         <div><div className="page-title">Garage Expenses</div><div className="page-sub">Daily expense records — Manager only</div></div>
         <div style={{ display:'flex', gap:10 }}>
-          <button className="btn btn-danger" style={{ fontSize:13 }} onClick={()=>{ setShowDeleteModal(true); setDeleteMonth('') }}>Delete by Month</button>
+          {user?.role === 'manager' && <button className="btn btn-danger" style={{ fontSize:13 }} onClick={()=>{ setShowDeleteModal(true); setDeleteMonth('') }}>Delete by Month</button>}
           <button className="btn btn-ghost" onClick={()=>{ setShowImportModal(true); setImportResult(null) }} disabled={importing}>
             {importing ? 'Importing...' : 'Import Excel'}
           </button>
@@ -2050,7 +2050,7 @@ function VehiclesPage({ user }) {
                 </div>
                 <div style={{ marginTop:10, display:'flex', justifyContent:'flex-end', gap:8 }}>
                   <button className="btn btn-ghost" style={{ padding:'6px 14px', fontSize:12 }} onClick={e=>{ e.stopPropagation(); setEditFleet(v); setShowAddFleet(true) }}>Edit</button>
-                  <button className="btn btn-danger" style={{ padding:'6px 14px', fontSize:12 }} onClick={async e=>{ e.stopPropagation(); if (!window.confirm('Delete this fleet vehicle?')) return; try { await api.delete(`/fleet/${v.id}`); fetchFleet() } catch { alert('Failed to delete') } }}>Delete</button>
+                  {user.role === 'manager' && <button className="btn btn-danger" style={{ padding:'6px 14px', fontSize:12 }} onClick={async e=>{ e.stopPropagation(); if (!window.confirm('Delete this fleet vehicle?')) return; try { await api.delete(`/fleet/${v.id}`); fetchFleet() } catch { alert('Failed to delete') } }}>Delete</button>}
                 </div>
               </div>
             )})}
