@@ -100,8 +100,18 @@ function LoginPage({ onLogin }) {
   }
   return (
     <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'100vh', width:'100%', backgroundImage:'url(/Page.jpg)', backgroundSize:'cover', backgroundPosition:'center', position:'relative' }}>
-      <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.25)' }} />
-      <div className="login-card" style={{ position:'relative', zIndex:1, background:'rgba(255,255,255,0.82)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', border:'1px solid rgba(255,255,255,0.6)', boxShadow:'0 8px 40px rgba(0,0,0,0.18)' }}>
+      <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.15)' }} />
+      {/* Right side vision text */}
+      <div style={{ position:'absolute', right:'6%', top:'50%', transform:'translateY(-50%)', zIndex:1, textAlign:'right', maxWidth:340 }}>
+        <div style={{ fontSize:36, fontWeight:800, color:'#ffffff', lineHeight:1.2, textShadow:'0 2px 12px rgba(0,0,0,0.4)', marginBottom:16, fontFamily:'Nunito,sans-serif' }}>
+          Delivering<br/>Excellence<br/>Every Mile
+        </div>
+        <div style={{ width:60, height:4, background:'var(--blue)', borderRadius:2, marginLeft:'auto', marginBottom:16 }}/>
+        <div style={{ fontSize:15, color:'rgba(255,255,255,0.9)', lineHeight:1.7, textShadow:'0 1px 6px rgba(0,0,0,0.4)', fontFamily:'Nunito,sans-serif', fontWeight:500 }}>
+          Manage your fleet, track expenses,<br/>monitor vehicles and keep your<br/>operations running efficiently.
+        </div>
+      </div>
+      <div className="login-card" style={{ position:'relative', zIndex:1, background:'rgba(255,255,255,0.55)', backdropFilter:'blur(16px)', WebkitBackdropFilter:'blur(16px)', border:'1px solid rgba(255,255,255,0.5)', boxShadow:'0 8px 40px rgba(0,0,0,0.15)', marginRight:'auto', marginLeft:'10%' }}>
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginBottom:36 }}>
           <div style={{ width:96, height:96, borderRadius:20, overflow:'hidden', marginBottom:18, boxShadow:'0 4px 20px rgba(0,0,0,0.18)', border:'3px solid rgba(255,255,255,0.15)', flexShrink:0 }}>
             <img src="/canvas.png" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
@@ -2048,7 +2058,7 @@ function VehiclesPage({ user }) {
   )
 }
 
-// ─── APP ──────────────────────────────────────────────────────────────────────
+// ─── APP ───────────────────────────────────────
 export default function App() {
   const [user, setUser] = useState(null)
   const [activeTab, setActiveTab] = useState('dashboard')
