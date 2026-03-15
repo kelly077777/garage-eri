@@ -164,14 +164,14 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout, alertCount }) {
       </div>
       <nav style={{ flex:1, padding:'16px 10px', display:'flex', flexDirection:'column', gap:2 }}>
         <div style={{ padding:'8px 12px 6px', fontSize:10, fontWeight:800, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.1em' }}>Main</div>
-        {user.role === 'manager' && N('dashboard','📊','Dashboard', alertCount)}
-        {(user.role === 'supervisor' || user.role === 'mechanic') && N('alerts','🔔','Alerts', alertCount)}
-        {N('vehicles','🚗','Vehicles')}
-        {user.role === 'manager' && N('fuel','⛽','Fuel Logs')}
-        {N('inventory','📦','Inventory')}
-        {user.role === 'manager' && N('staff','👥','Staff')}
-        {user.role === 'manager' && N('expenses','💰','Expenses')}
-        {user.role === 'manager' && N('reports','📋','Reports')}
+        {user.role === 'manager' && N('dashboard','Dashboard', alertCount)}
+        {(user.role === 'supervisor' || user.role === 'mechanic') && N('alerts','Alerts', alertCount)}
+        {N('vehicles','Vehicles')}
+        {user.role === 'manager' && N('fuel','Fuel Logs')}
+        {N('inventory','Inventory')}
+        {user.role === 'manager' && N('staff','Staff')}
+        {user.role === 'manager' && N('expenses','Expenses')}
+        {user.role === 'manager' && N('reports','Reports')}
       </nav>
       <div style={{ padding:16, borderTop:'1px solid var(--border)' }}>
         <div style={{ display:'flex', alignItems:'center', gap:10, padding:10, background:'var(--surface2)', borderRadius:10, marginBottom:10 }}>
@@ -228,7 +228,7 @@ function DashboardPage({ onAlertsChange }) {
           <div className="card" style={{ marginBottom:16, borderColor:'#fca5a5', borderWidth:1 }}>
             <div className="card-header" style={{ background:'#fff7f7' }}>
               <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                <span style={{ fontSize:20 }}>🚨</span>
+                <span style={{ fontSize:20 }}></span>
                 <div className="card-title" style={{ color:'#dc2626' }}>Document Expiry Alerts</div>
               </div>
               <span style={{ fontSize:12, fontWeight:700, color:'#dc2626', background:'#fee2e2', borderRadius:20, padding:'3px 10px' }}>{expiryAlerts.length} alert{expiryAlerts.length>1?'s':''}</span>
@@ -237,7 +237,7 @@ function DashboardPage({ onAlertsChange }) {
               {expiryAlerts.map(a => (
                 <div key={a.id} style={{ padding:'12px 20px', borderBottom:'1px solid #fee2e2', display:'flex', alignItems:'center', justifyContent:'space-between', background: a.expired ? '#fff5f5' : '#fffbeb' }}>
                   <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-                    <span style={{ fontSize:18 }}>{a.type==='Insurance' ? '🛡️' : '🔍'}</span>
+                    <span style={{ fontSize:18 }}>{a.type==='Insurance' ? '' : ''}</span>
                     <div>
                       <div style={{ fontSize:13, fontWeight:700 }}>
                         <span style={{ fontFamily:'DM Mono,monospace', color:'var(--blue)' }}>{a.plate}</span>
@@ -280,7 +280,7 @@ function DashboardPage({ onAlertsChange }) {
           <div className="card">
             <div className="card-header"><div className="card-title">Stock Alerts</div><span style={{ fontSize:12, color:lowStock.length>0?'#dc2626':'var(--text2)', fontWeight:600 }}>{lowStock.length} items need attention</span></div>
             {lowStock.length===0 ? (
-              <div style={{ padding:32, textAlign:'center', color:'var(--text3)' }}><div style={{ fontSize:28, marginBottom:8 }}>✅</div><div>All items well stocked</div></div>
+              <div style={{ padding:32, textAlign:'center', color:'var(--text3)' }}><div style={{ fontSize:28, marginBottom:8 }}></div><div>All items well stocked</div></div>
             ) : (
               <div style={{ maxHeight:220, overflowY:'auto' }}>
                 {lowStock.map(item => (
@@ -346,7 +346,7 @@ function AlertsDashboard({ onAlertsChange }) {
       <div className="page-content">
         {alerts.length === 0 ? (
           <div className="card" style={{ padding:64, textAlign:'center' }}>
-            <div style={{ fontSize:48, marginBottom:16 }}>✅</div>
+            <div style={{ fontSize:48, marginBottom:16 }}></div>
             <div style={{ fontSize:18, fontWeight:800, color:'var(--text)', marginBottom:8 }}>All documents are valid</div>
             <div style={{ fontSize:14, color:'var(--text2)' }}>No insurance or inspection expiring within 7 days</div>
           </div>
@@ -362,7 +362,7 @@ function AlertsDashboard({ onAlertsChange }) {
                     <div key={a.id} style={{ padding:'16px 20px', borderBottom: i < expired.length-1 ? '1px solid #fee2e2' : 'none', display:'flex', alignItems:'center', justifyContent:'space-between', background:'#fff5f5' }}>
                       <div style={{ display:'flex', alignItems:'center', gap:14 }}>
                         <div style={{ width:44, height:44, borderRadius:12, background:'#fee2e2', display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, flexShrink:0 }}>
-                          {a.type==='Insurance' ? '🛡️' : '🔍'}
+                          {a.type==='Insurance' ? '' : ''}
                         </div>
                         <div>
                           <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:3 }}>
@@ -390,7 +390,7 @@ function AlertsDashboard({ onAlertsChange }) {
                     <div key={a.id} style={{ padding:'16px 20px', borderBottom: i < upcoming.length-1 ? '1px solid #fef3c7' : 'none', display:'flex', alignItems:'center', justifyContent:'space-between', background:'#fffbeb' }}>
                       <div style={{ display:'flex', alignItems:'center', gap:14 }}>
                         <div style={{ width:44, height:44, borderRadius:12, background:'#fef3c7', display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, flexShrink:0 }}>
-                          {a.type==='Insurance' ? '🛡️' : '🔍'}
+                          {a.type==='Insurance' ? '' : ''}
                         </div>
                         <div>
                           <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:3 }}>
@@ -420,7 +420,7 @@ function AlertsDashboard({ onAlertsChange }) {
 
 
 // ─── EXPENSES PAGE ────────────────────────────────────────────────────────────
-function ExpensesPage() {
+function ExpensesPage({ user }) {
   const [expenses, setExpenses] = useState([])
   const [showAdd, setShowAdd] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
@@ -575,9 +575,9 @@ function ExpensesPage() {
       <div className="page-header">
         <div><div className="page-title">Garage Expenses</div><div className="page-sub">Daily expense records — Manager only</div></div>
         <div style={{ display:'flex', gap:10 }}>
-          <button className="btn btn-danger" style={{ fontSize:13 }} onClick={()=>{ setShowDeleteModal(true); setDeleteMonth('') }}>🗑 Delete by Month</button>
+          <button className="btn btn-danger" style={{ fontSize:13 }} onClick={()=>{ setShowDeleteModal(true); setDeleteMonth('') }}>Delete by Month</button>
           <button className="btn btn-ghost" onClick={()=>{ setShowImportModal(true); setImportResult(null) }} disabled={importing}>
-            {importing ? '⏳ Importing...' : '⬆ Import Excel'}
+            {importing ? 'Importing...' : 'Import Excel'}
           </button>
           <button className="btn btn-success" onClick={()=>{ setForm(empty); setShowAdd(true) }}>+ Add Expense</button>
         </div>
@@ -589,7 +589,7 @@ function ExpensesPage() {
           <div style={{ marginBottom:16, padding:'14px 18px', borderRadius:12, border:`1px solid ${importResult.failed===0?'#86efac':'#fca5a5'}`, background: importResult.failed===0?'#f0fdf4':'#fff5f5', display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:16 }}>
             <div style={{ flex:1 }}>
               <div style={{ fontWeight:800, fontSize:14, color: importResult.failed===0?'#166534':'#dc2626', marginBottom:4 }}>
-                {importResult.failed===0?'✅':'⚠️'} Import Complete — {importResult.success} imported{importResult.failed>0?`, ${importResult.failed} failed`:''}{importResult.skipped>0?`, ${importResult.skipped} skipped`:''}
+                {importResult.failed===0?'':''} Import Complete — {importResult.success} imported{importResult.failed>0?`, ${importResult.failed} failed`:''}{importResult.skipped>0?`, ${importResult.skipped} skipped`:''}
               </div>
               {importResult.errors.length>0 && <div style={{ fontSize:12, color:'#dc2626' }}>{importResult.errors.map((e,i)=><div key={i}>• {e}</div>)}</div>}
             </div>
@@ -626,7 +626,7 @@ function ExpensesPage() {
           </div>
           {filtered.length===0 ? (
             <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}>
-              <div style={{ fontSize:36, marginBottom:12 }}>💰</div>
+              <div style={{ fontSize:36, marginBottom:12 }}></div>
               <div>No expense records found</div>
             </div>
           ) : (
@@ -729,7 +729,7 @@ function ExpensesPage() {
                     return <option key={m} value={m}>{m} {count>0?`(${count} records)`:'(no records)'}</option>
                   })}
                 </select>
-                {deleteMonth && (()=>{ const idx=MONTHS.indexOf(deleteMonth)+1; const count=expenses.filter(e=>e.date&&new Date(e.date).getMonth()+1===idx).length; return <div style={{ fontSize:11, color:'#dc2626', marginTop:6, fontWeight:600 }}>⚠️ This will permanently delete {count} expense record{count!==1?'s':''} for {deleteMonth}</div> })()}
+                {deleteMonth && (()=>{ const idx=MONTHS.indexOf(deleteMonth)+1; const count=expenses.filter(e=>e.date&&new Date(e.date).getMonth()+1===idx).length; return <div style={{ fontSize:11, color:'#dc2626', marginTop:6, fontWeight:600 }}> This will permanently delete {count} expense record{count!==1?'s':''} for {deleteMonth}</div> })()}
               </div>
               <div style={{ background:'#fff5f5', border:'1px solid #fca5a5', borderRadius:10, padding:'12px 14px', fontSize:13, color:'#dc2626' }}>
                 This action cannot be undone.
@@ -752,23 +752,24 @@ function ExpensesPage() {
 function ReportsPage() {
   const [activeReport, setActiveReport] = useState('fleet')
   const [search, setSearch] = useState('')
-  const [data, setData] = useState({ vehicles:[], fleet:[], fuel:[], inventory:[], staff:[] })
+  const [data, setData] = useState({ vehicles:[], fleet:[], fuel:[], inventory:[], staff:[], expenses:[] })
   useEffect(() => {
-    Promise.all([api.get('/vehicles'), api.get('/fleet'), api.get('/fleet/fuel/all'), api.get('/inventory'), api.get('/auth/users')])
-      .then(([v,f,fuel,inv,s]) => setData({
+    Promise.all([api.get('/vehicles'), api.get('/fleet'), api.get('/fleet/fuel/all'), api.get('/inventory'), api.get('/auth/users'), api.get('/expenses')])
+      .then(([v,f,fuel,inv,s,exp]) => setData({
         vehicles: Array.isArray(v.data) ? v.data : v.data?.content || [],
         fleet: Array.isArray(f.data) ? f.data : f.data?.content || [],
         fuel: Array.isArray(fuel.data) ? fuel.data : fuel.data?.content || [],
         inventory: Array.isArray(inv.data) ? inv.data : inv.data?.content || [],
-        staff: Array.isArray(s.data) ? s.data : s.data?.content || []
+        staff: Array.isArray(s.data) ? s.data : s.data?.content || [],
+        expenses: Array.isArray(exp.data) ? exp.data : []
       })).catch(e => console.error(e))
   }, [])
   const reportTabs = [
-    { key:'fleet', label:'Fleet Vehicles', icon:'🚛' },
-    { key:'garage', label:'Garage Vehicles', icon:'🚗' },
-    { key:'fuel', label:'Fuel Logs', icon:'⛽' },
-    { key:'inventory', label:'Inventory', icon:'📦' },
-    { key:'staff', label:'Staff', icon:'👥' },
+    { key:'fleet', label:'Fleet Vehicles', icon:'' },
+    { key:'garage', label:'Garage Vehicles', icon:'' },
+    { key:'fuel', label:'Fuel Logs', icon:'' },
+    { key:'inventory', label:'Inventory', icon:'' },
+    { key:'staff', label:'Staff', icon:'' },
   ]
   const q = search.toLowerCase()
   const filteredFleet = data.fleet.filter(v => !q || v.plate?.toLowerCase().includes(q) || v.make?.toLowerCase().includes(q) || v.model?.toLowerCase().includes(q) || v.driverName?.toLowerCase().includes(q))
@@ -776,6 +777,7 @@ function ReportsPage() {
   const filteredFuel = data.fuel.filter(f => !q || f.fleetVehicle?.plate?.toLowerCase().includes(q) || f.station?.toLowerCase().includes(q) || f.filledBy?.toLowerCase().includes(q))
   const filteredInventory = data.inventory.filter(i => !q || i.name?.toLowerCase().includes(q) || i.category?.toLowerCase().includes(q) || i.supplier?.toLowerCase().includes(q))
   const filteredStaff = data.staff.filter(s => !q || s.name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q) || s.role?.toLowerCase().includes(q))
+  const filteredExpenses = data.expenses.filter(e => !q || e.plate?.toLowerCase().includes(q) || e.reason?.toLowerCase().includes(q) || e.assignment?.toLowerCase().includes(q) || e.domain?.toLowerCase().includes(q))
   const exportCSV = (rows, headers, filename) => {
     const csv = [headers, ...rows].map(r => r.map(c => `"${c??''}"`).join(',')).join('\n')
     const blob = new Blob([csv], { type:'text/csv' })
@@ -787,7 +789,7 @@ function ReportsPage() {
     const tableRows = rows.map(r => `<tr>${r.map(c=>`<td>${c??'—'}</td>`).join('')}</tr>`).join('')
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
     <style>body{font-family:Calibri,sans-serif;padding:30px;color:#111}h1{font-size:20px;margin-bottom:4px}p{color:#555;font-size:12px;margin:2px 0}table{width:100%;border-collapse:collapse;margin-top:16px;font-size:12px}th{background:#2563eb;color:#fff;padding:8px;text-align:left}td{padding:7px 8px;border-bottom:1px solid #eee}tr:nth-child(even) td{background:#f8faff}.footer{margin-top:16px;font-size:11px;color:#888}</style>
-    </head><body><h1>📋 ${title}</h1><p>Generated: ${new Date().toLocaleString()}</p><p>Total Records: ${rows.length}</p>
+    </head><body><h1> ${title}</h1><p>Generated: ${new Date().toLocaleString()}</p><p>Total Records: ${rows.length}</p>
     <table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${tableRows}</tbody></table>
     <div class="footer">ERI-RWANDA Fleet Management System</div></body></html>`
     const w = window.open('','_blank'); w.document.write(html); w.document.close(); w.print()
@@ -798,6 +800,7 @@ function ReportsPage() {
     else if (activeReport==='fuel') exportCSV(filteredFuel.map(f=>[f.fleetVehicle?.plate,f.date,f.liters,f.costPerLiter,f.totalCost,f.mileageAtFill,f.station,f.filledBy]),['Vehicle','Date','Liters','Cost/L','Total Cost','Mileage','Station','Filled By'],'fuel-logs')
     else if (activeReport==='inventory') exportCSV(filteredInventory.map(i=>[i.name,i.category,i.quantity,i.unit,i.minQuantity,i.unitPrice,i.status,i.supplier,i.location]),['Name','Category','Qty','Unit','Min Qty','Unit Price','Status','Supplier','Location'],'inventory')
     else if (activeReport==='staff') exportCSV(filteredStaff.map(s=>[s.name,s.email,s.role]),['Name','Email','Role'],'staff')
+    else if (activeReport==='expenses') exportCSV(filteredExpenses.map(e=>[e.date,e.plate,e.assignment,e.reason,e.domain,e.amount]),['Date','Plate','Assignment','Reason','Domain','Amount (RWF)'],'expenses')
   }
   const handleExportPDF = () => {
     if (activeReport==='fleet') exportPDF('Fleet Vehicles Report',['Plate','Make','Model','Year','Status','Driver','Phone','Mileage','Ins. Expiry'],filteredFleet.map(v=>[v.plate,v.make,v.model,v.year,v.status,v.driverName,v.driverPhone,v.mileage,v.insuranceExpiry]))
@@ -805,15 +808,16 @@ function ReportsPage() {
     else if (activeReport==='fuel') exportPDF('Fuel Logs Report',['Vehicle','Date','Liters','Cost/L (RWF)','Total Cost (RWF)','Station','Filled By'],filteredFuel.map(f=>[f.fleetVehicle?.plate,f.date,f.liters,f.costPerLiter,f.totalCost,f.station,f.filledBy]))
     else if (activeReport==='inventory') exportPDF('Inventory Report',['Name','Category','Qty','Unit Price (RWF)','Status','Supplier','Location'],filteredInventory.map(i=>[i.name,i.category,`${i.quantity} ${i.unit}`,i.unitPrice,i.status,i.supplier,i.location]))
     else if (activeReport==='staff') exportPDF('Staff Report',['Name','Email','Role'],filteredStaff.map(s=>[s.name,s.email,s.role]))
+    else if (activeReport==='expenses') exportPDF('Expenses Report',['Date','Plate','Assignment','Reason','Domain','Amount (RWF)'],filteredExpenses.map(e=>[e.date,e.plate||'—',e.assignment||'—',e.reason,e.domain,(e.amount||0).toLocaleString()]))
   }
-  const currentCount = {fleet:filteredFleet.length,garage:filteredGarage.length,fuel:filteredFuel.length,inventory:filteredInventory.length,staff:filteredStaff.length}[activeReport]
+  const currentCount = {fleet:filteredFleet.length,garage:filteredGarage.length,fuel:filteredFuel.length,inventory:filteredInventory.length,staff:filteredStaff.length,expenses:filteredExpenses.length}[activeReport]
   return (
     <>
       <div className="page-header">
         <div><div className="page-title">Reports</div><div className="page-sub">Generate and export reports — Manager only</div></div>
         <div style={{ display:'flex', gap:10 }}>
-          <button className="btn btn-ghost" onClick={handleExportCSV}>📥 Export CSV</button>
-          <button className="btn btn-blue" onClick={handleExportPDF}>📄 Export PDF</button>
+          <button className="btn btn-ghost" onClick={handleExportCSV}> Export CSV</button>
+          <button className="btn btn-blue" onClick={handleExportPDF}> Export PDF</button>
         </div>
       </div>
       <div className="page-content">
@@ -827,7 +831,7 @@ function ReportsPage() {
         </div>
         <div style={{ marginBottom:16, display:'flex', gap:10, alignItems:'center' }}>
           <div style={{ position:'relative', flex:1, maxWidth:400 }}>
-            <span style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:'var(--text3)', fontSize:16 }}>🔍</span>
+            <span style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:'var(--text3)', fontSize:16 }}></span>
             <input className="form-input" style={{ paddingLeft:38 }} placeholder="Search by plate number, name..." value={search} onChange={e=>setSearch(e.target.value)}/>
           </div>
           {search && <button className="btn btn-ghost" style={{ padding:'10px 14px' }} onClick={()=>setSearch('')}>✕ Clear</button>}
@@ -933,6 +937,33 @@ function ReportsPage() {
                     </tr>
                   )})}
                   </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+        {activeReport==='expenses' && (
+          <div className="card">
+            <div className="card-header">
+              <div className="card-title">Expenses</div>
+              <span style={{ fontFamily:'DM Mono,monospace', fontSize:13, color:'var(--red)', fontWeight:700 }}>Total: {filteredExpenses.reduce((s,e)=>s+(e.amount||0),0).toLocaleString()} RWF</span>
+            </div>
+            {filteredExpenses.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}>No expense records found</div> : (
+              <div style={{ overflowX:'auto' }}>
+                <table className="table">
+                  <thead><tr><th>Date</th><th>Plate</th><th>Assignment</th><th>Reason</th><th>Category</th><th>Amount (RWF)</th></tr></thead>
+                  <tbody>{filteredExpenses.map(e=>{
+                    return (
+                      <tr key={e.id}>
+                        <td style={{ color:'var(--text2)' }}>{e.date}</td>
+                        <td style={{ fontFamily:'DM Mono,monospace', color:'var(--blue)', fontWeight:700 }}>{e.plate||'—'}</td>
+                        <td style={{ color:'var(--text2)' }}>{e.assignment||'—'}</td>
+                        <td style={{ fontWeight:600 }}>{e.reason}</td>
+                        <td><span style={{ fontSize:11, fontWeight:700, borderRadius:20, padding:'3px 10px', background:'#eff6ff', color:'#1d4ed8' }}>{e.domain}</span></td>
+                        <td style={{ fontFamily:'DM Mono,monospace', fontWeight:700, color:'var(--red)' }}>{(e.amount||0).toLocaleString()}</td>
+                      </tr>
+                    )
+                  })}</tbody>
                 </table>
               </div>
             )}
@@ -1152,10 +1183,10 @@ function FuelLogsPage({ user }) {
         <div><div className="page-title">Fuel Logs</div><div className="page-sub">Track fuel consumption for fleet vehicles</div></div>
         <div style={{ display:'flex', gap:10 }}>
           <button className="btn btn-danger" style={{ fontSize:13 }} onClick={()=>{ setShowDeleteModal(true); setDeleteMonth('') }}>
-            🗑 Delete by Month
+            Delete by Month
           </button>
           <button className="btn btn-ghost" onClick={()=>{ setShowImportModal(true); setImportResult(null) }} disabled={importing}>
-            {importing ? '⏳ Importing...' : '⬆ Import Tally Excel'}
+            {importing ? 'Importing...' : 'Import Tally Excel'}
           </button>
           <button className="btn btn-blue" onClick={openAdd}>+ Log Fuel Fill</button>
         </div>
@@ -1166,7 +1197,7 @@ function FuelLogsPage({ user }) {
           <div style={{ marginBottom:16, padding:'14px 18px', borderRadius:12, border:`1px solid ${importResult.failed===0?'#86efac':'#fca5a5'}`, background: importResult.failed===0 ? '#f0fdf4':'#fff5f5', display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:16 }}>
             <div style={{ flex:1 }}>
               <div style={{ fontWeight:800, fontSize:14, color: importResult.failed===0?'#166534':'#dc2626', marginBottom:6 }}>
-                {importResult.failed===0 ? '✅' : '⚠️'} Import Complete — {importResult.success} imported{importResult.failed>0?`, ${importResult.failed} failed`:''}{importResult.skipped>0?`, ${importResult.skipped} skipped`:''}
+                {importResult.failed===0 ? '' : ''} Import Complete — {importResult.success} imported{importResult.failed>0?`, ${importResult.failed} failed`:''}{importResult.skipped>0?`, ${importResult.skipped} skipped`:''}
               </div>
               {importResult.errors.length>0 && (
                 <div style={{ fontSize:12, color:'#dc2626', marginBottom:4 }}>
@@ -1196,7 +1227,7 @@ function FuelLogsPage({ user }) {
         </div>
         <div className="card">
           <div className="card-header"><div className="card-title">Fuel History</div><span style={{ fontSize:12, color:'var(--text2)', fontWeight:600 }}>{filtered.length} entries</span></div>
-          {filtered.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}><div style={{ fontSize:36, marginBottom:12 }}>⛽</div><div>No fuel logs yet</div></div> : (
+          {filtered.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}><div style={{ fontSize:36, marginBottom:12 }}></div><div>No fuel logs yet</div></div> : (
             <table className="table">
               <thead><tr><th>Date</th><th>Particulars (Plate)</th><th>Vch Type</th><th>Vch No.</th><th>Quantity (L)</th><th>Value (RWF)</th><th>Actions</th></tr></thead>
               <tbody>{[...filtered].reverse().map(l=>(
@@ -1242,7 +1273,7 @@ function FuelLogsPage({ user }) {
                   const monthIndex = MONTHS.indexOf(deleteMonth) + 1
                   const count = logs.filter(l => l.date && new Date(l.date).getMonth() + 1 === monthIndex).length
                   return <div style={{ fontSize:11, color:'#dc2626', marginTop:6, fontWeight:600 }}>
-                    ⚠️ This will permanently delete {count} fuel log record{count !== 1 ? 's' : ''} for {deleteMonth}
+                     This will permanently delete {count} fuel log record{count !== 1 ? 's' : ''} for {deleteMonth}
                   </div>
                 })()}
               </div>
@@ -1382,7 +1413,7 @@ function InventoryPage({ user }) {
         </div>
         <div className="card">
           <div className="card-header"><div className="card-title">Stock List</div><span style={{ fontSize:12, color:'var(--text2)', fontWeight:600 }}>{filtered.length} items</span></div>
-          {filtered.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}><div style={{ fontSize:36, marginBottom:12 }}>📦</div><div>No items found</div></div> : (
+          {filtered.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}><div style={{ fontSize:36, marginBottom:12 }}></div><div>No items found</div></div> : (
             <table className="table">
               <thead><tr><th>Item</th><th>Category</th><th>Qty</th><th>Unit Price</th><th>Location</th><th>Status</th>{canEdit&&<th>Actions</th>}</tr></thead>
               <tbody>{filtered.map(item=>{ const st=INV_STATUS[item.status]||INV_STATUS['In_Stock']; return (
@@ -1578,7 +1609,7 @@ function StaffPage() {
               <div className="form-group">
                 <label className="form-label">New Password</label>
                 <input className="form-input" type="password" placeholder="Leave blank to keep current password" value={editForm.newPassword} onChange={e=>setEditForm(f=>({...f,newPassword:e.target.value}))}/>
-                <div style={{ fontSize:11, color:'var(--text3)', marginTop:5 }}>🔒 Only fill this in if you want to change the password</div>
+                <div style={{ fontSize:11, color:'var(--text3)', marginTop:5 }}> Only fill this in if you want to change the password</div>
               </div>
             </div>
             <div className="modal-footer">
@@ -1878,10 +1909,10 @@ function VehicleDetail({ vehicle, user, onBack, onUpdate }) {
         </div>
         <div className="card">
           <div className="card-header"><div className="card-title">Service & Repair History</div><span style={{ fontSize:12, color:'var(--text2)', fontWeight:600 }}>{history.length} records</span></div>
-          {history.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}><div style={{ fontSize:36, marginBottom:12 }}>📋</div><div>No service records yet</div></div>
+          {history.length===0 ? <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}><div style={{ fontSize:36, marginBottom:12 }}></div><div>No service records yet</div></div>
             : [...history].reverse().map(h=>(
               <div key={h.id} style={{ padding:'16px 20px', borderBottom:'1px solid var(--border)', display:'flex', gap:16 }}>
-                <div style={{ width:36, height:36, borderRadius:'50%', background:'var(--surface2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>🔧</div>
+                <div style={{ width:36, height:36, borderRadius:'50%', background:'var(--surface2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}></div>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:14, fontWeight:700, marginBottom:3 }}>{h.type}</div>
                   <div style={{ fontSize:13, color:'var(--text2)', marginBottom:6 }}>{h.description}</div>
@@ -1941,7 +1972,7 @@ function VehiclesPage({ user }) {
       </div>
       <div className="page-content">
         <div style={{ display:'flex', gap:4, marginBottom:20, background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, padding:4, width:'fit-content' }}>
-          {[['garage','🚗','Garage'],['fleet','🚛','Fleet']].map(([key,icon,label])=>(
+          {[['garage','','Garage'],['fleet','','Fleet']].map(([key,icon,label])=>(
             <button key={key} className="tab-btn" onClick={()=>setTab(key)} style={{ background:tab===key?'var(--blue)':'transparent', color:tab===key?'#fff':'var(--text2)' }}>{icon} {label}</button>
           ))}
         </div>
@@ -1962,7 +1993,7 @@ function VehiclesPage({ user }) {
               </select>
             </div>
             {loading?<div style={{ textAlign:'center', padding:48, color:'var(--text3)' }}>Loading...</div>:
-              filtered.length===0?<div className="card" style={{ padding:48, textAlign:'center', color:'var(--text3)' }}><div style={{ fontSize:40, marginBottom:12 }}>🚗</div><div>No vehicles found</div></div>:(
+              filtered.length===0?<div className="card" style={{ padding:48, textAlign:'center', color:'var(--text3)' }}><div style={{ fontSize:40, marginBottom:12 }}></div><div>No vehicles found</div></div>:(
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:16 }}>
                 {filtered.map(v=>{ const ss=STATUS_STYLE[v.status]||STATUS_STYLE['Ready']; return (
                   <div key={v.id} onClick={()=>setSelected(v)} style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, padding:20, cursor:'pointer', transition:'all 0.2s', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}
@@ -1985,7 +2016,7 @@ function VehiclesPage({ user }) {
           </>
         )}
         {tab==='fleet'&&(
-          fleet.length===0?<div className="card" style={{ padding:48, textAlign:'center', color:'var(--text3)' }}><div style={{ fontSize:40, marginBottom:12 }}>🚛</div><div>No fleet vehicles yet</div></div>:(
+          fleet.length===0?<div className="card" style={{ padding:48, textAlign:'center', color:'var(--text3)' }}><div style={{ fontSize:40, marginBottom:12 }}></div><div>No fleet vehicles yet</div></div>:(
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:16 }}>
             {fleet.map(v=>{ const ss=FLEET_STATUS[v.status]||FLEET_STATUS['Active']; return (
               <div key={v.id} style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, padding:20, transition:'all 0.2s', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}
@@ -1995,7 +2026,7 @@ function VehiclesPage({ user }) {
                   <span style={{ display:'inline-flex', alignItems:'center', gap:5, fontSize:11, fontWeight:700, borderRadius:20, padding:'3px 8px', background:ss.bg, color:ss.color }}><span style={{ width:5, height:5, borderRadius:'50%', background:ss.dot, display:'inline-block' }}/>{v.status?.replace('_',' ')}</span>
                 </div>
                 <div style={{ display:'flex', gap:8, marginBottom:12, flexWrap:'wrap' }}>{[v.year,v.type,v.color].filter(Boolean).map((m,i)=><span key={i} style={{ fontSize:11, color:'var(--text2)', background:'var(--surface2)', borderRadius:6, padding:'2px 8px', fontWeight:600 }}>{m}</span>)}</div>
-                {v.driverName&&<div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 0', borderTop:'1px solid var(--border)', borderBottom:'1px solid var(--border)', margin:'10px 0' }}><span style={{ fontSize:16 }}>👤</span><div><div style={{ fontSize:13, fontWeight:600 }}>{v.driverName}</div><div style={{ fontSize:11, color:'var(--text2)' }}>{v.driverPhone}</div></div></div>}
+                {v.driverName&&<div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 0', borderTop:'1px solid var(--border)', borderBottom:'1px solid var(--border)', margin:'10px 0' }}><span style={{ fontSize:16 }}></span><div><div style={{ fontSize:13, fontWeight:600 }}>{v.driverName}</div><div style={{ fontSize:11, color:'var(--text2)' }}>{v.driverPhone}</div></div></div>}
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginTop:10 }}>
                   <div style={{ background:'var(--surface2)', borderRadius:8, padding:'8px 10px' }}><div style={{ fontSize:10, color:'var(--text3)', marginBottom:2, fontWeight:700 }}>MILEAGE</div><div style={{ fontSize:13, fontWeight:700 }}>{Number(v.mileage||0).toLocaleString()} km</div></div>
                   <div style={{ background:'var(--surface2)', borderRadius:8, padding:'8px 10px' }}><div style={{ fontSize:10, color:'var(--text3)', marginBottom:2, fontWeight:700 }}>INS. EXPIRY</div><div style={{ fontSize:13, fontWeight:700 }}>{v.insuranceExpiry||'—'}</div></div>
@@ -2016,7 +2047,7 @@ function VehiclesPage({ user }) {
   )
 }
 
-// ─── AP
+// ─── APP ──────────────────────────────────────────────────────────────────────
 export default function App() {
   const [user, setUser] = useState(null)
   const [activeTab, setActiveTab] = useState('dashboard')
@@ -2040,7 +2071,7 @@ export default function App() {
             {activeTab==='fuel'&&<FuelLogsPage user={user}/>}
             {activeTab==='inventory'&&<InventoryPage user={user}/>}
             {activeTab==='staff'&&user.role==='manager'&&<StaffPage/>}
-            {activeTab==='expenses'&&user.role==='manager'&&<ExpensesPage/>}
+            {activeTab==='expenses'&&(user.role==='manager'||user.role==='supervisor')&&<ExpensesPage user={user}/>}
             {activeTab==='reports'&&user.role==='manager'&&<ReportsPage/>}
           </div>
         </div>
