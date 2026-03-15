@@ -770,6 +770,7 @@ function ReportsPage() {
     { key:'fuel', label:'Fuel Logs', icon:'' },
     { key:'inventory', label:'Inventory', icon:'' },
     { key:'staff', label:'Staff', icon:'' },
+    { key:'expenses', label:'Expenses', icon:'' },
   ]
   const q = search.toLowerCase()
   const filteredFleet = data.fleet.filter(v => !q || v.plate?.toLowerCase().includes(q) || v.make?.toLowerCase().includes(q) || v.model?.toLowerCase().includes(q) || v.driverName?.toLowerCase().includes(q))
