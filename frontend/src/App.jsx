@@ -100,8 +100,8 @@ function LoginPage({ onLogin }) {
   }
   return (
     <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'100vh', width:'100%', backgroundImage:'url(/Page.jpg)', backgroundSize:'cover', backgroundPosition:'center', position:'relative' }}>
-      <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg, rgba(10,15,30,0.82) 0%, rgba(20,30,60,0.75) 100%)', backdropFilter:'blur(1px)' }} />
-      <div className="login-card" style={{ position:'relative', zIndex:1 }}>
+      <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.25)' }} />
+      <div className="login-card" style={{ position:'relative', zIndex:1, background:'rgba(255,255,255,0.82)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', border:'1px solid rgba(255,255,255,0.6)', boxShadow:'0 8px 40px rgba(0,0,0,0.18)' }}>
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginBottom:36 }}>
           <div style={{ width:96, height:96, borderRadius:20, overflow:'hidden', marginBottom:18, boxShadow:'0 4px 20px rgba(0,0,0,0.18)', border:'3px solid rgba(255,255,255,0.15)', flexShrink:0 }}>
             <img src="/canvas.png" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
