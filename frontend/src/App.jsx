@@ -439,6 +439,7 @@ function AlertsDashboard({ onAlertsChange }) {
 function ExpensesPage({ user }) {
   const [expenses, setExpenses] = useState([])
   const [showAdd, setShowAdd] = useState(false)
+  const [editing, setEditing] = useState(null)
   const [showImportModal, setShowImportModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [importing, setImporting] = useState(false)
@@ -473,9 +474,19 @@ function ExpensesPage({ user }) {
   const handleSave = async () => {
     if (!form.date || !form.reason || !form.amount) { alert('Date, Reason and Amount are required'); return }
     try {
-      await api.post('/expenses', { ...form, amount: parseInt(form.amount)||0 })
-      fetchExpenses(); setShowAdd(false); setForm(empty)
+      if (editing) {
+        await api.put(`/expenses/${editing.id}`, { ...form, amount: parseInt(form.amount)||0 })
+      } else {
+        await api.post('/expenses', { ...form, amount: parseInt(form.amount)||0 })
+      }
+      fetchExpenses(); setShowAdd(false); setEditing(null); setForm(empty)
     } catch { alert('Failed to save expense') }
+  }
+
+  const openEdit = (exp) => {
+    setEditing(exp)
+    setForm({ date: exp.date||'', plate: exp.plate||'', assignment: exp.assignment||'', reason: exp.reason||'', domain: exp.domain||'GENERAL', amount: exp.amount||'' })
+    setShowAdd(true)
   }
 
   const handleDelete = async (id) => {
@@ -595,7 +606,7 @@ function ExpensesPage({ user }) {
           <button className="btn btn-ghost" onClick={()=>{ setShowImportModal(true); setImportResult(null) }} disabled={importing}>
             {importing ? 'Importing...' : 'Import Excel'}
           </button>
-          <button className="btn btn-success" onClick={()=>{ setForm(empty); setShowAdd(true) }}>+ Add Expense</button>
+          <button className="btn btn-success" onClick={()=>{ setForm(empty); setEditing(null); setShowAdd(true) }}>+ Add Expense</button>
         </div>
       </div>
       <div className="page-content">
@@ -659,7 +670,12 @@ function ExpensesPage({ user }) {
                       <td style={{ fontWeight:600 }}>{e.reason}</td>
                       <td><span style={{ fontSize:11, fontWeight:700, borderRadius:20, padding:'3px 10px', background:ds.bg, color:ds.color }}>{e.domain}</span></td>
                       <td style={{ fontFamily:'DM Mono,monospace', fontWeight:700, color:'var(--red)' }}>{(e.amount||0).toLocaleString()}</td>
-                      <td><button className="btn btn-danger" style={{ padding:'5px 10px', fontSize:12 }} onClick={()=>handleDelete(e.id)}>Del</button></td>
+                      <td>
+                        <div style={{ display:'flex', gap:6 }}>
+                          <button className="btn btn-ghost" style={{ padding:'5px 10px', fontSize:12 }} onClick={()=>openEdit(e)}>Edit</button>
+                          {user?.role === 'manager' && <button className="btn btn-danger" style={{ padding:'5px 10px', fontSize:12 }} onClick={()=>handleDelete(e.id)}>Del</button>}
+                        </div>
+                      </td>
                     </tr>
                   )
                 })}</tbody>
@@ -673,7 +689,7 @@ function ExpensesPage({ user }) {
       {showAdd && (
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowAdd(false)}>
           <div className="modal" style={{ maxWidth:520 }}>
-            <div className="modal-header"><div className="modal-title">Add Expense</div><X onClick={()=>setShowAdd(false)}/></div>
+            <div className="modal-header"><div className="modal-title">{editing ? 'Edit Expense' : 'Add Expense'}</div><X onClick={()=>{ setShowAdd(false); setEditing(null) }}/></div>
             <div className="modal-body">
               <div style={{ fontSize:11, fontWeight:800, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:14, paddingBottom:8, borderBottom:'1px solid var(--border)' }}>Same format as Excel — DATE, PLATE, ASSIGNMENT, REASON, DOMAIN, AMOUNT</div>
               <div className="form-row" style={{ marginBottom:14 }}>
@@ -692,8 +708,8 @@ function ExpensesPage({ user }) {
               <div className="form-group"><label className="form-label">Amount (RWF) *</label><input className="form-input" type="number" value={form.amount} onChange={e=>sf('amount',e.target.value)} placeholder="e.g. 15000"/></div>
             </div>
             <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={()=>setShowAdd(false)}>Cancel</button>
-              <button className="btn btn-success" onClick={handleSave}>Save Expense</button>
+              <button className="btn btn-ghost" onClick={()=>{ setShowAdd(false); setEditing(null) }}>Cancel</button>
+              <button className="btn btn-success" onClick={handleSave}>{editing ? 'Save Changes' : 'Save Expense'}</button>
             </div>
           </div>
         </div>
