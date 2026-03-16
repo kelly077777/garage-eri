@@ -125,16 +125,16 @@ function LoginPage({ onLogin }) {
           <button className="btn-primary" onClick={handleLogin} disabled={loading}>{loading ? 'Signing in...' : 'Sign In'}</button>
         </div>
         {/* Right — ERI-RWANDA Company Ad */}
-      {/*  <div style={{ flex:1, textAlign:'right', maxWidth:260 }}>
-          <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>ERI-RWANDA LTD</div>
+       <div style={{ flex:1, textAlign:'right', maxWidth:260 }}>
+         {/* <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>ERI-RWANDA LTD</div>
           <div style={{ fontSize:28, fontWeight:800, color:'#ffffff', lineHeight:1.25, textShadow:'0 2px 12px rgba(0,0,0,0.5)', marginBottom:14, fontFamily:'Nunito,sans-serif' }}>
             Your Trusted<br/>Importer &<br/>Distributor
           </div>
           <div style={{ width:50, height:3, background:'#2563eb', borderRadius:2, marginLeft:'auto', marginBottom:14 }}/>
           <div style={{ fontSize:13, color:'rgba(255,255,255,0.85)', lineHeight:1.8, textShadow:'0 1px 6px rgba(0,0,0,0.4)', fontFamily:'Nunito,sans-serif' }}>
             Bringing quality products<br/>across Rwanda with a<br/>reliable fleet since day one.
-          </div>
-        </div>  */}
+          </div> */}
+        </div>  
       </div>
     </div>
   )
