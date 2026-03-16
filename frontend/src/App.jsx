@@ -104,7 +104,7 @@ function LoginPage({ onLogin }) {
       <video autoPlay muted loop playsInline style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', zIndex:0 }}>
         <source src="/bg.mp4" type="video/mp4"/>
       </video>
-      <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.35)', zIndex:1 }} />
+      <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.15)', zIndex:1 }} />
       {/* Layout: left ad text + center card + right ad text */}
       <div style={{ position:'relative', zIndex:2, display:'flex', alignItems:'center', justifyContent:'center', width:'100%', maxWidth:1200, padding:'0 40px', gap:48 }}>
         <div style={{ flex:1 }}/>
@@ -126,14 +126,14 @@ function LoginPage({ onLogin }) {
         </div>
         {/* Right — ERI-RWANDA Company Ad */}
         <div style={{ flex:1, textAlign:'right', maxWidth:260 }}>
-         {/* <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>ERI-RWANDA LTD</div>
-        {/*  <div style={{ fontSize:28, fontWeight:800, color:'#ffffff', lineHeight:1.25, textShadow:'0 2px 12px rgba(0,0,0,0.5)', marginBottom:14, fontFamily:'Nunito,sans-serif' }}>
+          <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>ERI-RWANDA LTD</div>
+          <div style={{ fontSize:28, fontWeight:800, color:'#ffffff', lineHeight:1.25, textShadow:'0 2px 12px rgba(0,0,0,0.5)', marginBottom:14, fontFamily:'Nunito,sans-serif' }}>
             Your Trusted<br/>Importer &<br/>Distributor
-          </div>*/}
-         {/* <div style={{ width:50, height:3, background:'#2563eb', borderRadius:2, marginLeft:'auto', marginBottom:14 }}/>  */}
-         {/* <div style={{ fontSize:13, color:'rgba(255,255,255,0.85)', lineHeight:1.8, textShadow:'0 1px 6px rgba(0,0,0,0.4)', fontFamily:'Nunito,sans-serif' }}>
+          </div>
+          <div style={{ width:50, height:3, background:'#2563eb', borderRadius:2, marginLeft:'auto', marginBottom:14 }}/>
+          <div style={{ fontSize:13, color:'rgba(255,255,255,0.85)', lineHeight:1.8, textShadow:'0 1px 6px rgba(0,0,0,0.4)', fontFamily:'Nunito,sans-serif' }}>
             Bringing quality products<br/>across Rwanda with a<br/>reliable fleet since day one.
-          </div>*/}
+          </div>
         </div>
       </div>
     </div>
@@ -180,7 +180,7 @@ const logAudit = async (user, action, module, details) => {
   } catch(e) { console.error('Audit log failed:', e) }
 }
 
-// ─── SIDEBAR ──────────────────────────────────
+// ─── SIDEBAR ──────────────────────────────────────────────────────────────────
 function Sidebar({ user, activeTab, setActiveTab, onLogout, alertCount }) {
   const rc = ROLE_CONFIG[user.role]
   const initials = user.name.split(' ').map(n => n[0]).join('')
