@@ -99,10 +99,14 @@ function LoginPage({ onLogin }) {
     setLoading(false)
   }
   return (
-    <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'100vh', width:'100%', backgroundImage:'url(/Page.jpg)', backgroundSize:'cover', backgroundPosition:'center', position:'relative' }}>
-      <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.15)' }} />
+    <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'100vh', width:'100%', position:'relative', overflow:'hidden', backgroundImage:'url(/Page.jpg)', backgroundSize:'cover', backgroundPosition:'center' }}>
+      {/* Video background */}
+      <video autoPlay muted loop playsInline style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', zIndex:0 }}>
+        <source src="/bg.mp4" type="video/mp4"/>
+      </video>
+      <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.35)', zIndex:1 }} />
       {/* Layout: left ad text + center card + right ad text */}
-      <div style={{ position:'relative', zIndex:1, display:'flex', alignItems:'center', justifyContent:'center', width:'100%', maxWidth:1200, padding:'0 40px', gap:48 }}>
+      <div style={{ position:'relative', zIndex:2, display:'flex', alignItems:'center', justifyContent:'center', width:'100%', maxWidth:1200, padding:'0 40px', gap:48 }}>
         <div style={{ flex:1 }}/>
         {/* Center login card — smaller */}
         <div className="login-card" style={{ position:'relative', zIndex:1, background:'rgba(255,255,255,0.5)', backdropFilter:'blur(18px)', WebkitBackdropFilter:'blur(18px)', border:'1px solid rgba(255,255,255,0.5)', boxShadow:'0 8px 40px rgba(0,0,0,0.18)', flexShrink:0, width:320, padding:28 }}>
@@ -2213,7 +2217,7 @@ function VehiclesPage({ user }) {
   )
 }
 
-// ─── APP ────────────────────────────────────────
+// ─── APP ──────────────────────────────────────────────────────────────────────
 export default function App() {
   const [user, setUser] = useState(null)
   const [activeTab, setActiveTab] = useState('dashboard')
