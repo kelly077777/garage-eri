@@ -157,6 +157,25 @@ function getExpiryAlerts(fleet, warningDays = 7) {
   return alerts
 }
 
+
+// ─── AUDIT LOG HELPER ────────────────────────────────────────────────────────
+const logAudit = async (user, action, module, details) => {
+  try {
+    await fetch('https://garage-eri-production.up.railway.app/api/audit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+      body: JSON.stringify({
+        userName: user?.name || 'Unknown',
+        userRole: user?.role || 'unknown',
+        action,
+        moduleName: module,
+        details,
+        timestamp: new Date().toISOString()
+      })
+    })
+  } catch(e) { console.error('Audit log failed:', e) }
+}
+
 // ─── SIDEBAR ──────────────────────────────────────────────────────────────────
 function Sidebar({ user, activeTab, setActiveTab, onLogout, alertCount }) {
   const rc = ROLE_CONFIG[user.role]
@@ -187,6 +206,7 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout, alertCount }) {
         {N('inventory','Inventory')}
         {user.role === 'manager' && N('staff','Staff')}
         {(user.role === 'manager' || user.role === 'supervisor') && N('expenses','Expenses')}
+        {user.role === 'manager' && N('audit','Audit Log')}
         {user.role === 'manager' && N('reports','Reports')}
       </nav>
       <div style={{ padding:16, borderTop:'1px solid var(--border)' }}>
@@ -476,8 +496,10 @@ function ExpensesPage({ user }) {
     try {
       if (editing) {
         await api.put(`/expenses/${editing.id}`, { ...form, amount: parseInt(form.amount)||0 })
+        await logAudit(user, 'EDIT', 'Expenses', `Edited expense: ${form.reason} - ${form.amount} RWF`)
       } else {
         await api.post('/expenses', { ...form, amount: parseInt(form.amount)||0 })
+        await logAudit(user, 'ADD', 'Expenses', `Added expense: ${form.reason} - ${form.amount} RWF`)
       }
       fetchExpenses(); setShowAdd(false); setEditing(null); setForm(empty)
     } catch { alert('Failed to save expense') }
@@ -491,7 +513,7 @@ function ExpensesPage({ user }) {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this expense?')) return
-    try { await api.delete(`/expenses/${id}`); fetchExpenses() }
+    try { await api.delete(`/expenses/${id}`); await logAudit(user, 'DELETE', 'Expenses', `Deleted expense ID: ${id}`); fetchExpenses() }
     catch { alert('Failed to delete') }
   }
 
@@ -776,6 +798,99 @@ function ExpensesPage({ user }) {
           </div>
         </div>
       )}
+    </>
+  )
+}
+
+
+// ─── AUDIT LOG PAGE ───────────────────────────────────────────────────────────
+function AuditLogPage() {
+  const [logs, setLogs] = useState([])
+  const [search, setSearch] = useState('')
+  const [filterModule, setFilterModule] = useState('ALL')
+  const [filterAction, setFilterAction] = useState('ALL')
+  const MODULES = ['ALL','Expenses','Fleet Vehicles','Garage Vehicles','Inventory','Fuel Logs']
+  const ACTIONS = ['ALL','ADD','EDIT','DELETE']
+  const ACTION_STYLE = {
+    'ADD': { bg:'#d1fae5', color:'#065f46' },
+    'EDIT': { bg:'#dbeafe', color:'#1e40af' },
+    'DELETE': { bg:'#fee2e2', color:'#991b1b' },
+  }
+
+  useEffect(() => { fetchLogs() }, [])
+  const fetchLogs = async () => {
+    try { const r = await api.get('/audit'); setLogs(Array.isArray(r.data) ? r.data : []) }
+    catch(e) { console.error(e) }
+  }
+
+  const filtered = logs.filter(l => {
+    const q = search.toLowerCase()
+    const modMatch = filterModule === 'ALL' || l.moduleName === filterModule
+    const actMatch = filterAction === 'ALL' || l.action === filterAction
+    const searchMatch = !q || l.userName?.toLowerCase().includes(q) || l.details?.toLowerCase().includes(q) || l.moduleName?.toLowerCase().includes(q)
+    return modMatch && actMatch && searchMatch
+  })
+
+  const formatTime = (ts) => {
+    if (!ts) return '—'
+    const d = new Date(ts)
+    return d.toLocaleDateString('en-GB') + ' ' + d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' })
+  }
+
+  return (
+    <>
+      <div className="page-header">
+        <div><div className="page-title">Audit Log</div><div className="page-sub">Track who did what and when — Manager only</div></div>
+        <span style={{ fontSize:13, color:'var(--text2)', fontWeight:600, alignSelf:'flex-end' }}>{filtered.length} records</span>
+      </div>
+      <div className="page-content">
+        {/* Stats */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14, marginBottom:20 }}>
+          {[['Total Actions', logs.length, 'var(--blue)'], ['This Month', logs.filter(l=>{ const d=new Date(l.timestamp); const n=new Date(); return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear() }).length, 'var(--green)'], ['Deletions', logs.filter(l=>l.action==='DELETE').length, 'var(--red)']].map(([label,val,color])=>(
+            <div key={label} className="stat-card">
+              <div style={{ fontSize:12, color:'var(--text2)', marginBottom:6, fontWeight:600 }}>{label}</div>
+              <div style={{ fontSize:24, fontWeight:800, color }}>{val}</div>
+            </div>
+          ))}
+        </div>
+        {/* Filters */}
+        <div style={{ display:'flex', gap:10, marginBottom:16, flexWrap:'wrap' }}>
+          <input className="form-input" style={{ flex:1, minWidth:200 }} placeholder="Search user, module, details..." value={search} onChange={e=>setSearch(e.target.value)}/>
+          <select className="form-input" style={{ width:180, appearance:'auto' }} value={filterModule} onChange={e=>setFilterModule(e.target.value)}>
+            {MODULES.map(m=><option key={m} value={m}>{m === 'ALL' ? 'All Modules' : m}</option>)}
+          </select>
+          <select className="form-input" style={{ width:140, appearance:'auto' }} value={filterAction} onChange={e=>setFilterAction(e.target.value)}>
+            {ACTIONS.map(a=><option key={a} value={a}>{a === 'ALL' ? 'All Actions' : a}</option>)}
+          </select>
+        </div>
+        {/* Table */}
+        <div className="card">
+          <div className="card-header"><div className="card-title">Activity History</div></div>
+          {filtered.length === 0 ? (
+            <div style={{ padding:48, textAlign:'center', color:'var(--text3)' }}>No audit records found</div>
+          ) : (
+            <div style={{ overflowX:'auto' }}>
+              <table className="table">
+                <thead><tr><th>Time</th><th>User</th><th>Role</th><th>Action</th><th>Module</th><th>Details</th></tr></thead>
+                <tbody>{[...filtered].reverse().map((l,i) => {
+                  const as = ACTION_STYLE[l.action] || ACTION_STYLE['ADD']
+                  const rc = ROLE_CONFIG[l.userRole]
+                  return (
+                    <tr key={i}>
+                      <td style={{ color:'var(--text2)', fontSize:12, whiteSpace:'nowrap' }}>{formatTime(l.timestamp)}</td>
+                      <td style={{ fontWeight:700 }}>{l.userName}</td>
+                      <td><span style={{ fontSize:11, fontWeight:700, borderRadius:20, padding:'3px 10px', background:rc?.bg||'var(--surface2)', color:rc?.color||'var(--text2)' }}>{l.userRole}</span></td>
+                      <td><span style={{ fontSize:11, fontWeight:800, borderRadius:20, padding:'3px 10px', background:as.bg, color:as.color }}>{l.action}</span></td>
+                      <td style={{ fontSize:13, color:'var(--text2)', fontWeight:600 }}>{l.moduleName}</td>
+                      <td style={{ fontSize:13, color:'var(--text2)', maxWidth:300 }}>{l.details}</td>
+                    </tr>
+                  )
+                })}</tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
     </>
   )
 }
@@ -1077,15 +1192,15 @@ function FuelLogsPage({ user }) {
     if (!form.fleetVehicleId || !form.liters || !form.date) { alert('Vehicle, date and liters required'); return }
     const payload = { ...form, liters: parseFloat(form.liters), costPerLiter: parseInt(form.costPerLiter)||0, totalCost: parseInt(form.totalCost)||0, mileageAtFill: parseInt(form.mileageAtFill)||0 }
     try {
-      if (editing) await api.put(`/fleet/${form.fleetVehicleId}/fuel/${editing.id}`, payload)
-      else await api.post(`/fleet/${form.fleetVehicleId}/fuel`, payload)
+      if (editing) { await api.put(`/fleet/${form.fleetVehicleId}/fuel/${editing.id}`, payload); await logAudit(user, 'EDIT', 'Fuel Logs', `Edited fuel log: ${payload.liters}L for vehicle ID ${form.fleetVehicleId}`) }
+      else { await api.post(`/fleet/${form.fleetVehicleId}/fuel`, payload); await logAudit(user, 'ADD', 'Fuel Logs', `Added fuel log: ${payload.liters}L - ${payload.totalCost} RWF`) }
       fetchData(); setShowAdd(false); setEditing(null)
     } catch { alert('Failed to save fuel log') }
   }
 
   const handleDelete = async (log) => {
     if (!window.confirm('Delete this fuel log entry?')) return
-    try { await api.delete(`/fleet/${log.fleetVehicle?.id}/fuel/${log.id}`); fetchData() }
+    try { await api.delete(`/fleet/${log.fleetVehicle?.id}/fuel/${log.id}`); await logAudit(user, 'DELETE', 'Fuel Logs', `Deleted fuel log: ${log.liters}L on ${log.date}`); fetchData() }
     catch { alert('Failed to delete fuel log') }
   }
 
@@ -1410,14 +1525,14 @@ function InventoryPage({ user }) {
   const handleSave = async () => {
     if (!form.name) { alert('Item name required'); return }
     try {
-      if (editing) await api.put(`/inventory/${editing.id}`, form)
-      else await api.post('/inventory', form)
+      if (editing) { await api.put(`/inventory/${editing.id}`, form); await logAudit(user, 'EDIT', 'Inventory', `Edited item: ${form.name}`) }
+      else { await api.post('/inventory', form); await logAudit(user, 'ADD', 'Inventory', `Added item: ${form.name}`) }
       fetchItems(); setShowAdd(false); setEditing(null); setForm(empty)
     } catch { alert('Failed to save item') }
   }
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this item?')) return
-    try { await api.delete(`/inventory/${id}`); fetchItems() } catch { alert('Failed to delete') }
+    try { const item = items.find(i=>i.id===id); await api.delete(`/inventory/${id}`); await logAudit(user, 'DELETE', 'Inventory', `Deleted item: ${item?.name||id}`); fetchItems() } catch { alert('Failed to delete') }
   }
   const filtered = items.filter(i => {
     const q=search.toLowerCase()
@@ -1883,11 +1998,15 @@ function VehicleDetail({ vehicle, user, onBack, onUpdate }) {
     catch { alert('Failed to log service') }
   }
   const saveEdit = async (data) => {
-    try { const r=await api.put(`/vehicles/${vehicle.id}`,data); onUpdate(r.data); setShowEdit(false) } catch { alert('Failed to update') }
+    try {
+      const r = await api.put(`/vehicles/${vehicle.id}`, data)
+      await logAudit(user, 'EDIT', 'Garage Vehicles', `Edited vehicle: ${data.plate}`)
+      onUpdate(r.data); setShowEdit(false)
+    } catch { alert('Failed to update') }
   }
   const deleteVehicle = async () => {
     if(!window.confirm('Are you sure you want to delete this vehicle?')) return
-    try { await api.delete(`/vehicles/${vehicle.id}`); onBack() } catch { alert('Failed to delete vehicle') }
+    try { await api.delete(`/vehicles/${vehicle.id}`); await logAudit(user, 'DELETE', 'Garage Vehicles', `Deleted vehicle: ${vehicle.plate}`); onBack() } catch { alert('Failed to delete vehicle') }
   }
   return (
     <>
@@ -1983,8 +2102,22 @@ function VehiclesPage({ user }) {
   useEffect(()=>{ fetchVehicles(); fetchFleet() },[])
   const fetchVehicles = async () => { try { const r=await api.get('/vehicles'); setVehicles(Array.isArray(r.data) ? r.data : r.data?.content || []) } catch { alert('Failed to load vehicles') } setLoading(false) }
   const fetchFleet = async () => { try { const r=await api.get('/fleet'); setFleet(Array.isArray(r.data) ? r.data : r.data?.content || []) } catch(e){console.error(e)} }
-  const addVehicle = async (data) => { try { await api.post('/vehicles',data); fetchVehicles(); setShowAdd(false) } catch { alert('Failed') } }
-  const addFleetVehicle = async (data) => { try { if (editFleet) await api.put(`/fleet/${editFleet.id}`,data); else await api.post('/fleet',data); fetchFleet(); setShowAddFleet(false); setEditFleet(null) } catch { alert('Failed') } }
+  const addVehicle = async (data) => {
+    try { await api.post('/vehicles',data); await logAudit(user, 'ADD', 'Garage Vehicles', `Registered vehicle: ${data.plate}`); fetchVehicles(); setShowAdd(false) }
+    catch { alert('Failed') }
+  }
+  const addFleetVehicle = async (data) => {
+    try {
+      if (editFleet) {
+        await api.put(`/fleet/${editFleet.id}`,data)
+        await logAudit(user, 'EDIT', 'Fleet Vehicles', `Edited fleet vehicle: ${data.plate}`)
+      } else {
+        await api.post('/fleet',data)
+        await logAudit(user, 'ADD', 'Fleet Vehicles', `Added fleet vehicle: ${data.plate}`)
+      }
+      fetchFleet(); setShowAddFleet(false); setEditFleet(null)
+    } catch { alert('Failed') }
+  }
   const updateVehicle = (u) => { setVehicles(p=>p.map(v=>v.id===u.id?u:v)); setSelected(u) }
 
   const filtered = (vehicles||[]).filter(v => {
@@ -2066,7 +2199,7 @@ function VehiclesPage({ user }) {
                 </div>
                 <div style={{ marginTop:10, display:'flex', justifyContent:'flex-end', gap:8 }}>
                   <button className="btn btn-ghost" style={{ padding:'6px 14px', fontSize:12 }} onClick={e=>{ e.stopPropagation(); setEditFleet(v); setShowAddFleet(true) }}>Edit</button>
-                  {user.role === 'manager' && <button className="btn btn-danger" style={{ padding:'6px 14px', fontSize:12 }} onClick={async e=>{ e.stopPropagation(); if (!window.confirm('Delete this fleet vehicle?')) return; try { await api.delete(`/fleet/${v.id}`); fetchFleet() } catch { alert('Failed to delete') } }}>Delete</button>}
+                  {user.role === 'manager' && <button className="btn btn-danger" style={{ padding:'6px 14px', fontSize:12 }} onClick={async e=>{ e.stopPropagation(); if (!window.confirm('Delete this fleet vehicle?')) return; try { await api.delete(`/fleet/${v.id}`); await logAudit(user, 'DELETE', 'Fleet Vehicles', `Deleted fleet vehicle: ${v.plate}`); fetchFleet() } catch { alert('Failed to delete') } }}>Delete</button>}
                 </div>
               </div>
             )})}
@@ -2080,7 +2213,7 @@ function VehiclesPage({ user }) {
   )
 }
 
-// ─── APP ────────────────────────────────────────
+// ─── APP ──────────────────────────────────────────────────────────────────────
 export default function App() {
   const [user, setUser] = useState(null)
   const [activeTab, setActiveTab] = useState('dashboard')
@@ -2105,6 +2238,7 @@ export default function App() {
             {activeTab==='inventory'&&<InventoryPage user={user}/>}
             {activeTab==='staff'&&user.role==='manager'&&<StaffPage/>}
             {activeTab==='expenses'&&(user.role==='manager'||user.role==='supervisor')&&<ExpensesPage user={user}/>}
+            {activeTab==='audit'&&user.role==='manager'&&<AuditLogPage/>}
             {activeTab==='reports'&&user.role==='manager'&&<ReportsPage/>}
           </div>
         </div>
