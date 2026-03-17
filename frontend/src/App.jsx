@@ -125,16 +125,16 @@ function LoginPage({ onLogin }) {
           <button className="btn-primary" onClick={handleLogin} disabled={loading}>{loading ? 'Signing in...' : 'Sign In'}</button>
         </div>
         {/* Right — ERI-RWANDA Company Ad */}
-       <div style={{ flex:1, textAlign:'right', maxWidth:260 }}>
-         {/* <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>ERI-RWANDA LTD</div>
+        <div style={{ flex:1, textAlign:'right', maxWidth:260 }}>
+          <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>ERI-RWANDA LTD</div>
           <div style={{ fontSize:28, fontWeight:800, color:'#ffffff', lineHeight:1.25, textShadow:'0 2px 12px rgba(0,0,0,0.5)', marginBottom:14, fontFamily:'Nunito,sans-serif' }}>
             Your Trusted<br/>Importer &<br/>Distributor
           </div>
           <div style={{ width:50, height:3, background:'#2563eb', borderRadius:2, marginLeft:'auto', marginBottom:14 }}/>
           <div style={{ fontSize:13, color:'rgba(255,255,255,0.85)', lineHeight:1.8, textShadow:'0 1px 6px rgba(0,0,0,0.4)', fontFamily:'Nunito,sans-serif' }}>
             Bringing quality products<br/>across Rwanda with a<br/>reliable fleet since day one.
-          </div> */}
-        </div>  
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -1958,8 +1958,8 @@ function FleetModal({ vehicle, onSave, onClose }) {
             <div><label className="form-label">Insurance Expiry *</label><input className="form-input" type="date" value={form.insuranceExpiry} onChange={e=>s('insuranceExpiry',e.target.value)}/></div>
           </div>
           <div className="form-row">
-            <div><label className="form-label">Inspection Issued Date *</label><input className="form-input" type="date" value={form.inspectionIssuedDate} onChange={e=>s('inspectionIssuedDate',e.target.value)}/></div>
-            <div><label className="form-label">Inspection Expiry Date *</label><input className="form-input" type="date" value={form.inspectionExpiry} onChange={e=>s('inspectionExpiry',e.target.value)}/></div>
+            <div><label className="form-label">Inspection Issued Date</label><input className="form-input" type="date" value={form.inspectionIssuedDate} onChange={e=>s('inspectionIssuedDate',e.target.value)}/></div>
+            <div><label className="form-label">Inspection Expiry Date</label><input className="form-input" type="date" value={form.inspectionExpiry} onChange={e=>s('inspectionExpiry',e.target.value)}/></div>
           </div>
         </div>
         <div className="modal-footer">
@@ -1976,7 +1976,6 @@ function FleetModal({ vehicle, onSave, onClose }) {
             if (!form.insuranceCompany) missing.push('Insurance Company')
             if (!form.insuranceNumber) missing.push('Insurance Number')
             if (!form.insuranceExpiry) missing.push('Insurance Expiry')
-            if (!form.inspectionExpiry) missing.push('Inspection Expiry')
             if (missing.length > 0) { alert('Required fields missing:\n• ' + missing.join('\n• ')); return }
             onSave(form)
           }}>{vehicle?'Save Changes':'Add Vehicle'}</button>
@@ -2112,6 +2111,16 @@ function VehiclesPage({ user }) {
   }
   const addFleetVehicle = async (data) => {
     try {
+      // Check for duplicate plate number
+      const normalizedNew = data.plate?.replace(/[\s\-]/g,'').toUpperCase()
+      const duplicate = fleet.find(v => {
+        if (editFleet && v.id === editFleet.id) return false // skip self when editing
+        return v.plate?.replace(/[\s\-]/g,'').toUpperCase() === normalizedNew
+      })
+      if (duplicate) {
+        alert(`Plate number "${data.plate}" is already registered in the fleet (${duplicate.make} ${duplicate.model}). Please use a different plate number.`)
+        return
+      }
       if (editFleet) {
         await api.put(`/fleet/${editFleet.id}`,data)
         await logAudit(user, 'EDIT', 'Fleet Vehicles', `Edited fleet vehicle: ${data.plate}`)
