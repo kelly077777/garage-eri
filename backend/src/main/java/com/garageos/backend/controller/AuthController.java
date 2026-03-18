@@ -7,12 +7,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import java.util.Map;
+import java.util.Map; 
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:5174", "https://inquisitive-kataifi-41bdfe.netlify.app"})
+@CrossOrigin(origins = {"http://localhost:5173", "https://inquisitive-kataifi-41bdfe.netlify.app"})
 public class AuthController {
 
     private final UserRepository userRepo;
@@ -58,5 +58,19 @@ public class AuthController {
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         userRepo.deleteById(id);
         return ResponseEntity.ok().build();
-    }
+    } 
+
+    @PutMapping("/users/{id}")
+public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody Map<String, String> payload) {
+    return userRepo.findById(id).map(user -> {
+        if (payload.containsKey("name")) user.setName(payload.get("name"));
+        if (payload.containsKey("email")) user.setEmail(payload.get("email"));
+       if (payload.containsKey("role")) user.setRole(User.Role.valueOf(payload.get("role").toLowerCase()));
+        if (payload.containsKey("password") && payload.get("password") != null && !payload.get("password").isEmpty()) {
+            user.setPassword(passwordEncoder.encode(payload.get("password")));
+        }
+        return ResponseEntity.ok(userRepo.save(user));
+    }).orElse(ResponseEntity.notFound().build());
+}
+
 }
