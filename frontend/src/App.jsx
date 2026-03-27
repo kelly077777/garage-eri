@@ -290,11 +290,11 @@ function LoginPage({ onLogin }) {
           <button className="btn-primary" onClick={handleLogin} disabled={loading}>{loading?'Signing in...':'Sign In'}</button>
         </div>
         <div style={{ flex:1, textAlign:'right', maxWidth:260, display:'flex', flexDirection:'column', alignItems:'flex-end' }}>
-         { /* <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>ERI-RWANDA LTD</div>
+          <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>ERI-RWANDA LTD</div>
           <div style={{ fontSize:28, fontWeight:800, color:'#fff', lineHeight:1.25, textShadow:'0 2px 12px rgba(0,0,0,0.5)', marginBottom:14, fontFamily:'Nunito,sans-serif' }}>Your Trusted<br/>Importer &<br/>Distributor</div>
           <div style={{ width:50, height:3, background:'#2563eb', borderRadius:2, marginBottom:14 }}/>
           <div style={{ fontSize:13, color:'rgba(255,255,255,0.85)', lineHeight:1.8, textShadow:'0 1px 6px rgba(0,0,0,0.4)', fontFamily:'Nunito,sans-serif' }}>Bringing quality products<br/>across Rwanda with a<br/>reliable fleet since day one.</div>
-          */} </div>
+        </div>
       </div>
     </div>
   )
@@ -355,7 +355,7 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout, alertCount, menuOpen
               <span style={{background:'#dc2626',color:'#fff',borderRadius:20,fontSize:11,fontWeight:800,padding:'3px 9px'}}>{alertCount}</span>
             )}
             <button onClick={()=>setMenuOpen(o=>!o)} style={{background:'none',border:'none',cursor:'pointer',fontSize:26,color:'var(--text2)',padding:4,lineHeight:1}}>
-              {menuOpen?'':''}
+              {menuOpen ? '✕' : '☰'}
             </button>
           </div>
         </div>
