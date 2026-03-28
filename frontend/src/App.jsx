@@ -2016,7 +2016,7 @@ function FleetModal({ vehicle, onSave, onClose }) {
             <div><label className="form-label">Driver Name *</label><input className="form-input" value={form.driverName} onChange={e=>s('driverName',e.target.value)}/></div>
             <div><label className="form-label">Driver Phone *</label><input className="form-input" value={form.driverPhone} onChange={e=>s('driverPhone',e.target.value)}/></div>
           </div>
-          <div className="form-group"><label className="form-label">License ID *</label><input className="form-input" value={form.driverLicense} onChange={e=>s('driverLicense',e.target.value)}/></div>
+
           <div style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.08em',margin:'18px 0 12px',paddingBottom:8,borderBottom:'1px solid var(--border)'}}>Insurance & Documents</div>
           <div className="form-row" style={{marginBottom:14}}>
             <div><label className="form-label">Insurance Company *</label><input className="form-input" value={form.insuranceCompany} onChange={e=>s('insuranceCompany',e.target.value)}/></div>
@@ -2130,7 +2130,7 @@ function FleetModal({ vehicle, onSave, onClose }) {
             if(!form.companyDepartment||form.companyDepartment==='--Please Select--')missing.push('Department')
             if(!form.driverName)missing.push('Driver Name')
             if(!form.driverPhone)missing.push('Driver Phone')
-            if(!form.driverLicense)missing.push('License ID')
+
             if(!form.insuranceCompany)missing.push('Insurance Company')
             if(!form.insuranceNumber)missing.push('Insurance Number')
             if(!form.insuranceExpiry)missing.push('Insurance Expiry')
@@ -2631,7 +2631,7 @@ function VehiclesPage({ user }) {
   )
 }
 
-//  APP 
+//  APP ---------------------
 export default function App() {
   const [user, setUser] = useState(null)
   const [activeTab, setActiveTab] = useState('dashboard')
