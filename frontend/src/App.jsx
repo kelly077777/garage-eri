@@ -2022,26 +2022,100 @@ function FleetModal({ vehicle, onSave, onClose }) {
             <div><label className="form-label">Insurance Company *</label><input className="form-input" value={form.insuranceCompany} onChange={e=>s('insuranceCompany',e.target.value)}/></div>
             <div><label className="form-label">Insurance Number *</label><input className="form-input" value={form.insuranceNumber} onChange={e=>s('insuranceNumber',e.target.value)}/></div>
           </div>
-          <div className="form-row" style={{marginBottom:14}}>
-            <div><label className="form-label">Insurance Issued Date</label><input className="form-input" type="date" value={form.insuranceIssuedDate||''} onChange={e=>s('insuranceIssuedDate',e.target.value)}/></div>
-            <div><label className="form-label">Insurance Expiry *</label><input className="form-input" type="date" value={form.insuranceExpiry} onChange={e=>s('insuranceExpiry',e.target.value)}/></div>
-          </div>
-          <div className="form-row" style={{marginBottom:14}}>
-            <div><label className="form-label">Inspection Issued Date</label><input className="form-input" type="date" value={form.inspectionIssuedDate||''} onChange={e=>s('inspectionIssuedDate',e.target.value)}/></div>
-            <div><label className="form-label">Inspection Expiry *</label><input className="form-input" type="date" value={form.inspectionExpiry} onChange={e=>s('inspectionExpiry',e.target.value)}/></div>
-          </div>
-          <div className="form-row" style={{marginBottom:14}}>
-            <div><label className="form-label">Speed Governor Issued</label><input className="form-input" type="date" value={form.speedGovernorIssuedDate||''} onChange={e=>s('speedGovernorIssuedDate',e.target.value)}/></div>
-            <div><label className="form-label">Speed Governor Expiry *</label><input className="form-input" type="date" value={form.speedGovernorExpiry||''} onChange={e=>s('speedGovernorExpiry',e.target.value)}/></div>
-          </div>
-          <div className="form-row" style={{marginBottom:14}}>
-            <div><label className="form-label">Driver License Issued</label><input className="form-input" type="date" value={form.driverLicenseIssuedDate||''} onChange={e=>s('driverLicenseIssuedDate',e.target.value)}/></div>
-            <div><label className="form-label">Driver License Expiry *</label><input className="form-input" type="date" value={form.driverLicenseExpiry||''} onChange={e=>s('driverLicenseExpiry',e.target.value)}/></div>
-          </div>
-          <div className="form-row">
-            <div><label className="form-label">Yellow Card Issued</label><input className="form-input" type="date" value={form.yellowCardIssuedDate||''} onChange={e=>s('yellowCardIssuedDate',e.target.value)}/></div>
-            <div><label className="form-label">Yellow Card Expiry *</label><input className="form-input" type="date" value={form.yellowCardExpiry||''} onChange={e=>s('yellowCardExpiry',e.target.value)}/></div>
-          </div>
+          {/* Documents with Issued + Expiry dates */}
+          {[
+            {label:'Insurance',      issuedKey:'insuranceIssuedDate',   expiryKey:'insuranceExpiry',      fileKey:'insuranceFile'},
+            {label:'Inspection',     issuedKey:'inspectionIssuedDate',  expiryKey:'inspectionExpiry',     fileKey:'inspectionFile'},
+            {label:'Speed Governor', issuedKey:'speedGovernorIssuedDate',expiryKey:'speedGovernorExpiry', fileKey:'speedGovernorFile'},
+          ].map(doc=>(
+            <div key={doc.label} style={{marginBottom:16,padding:'12px 14px',background:'var(--surface2)',borderRadius:10,border:'1px solid var(--border)'}}>
+              <div style={{fontSize:11,fontWeight:800,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:10}}>{doc.label}</div>
+              <div className="form-row" style={{marginBottom:10}}>
+                <div><label className="form-label">Issued Date</label><input className="form-input" type="date" value={form[doc.issuedKey]||''} onChange={e=>s(doc.issuedKey,e.target.value)}/></div>
+                <div><label className="form-label">Expiry Date *</label><input className="form-input" type="date" value={form[doc.expiryKey]||''} onChange={e=>s(doc.expiryKey,e.target.value)}/></div>
+              </div>
+              <div>
+                <label className="form-label">Document File (PDF / JPG / PNG)</label>
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <label style={{
+                    display:'inline-flex',alignItems:'center',gap:8,
+                    padding:'9px 16px',
+                    background: form[doc.fileKey] ? '#f0fdf4' : 'var(--blue)',
+                    color: form[doc.fileKey] ? 'var(--green)' : '#fff',
+                    border: form[doc.fileKey] ? '1px solid #86efac' : 'none',
+                    borderRadius:8,cursor:'pointer',fontSize:13,fontWeight:700,
+                    whiteSpace:'nowrap',flexShrink:0
+                  }}>
+                    {form[doc.fileKey] ? '✓ Uploaded' : '+ Upload File'}
+                    <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{display:'none'}}
+                      onChange={e=>{
+                        const file=e.target.files[0]; if(!file) return
+                        const reader=new FileReader()
+                        reader.onload=()=>{
+                          s(doc.fileKey, reader.result)
+                          s(doc.fileKey+'Name', file.name)
+                        }
+                        reader.readAsDataURL(file)
+                      }}
+                    />
+                  </label>
+                  {form[doc.fileKey] ? (
+                    <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0}}>
+                      <span style={{fontSize:12,color:'var(--green)',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{form[doc.fileKey+'Name']||'document'}</span>
+                      <button onClick={()=>{s(doc.fileKey,'');s(doc.fileKey+'Name','')}} style={{fontSize:12,color:'var(--red)',background:'none',border:'none',cursor:'pointer',fontWeight:700,flexShrink:0}}>✕</button>
+                    </div>
+                  ) : (
+                    <span style={{fontSize:12,color:'var(--text3)'}}>No file chosen</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {/* Driver License and Yellow Card — upload only, no dates */}
+          {[
+            {label:'Driver License', fileKey:'driverLicenseFile'},
+            {label:'Yellow Card',    fileKey:'yellowCardFile'},
+          ].map(doc=>(
+            <div key={doc.label} style={{marginBottom:16,padding:'12px 14px',background:'var(--surface2)',borderRadius:10,border:'1px solid var(--border)'}}>
+              <div style={{fontSize:11,fontWeight:800,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:10}}>{doc.label}</div>
+              <div>
+                <label className="form-label">Document File (PDF / JPG / PNG)</label>
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <label style={{
+                    display:'inline-flex',alignItems:'center',gap:8,
+                    padding:'9px 16px',
+                    background: form[doc.fileKey] ? '#f0fdf4' : 'var(--blue)',
+                    color: form[doc.fileKey] ? 'var(--green)' : '#fff',
+                    border: form[doc.fileKey] ? '1px solid #86efac' : 'none',
+                    borderRadius:8,cursor:'pointer',fontSize:13,fontWeight:700,
+                    whiteSpace:'nowrap',flexShrink:0
+                  }}>
+                    {form[doc.fileKey] ? '✓ Uploaded' : '+ Upload File'}
+                    <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{display:'none'}}
+                      onChange={e=>{
+                        const file=e.target.files[0]; if(!file) return
+                        const reader=new FileReader()
+                        reader.onload=()=>{
+                          s(doc.fileKey, reader.result)
+                          s(doc.fileKey+'Name', file.name)
+                        }
+                        reader.readAsDataURL(file)
+                      }}
+                    />
+                  </label>
+                  {form[doc.fileKey] ? (
+                    <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0}}>
+                      <span style={{fontSize:12,color:'var(--green)',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{form[doc.fileKey+'Name']||'document'}</span>
+                      <button onClick={()=>{s(doc.fileKey,'');s(doc.fileKey+'Name','')}} style={{fontSize:12,color:'var(--red)',background:'none',border:'none',cursor:'pointer',fontWeight:700,flexShrink:0}}>✕</button>
+                    </div>
+                  ) : (
+                    <span style={{fontSize:12,color:'var(--text3)'}}>No file chosen</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
         <div className="modal-footer">
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
@@ -2062,8 +2136,7 @@ function FleetModal({ vehicle, onSave, onClose }) {
             if(!form.insuranceExpiry)missing.push('Insurance Expiry')
             if(!form.inspectionExpiry)missing.push('Inspection Expiry')
             if(!form.speedGovernorExpiry)missing.push('Speed Governor Expiry')
-            if(!form.driverLicenseExpiry)missing.push('Driver License Expiry')
-            if(!form.yellowCardExpiry)missing.push('Yellow Card Expiry')
+
             if(missing.length>0){alert('Required fields missing:\n• '+missing.join('\n• '));return}
             onSave(form)
           }}>{vehicle?'Save Changes':'Add Vehicle'}</button>
@@ -2434,7 +2507,7 @@ function VehiclesPage({ user }) {
   )
 }
 
-//  APP ---------------------------------
+//  APP 
 export default function App() {
   const [user, setUser] = useState(null)
   const [activeTab, setActiveTab] = useState('dashboard')
