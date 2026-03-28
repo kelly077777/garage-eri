@@ -2315,20 +2315,46 @@ function VehiclesPage({ user }) {
             </div>
             {loading?<div style={{textAlign:'center',padding:48,color:'var(--text3)'}}>Loading...</div>:
               filtered.length===0?<div className="card" style={{padding:48,textAlign:'center',color:'var(--text3)'}}>No vehicles found</div>:(
-              <div className="vehicle-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:14}}>
-                {filtered.map(v=>{const ss=STATUS_STYLE[v.status]||STATUS_STYLE['Ready'];return(
-                  <div key={v.id} onClick={()=>setSelected(v)} style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:12,padding:18,cursor:'pointer',transition:'all 0.2s',boxShadow:'0 1px 4px rgba(0,0,0,0.05)',active:{borderColor:'var(--blue)'}}}
-                    onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--blue)';e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,0.1)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,0.05)'}}>
-                    <div style={{fontFamily:'DM Mono,monospace',fontSize:17,color:'var(--blue)',marginBottom:3,fontWeight:700}}>{v.plate}</div>
-                    <div style={{fontFamily:'Nunito,sans-serif',fontSize:15,fontWeight:800,marginBottom:8}}>{v.make} {v.model}</div>
-                    <div style={{display:'flex',gap:6,marginBottom:10,flexWrap:'wrap'}}>{[v.year,v.type,v.color].filter(Boolean).map((m,i)=><span key={i} style={{fontSize:11,color:'var(--text2)',background:'var(--surface2)',borderRadius:6,padding:'2px 8px',fontWeight:600}}>{m}</span>)}</div>
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-                      <span style={{display:'inline-flex',alignItems:'center',gap:5,fontSize:11,fontWeight:700,borderRadius:20,padding:'3px 9px',background:ss.bg,color:ss.color}}><span style={{width:5,height:5,borderRadius:'50%',background:ss.dot,display:'inline-block'}}/>{v.status?.replace('_',' ')}</span>
-                      <span style={{fontSize:11,color:'var(--text3)',fontWeight:600}}>{(v.serviceHistory||[]).length} services</span>
-                    </div>
-
-                  </div>
-                )})}
+              <div className="card">
+                <div className="card-header">
+                  <div className="card-title">Garage Vehicles</div>
+                  <span style={{fontSize:12,color:'var(--text2)',fontWeight:600}}>{filtered.length} vehicles</span>
+                </div>
+                <div className="table-wrap">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Plate</th>
+                        <th>Make / Model</th>
+                        <th className="hide-mobile">Year</th>
+                        <th className="hide-mobile">Type</th>
+                        <th className="hide-mobile">Color</th>
+                        <th>Status</th>
+                        <th className="hide-mobile">Services</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.map(v=>{
+                        const ss=STATUS_STYLE[v.status]||STATUS_STYLE['Ready']
+                        return(
+                          <tr key={v.id} style={{cursor:'pointer'}} onClick={()=>setSelected(v)}>
+                            <td style={{fontFamily:'DM Mono,monospace',color:'var(--blue)',fontWeight:700,whiteSpace:'nowrap'}}>{v.plate}</td>
+                            <td><div style={{fontWeight:700,fontSize:13}}>{v.make} {v.model}</div></td>
+                            <td className="hide-mobile" style={{color:'var(--text2)'}}>{v.year}</td>
+                            <td className="hide-mobile"><span style={{fontSize:11,background:'var(--surface2)',color:'var(--text2)',borderRadius:6,padding:'2px 8px',fontWeight:600}}>{v.type}</span></td>
+                            <td className="hide-mobile" style={{color:'var(--text2)'}}>{v.color}</td>
+                            <td><span style={{display:'inline-flex',alignItems:'center',gap:5,fontSize:11,fontWeight:700,borderRadius:20,padding:'3px 9px',background:ss.bg,color:ss.color,whiteSpace:'nowrap'}}><span style={{width:5,height:5,borderRadius:'50%',background:ss.dot,display:'inline-block'}}/>{v.status?.replace('_',' ')}</span></td>
+                            <td className="hide-mobile" style={{color:'var(--text2)',fontSize:13}}>{(v.serviceHistory||[]).length}</td>
+                            <td onClick={e=>e.stopPropagation()}>
+                              <button className="btn btn-ghost btn-sm" onClick={()=>setSelected(v)}>View</button>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </>
@@ -2386,7 +2412,7 @@ function VehiclesPage({ user }) {
   )
 }
 
-//  APP ------------------------
+//  APP 
 export default function App() {
   const [user, setUser] = useState(null)
   const [activeTab, setActiveTab] = useState('dashboard')
