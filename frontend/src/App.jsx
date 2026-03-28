@@ -2101,24 +2101,13 @@ function VehicleDetail({ vehicle, user, onBack, onUpdate }) {
             </div>
           ))}
         </div>
-        <div className="dash-two-col" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
+        <div style={{marginBottom:16}}>
           <div className="card">
             <div className="card-header"><div className="card-title">Vehicle Info</div></div>
             <div style={{padding:'0 20px'}}>
               {[['Make',vehicle.make],['Model',vehicle.model],['Year',vehicle.year],['Color',vehicle.color],['Type',vehicle.type],['Plate',vehicle.plate],['Mileage',`${Number(vehicle.mileage||0).toLocaleString()} km`]].map(([k,v])=>(
                 <div key={k} style={{display:'flex',justifyContent:'space-between',padding:'10px 0',borderBottom:'1px solid var(--border)'}}>
                   <span style={{fontSize:13,color:'var(--text2)',fontWeight:600}}>{k}</span><span style={{fontSize:13,fontWeight:600}}>{v}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="card">
-            <div className="card-header"><div className="card-title">Owner Info</div></div>
-            <div style={{padding:'0 20px'}}>
-              {[['Name',vehicle.ownerName],['Phone',vehicle.ownerPhone||'—'],['Email',vehicle.ownerEmail||'—'],['Company',vehicle.ownerCompany||'—']].map(([k,v])=>(
-                <div key={k} style={{display:'flex',justifyContent:'space-between',padding:'10px 0',borderBottom:'1px solid var(--border)',gap:8}}>
-                  <span style={{fontSize:13,color:'var(--text2)',fontWeight:600,flexShrink:0}}>{k}</span>
-                  <span style={{fontSize:13,fontWeight:600,textAlign:'right',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{v}</span>
                 </div>
               ))}
             </div>
