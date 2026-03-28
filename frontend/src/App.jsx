@@ -290,11 +290,11 @@ function LoginPage({ onLogin }) {
           <button className="btn-primary" onClick={handleLogin} disabled={loading}>{loading?'Signing in...':'Sign In'}</button>
         </div>
         <div style={{ flex:1, textAlign:'right', maxWidth:260, display:'flex', flexDirection:'column', alignItems:'flex-end' }}>
-        {/*  <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>ERI-RWANDA LTD</div>
+          <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>ERI-RWANDA LTD</div>
           <div style={{ fontSize:28, fontWeight:800, color:'#fff', lineHeight:1.25, textShadow:'0 2px 12px rgba(0,0,0,0.5)', marginBottom:14, fontFamily:'Nunito,sans-serif' }}>Your Trusted<br/>Importer &<br/>Distributor</div>
           <div style={{ width:50, height:3, background:'#2563eb', borderRadius:2, marginBottom:14 }}/>
           <div style={{ fontSize:13, color:'rgba(255,255,255,0.85)', lineHeight:1.8, textShadow:'0 1px 6px rgba(0,0,0,0.4)', fontFamily:'Nunito,sans-serif' }}>Bringing quality products<br/>across Rwanda with a<br/>reliable fleet since day one.</div>
-       */} </div>
+        </div>
       </div>
     </div>
   )
@@ -518,7 +518,7 @@ function DashboardPage({ onAlertsChange }) {
           {d.fuel.length===0?<div style={{padding:32,textAlign:'center',color:'var(--text3)'}}>No fuel logs yet</div>:(
             <div className="table-wrap">
               <table className="table">
-                <thead><tr><th>Vehicle</th><th>Date</th><th>Liters</th><th>Total Cost</th><th className="hide-mobile">Voucher Number</th></tr></thead>
+                <thead><tr><th>Vehicle</th><th>Date</th><th>Liters</th><th>Total Cost</th><th className="hide-mobile">Station</th></tr></thead>
                 <tbody>
                   {[...d.fuel].reverse().slice(0,8).map(f=>(
                     <tr key={f.id}>
@@ -1924,7 +1924,7 @@ function VehicleModal({ vehicle, onSave, onClose }) {
             <div><label className="form-label">Type *</label><select className="form-input" style={{appearance:'auto'}} value={form.type} onChange={e=>s('type',e.target.value)}>{['Sedan','SUV','Pickup Truck','Van','Minibus','Truck','Motorcycle'].map(t=><option key={t}>{t}</option>)}</select></div>
             <div><label className="form-label">Mileage (km) *</label><input className="form-input" type="number" value={form.mileage} onChange={e=>s('mileage',e.target.value)}/></div>
           </div>
-        {/*  <div style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.08em',margin:'18px 0 12px',paddingBottom:8,borderBottom:'1px solid var(--border)'}}>Owner Information</div>
+          <div style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.08em',margin:'18px 0 12px',paddingBottom:8,borderBottom:'1px solid var(--border)'}}>Owner Information</div>
           <div className="form-row" style={{marginBottom:14}}>
             <div><label className="form-label">Owner Name *</label><input className="form-input" value={form.ownerName} onChange={e=>s('ownerName',e.target.value)}/></div>
             <div><label className="form-label">Phone *</label><input className="form-input" value={form.ownerPhone} onChange={e=>s('ownerPhone',e.target.value)} placeholder="+250 788 000 000"/></div>
@@ -1932,7 +1932,7 @@ function VehicleModal({ vehicle, onSave, onClose }) {
           <div className="form-row" style={{marginBottom:14}}>
             <div><label className="form-label">Email *</label><input className="form-input" value={form.ownerEmail} onChange={e=>s('ownerEmail',e.target.value)}/></div>
             <div><label className="form-label">Company *</label><input className="form-input" value={form.ownerCompany} onChange={e=>s('ownerCompany',e.target.value)}/></div>
-          </div>  */}
+          </div>
           <div style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.08em',margin:'18px 0 12px',paddingBottom:8,borderBottom:'1px solid var(--border)'}}>Driver Information</div>
           <div className="form-row">
             <div><label className="form-label">Driver Name *</label><input className="form-input" value={form.driverName} onChange={e=>s('driverName',e.target.value)}/></div>
@@ -1944,8 +1944,6 @@ function VehicleModal({ vehicle, onSave, onClose }) {
           <button className="btn btn-success" onClick={()=>{
             const missing=[]
             if(!form.plate)missing.push('Plate');if(!form.make)missing.push('Make');if(!form.model)missing.push('Model')
-            if(!form.color)missing.push('Color');if(!form.mileage)missing.push('Mileage');if(!form.ownerName)missing.push('Owner Name')
-            if(!form.ownerPhone)missing.push('Owner Phone');if(!form.ownerEmail)missing.push('Owner Email');if(!form.ownerCompany)missing.push('Company')
             if(!form.driverName)missing.push('Driver Name');if(!form.driverPhone)missing.push('Driver Phone')
             if(missing.length>0){alert('Required fields missing:\n• '+missing.join('\n• '));return}
             onSave(form)
@@ -2005,8 +2003,8 @@ function FleetModal({ vehicle, onSave, onClose }) {
             <div><label className="form-label">Model *</label><input className="form-input" value={form.model} onChange={e=>s('model',e.target.value)}/></div>
           </div>
           <div className="form-row" style={{marginBottom:14}}>
-            <div><label className="form-label">Card Number</label><input className="form-input" value={form.cardNumber} onChange={e=>s('cardNumber',e.target.value.toUpperCase())} style={{fontFamily:'DM Mono,monospace'}}/></div>
-            <div><label className="form-label">Department</label><select className="form-input" style={{appearance:'auto'}} value={form.companyDepartment} onChange={e=>s('companyDepartment',e.target.value)}>{['--Please Select--','Blue_Band','Colgate','OXI','Nestle','Indomie'].map(x=><option key={x}>{x}</option>)}</select></div>
+            <div><label className="form-label">Card Number *</label><input className="form-input" value={form.cardNumber} onChange={e=>s('cardNumber',e.target.value.toUpperCase())} style={{fontFamily:'DM Mono,monospace'}}/></div>
+            <div><label className="form-label">Department *</label><select className="form-input" style={{appearance:'auto'}} value={form.companyDepartment} onChange={e=>s('companyDepartment',e.target.value)}>{['--Please Select--','Blue_Band','Colgate','OXI','Nestle','Indomie'].map(x=><option key={x}>{x}</option>)}</select></div>
           </div>
           <div className="form-row" style={{marginBottom:14}}>
             <div><label className="form-label">Year *</label><input className="form-input" type="number" value={form.year} onChange={e=>s('year',e.target.value)}/></div>
@@ -2021,7 +2019,7 @@ function FleetModal({ vehicle, onSave, onClose }) {
             <div><label className="form-label">Driver Name *</label><input className="form-input" value={form.driverName} onChange={e=>s('driverName',e.target.value)}/></div>
             <div><label className="form-label">Driver Phone *</label><input className="form-input" value={form.driverPhone} onChange={e=>s('driverPhone',e.target.value)}/></div>
           </div>
-          <div className="form-group"><label className="form-label">License ID</label><input className="form-input" value={form.driverLicense} onChange={e=>s('driverLicense',e.target.value)}/></div>
+          <div className="form-group"><label className="form-label">License ID *</label><input className="form-input" value={form.driverLicense} onChange={e=>s('driverLicense',e.target.value)}/></div>
           <div style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.08em',margin:'18px 0 12px',paddingBottom:8,borderBottom:'1px solid var(--border)'}}>Insurance & Documents</div>
           <div className="form-row" style={{marginBottom:14}}>
             <div><label className="form-label">Insurance Company *</label><input className="form-input" value={form.insuranceCompany} onChange={e=>s('insuranceCompany',e.target.value)}/></div>
@@ -2032,17 +2030,27 @@ function FleetModal({ vehicle, onSave, onClose }) {
           </div>
           <div className="form-row">
             <div><label className="form-label">Inspection Issued</label><input className="form-input" type="date" value={form.inspectionIssuedDate} onChange={e=>s('inspectionIssuedDate',e.target.value)}/></div>
-            <div><label className="form-label">Inspection Expiry</label><input className="form-input" type="date" value={form.inspectionExpiry} onChange={e=>s('inspectionExpiry',e.target.value)}/></div>
+            <div><label className="form-label">Inspection Expiry *</label><input className="form-input" type="date" value={form.inspectionExpiry} onChange={e=>s('inspectionExpiry',e.target.value)}/></div>
           </div>
         </div>
         <div className="modal-footer">
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
           <button className="btn btn-blue" onClick={()=>{
             const missing=[]
-            if(!form.plate)missing.push('Plate');if(!form.make)missing.push('Make');if(!form.model)missing.push('Model')
-            if(!form.color)missing.push('Color');if(!form.mileage)missing.push('Mileage');if(!form.driverName)missing.push('Driver Name')
-            if(!form.driverPhone)missing.push('Driver Phone');if(!form.insuranceCompany)missing.push('Insurance Company')
-            if(!form.insuranceNumber)missing.push('Insurance Number');if(!form.insuranceExpiry)missing.push('Insurance Expiry')
+            if(!form.plate)missing.push('Plate')
+            if(!form.make)missing.push('Make')
+            if(!form.model)missing.push('Model')
+            if(!form.color)missing.push('Color')
+            if(!form.mileage)missing.push('Mileage')
+            if(!form.cardNumber)missing.push('Card Number')
+            if(!form.companyDepartment||form.companyDepartment==='--Please Select--')missing.push('Department')
+            if(!form.driverName)missing.push('Driver Name')
+            if(!form.driverPhone)missing.push('Driver Phone')
+            if(!form.driverLicense)missing.push('License ID')
+            if(!form.insuranceCompany)missing.push('Insurance Company')
+            if(!form.insuranceNumber)missing.push('Insurance Number')
+            if(!form.insuranceExpiry)missing.push('Insurance Expiry')
+            if(!form.inspectionExpiry)missing.push('Inspection Expiry')
             if(missing.length>0){alert('Required fields missing:\n• '+missing.join('\n• '));return}
             onSave(form)
           }}>{vehicle?'Save Changes':'Add Vehicle'}</button>
