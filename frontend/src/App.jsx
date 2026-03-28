@@ -308,12 +308,18 @@ function getDaysUntil(dateStr) {
 function getExpiryAlerts(fleet, warningDays=7) {
   const alerts = []
   fleet.forEach(v => {
-    const insDays = getDaysUntil(v.insuranceExpiry)
-    const inspDays = getDaysUntil(v.inspectionExpiry)
-    if (insDays !== null && insDays <= warningDays)
-      alerts.push({ id:`ins-${v.id}`, plate:v.plate, type:'Insurance', expiry:v.insuranceExpiry, days:insDays, expired:insDays<0 })
-    if (inspDays !== null && inspDays <= warningDays)
-      alerts.push({ id:`insp-${v.id}`, plate:v.plate, type:'Inspection', expiry:v.inspectionExpiry, days:inspDays, expired:inspDays<0 })
+    const docs = [
+      { key:'ins',   type:'Insurance',       expiry: v.insuranceExpiry },
+      { key:'insp',  type:'Inspection',      expiry: v.inspectionExpiry },
+      { key:'spd',   type:'Speed Governor',  expiry: v.speedGovernorExpiry },
+      { key:'lic',   type:'Driver License',  expiry: v.driverLicenseExpiry },
+      { key:'yc',    type:'Yellow Card',     expiry: v.yellowCardExpiry },
+    ]
+    docs.forEach(doc => {
+      const days = getDaysUntil(doc.expiry)
+      if(days !== null && days <= warningDays)
+        alerts.push({ id:`${doc.key}-${v.id}`, plate:v.plate, type:doc.type, expiry:doc.expiry, days, expired:days<0 })
+    })
   })
   return alerts
 }
@@ -1976,7 +1982,7 @@ function ServiceModal({ onSave, onClose, currentUser }) {
 
 //  FLEET MODAL 
 function FleetModal({ vehicle, onSave, onClose }) {
-  const empty={plate:'',make:'',model:'',cardNumber:'',year:new Date().getFullYear(),color:'',vin:'',type:'Sedan',mileage:0,driverName:'',driverPhone:'',driverLicense:'',insuranceCompany:'',insuranceNumber:'',insuranceExpiry:'',inspectionExpiry:'',status:'Active'}
+  const empty={plate:'',make:'',model:'',cardNumber:'',year:new Date().getFullYear(),color:'',vin:'',type:'Sedan',mileage:0,driverName:'',driverPhone:'',driverLicense:'',insuranceCompany:'',insuranceNumber:'',insuranceExpiry:'',inspectionIssuedDate:'',inspectionExpiry:'',speedGovernorExpiry:'',driverLicenseExpiry:'',yellowCardExpiry:'',status:'Active'}
   const [form, setForm] = useState(vehicle||empty)
   const s=(k,v)=>setForm(f=>({...f,[k]:v}))
   return (
@@ -2017,11 +2023,24 @@ function FleetModal({ vehicle, onSave, onClose }) {
             <div><label className="form-label">Insurance Number *</label><input className="form-input" value={form.insuranceNumber} onChange={e=>s('insuranceNumber',e.target.value)}/></div>
           </div>
           <div className="form-row" style={{marginBottom:14}}>
+            <div><label className="form-label">Insurance Issued Date</label><input className="form-input" type="date" value={form.insuranceIssuedDate||''} onChange={e=>s('insuranceIssuedDate',e.target.value)}/></div>
             <div><label className="form-label">Insurance Expiry *</label><input className="form-input" type="date" value={form.insuranceExpiry} onChange={e=>s('insuranceExpiry',e.target.value)}/></div>
           </div>
-          <div className="form-row">
-            <div><label className="form-label">Inspection Issued</label><input className="form-input" type="date" value={form.inspectionIssuedDate} onChange={e=>s('inspectionIssuedDate',e.target.value)}/></div>
+          <div className="form-row" style={{marginBottom:14}}>
+            <div><label className="form-label">Inspection Issued Date</label><input className="form-input" type="date" value={form.inspectionIssuedDate||''} onChange={e=>s('inspectionIssuedDate',e.target.value)}/></div>
             <div><label className="form-label">Inspection Expiry *</label><input className="form-input" type="date" value={form.inspectionExpiry} onChange={e=>s('inspectionExpiry',e.target.value)}/></div>
+          </div>
+          <div className="form-row" style={{marginBottom:14}}>
+            <div><label className="form-label">Speed Governor Issued</label><input className="form-input" type="date" value={form.speedGovernorIssuedDate||''} onChange={e=>s('speedGovernorIssuedDate',e.target.value)}/></div>
+            <div><label className="form-label">Speed Governor Expiry *</label><input className="form-input" type="date" value={form.speedGovernorExpiry||''} onChange={e=>s('speedGovernorExpiry',e.target.value)}/></div>
+          </div>
+          <div className="form-row" style={{marginBottom:14}}>
+            <div><label className="form-label">Driver License Issued</label><input className="form-input" type="date" value={form.driverLicenseIssuedDate||''} onChange={e=>s('driverLicenseIssuedDate',e.target.value)}/></div>
+            <div><label className="form-label">Driver License Expiry *</label><input className="form-input" type="date" value={form.driverLicenseExpiry||''} onChange={e=>s('driverLicenseExpiry',e.target.value)}/></div>
+          </div>
+          <div className="form-row">
+            <div><label className="form-label">Yellow Card Issued</label><input className="form-input" type="date" value={form.yellowCardIssuedDate||''} onChange={e=>s('yellowCardIssuedDate',e.target.value)}/></div>
+            <div><label className="form-label">Yellow Card Expiry *</label><input className="form-input" type="date" value={form.yellowCardExpiry||''} onChange={e=>s('yellowCardExpiry',e.target.value)}/></div>
           </div>
         </div>
         <div className="modal-footer">
@@ -2042,6 +2061,9 @@ function FleetModal({ vehicle, onSave, onClose }) {
             if(!form.insuranceNumber)missing.push('Insurance Number')
             if(!form.insuranceExpiry)missing.push('Insurance Expiry')
             if(!form.inspectionExpiry)missing.push('Inspection Expiry')
+            if(!form.speedGovernorExpiry)missing.push('Speed Governor Expiry')
+            if(!form.driverLicenseExpiry)missing.push('Driver License Expiry')
+            if(!form.yellowCardExpiry)missing.push('Yellow Card Expiry')
             if(missing.length>0){alert('Required fields missing:\n• '+missing.join('\n• '));return}
             onSave(form)
           }}>{vehicle?'Save Changes':'Add Vehicle'}</button>
