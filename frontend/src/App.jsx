@@ -2326,10 +2326,7 @@ function VehiclesPage({ user }) {
                       <span style={{display:'inline-flex',alignItems:'center',gap:5,fontSize:11,fontWeight:700,borderRadius:20,padding:'3px 9px',background:ss.bg,color:ss.color}}><span style={{width:5,height:5,borderRadius:'50%',background:ss.dot,display:'inline-block'}}/>{v.status?.replace('_',' ')}</span>
                       <span style={{fontSize:11,color:'var(--text3)',fontWeight:600}}>{(v.serviceHistory||[]).length} services</span>
                     </div>
-                    <div style={{display:'flex',alignItems:'center',gap:8,paddingTop:10,borderTop:'1px solid var(--border)'}}>
-                      <div style={{width:26,height:26,background:'var(--blue)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:800,color:'#fff',flexShrink:0}}>{v.ownerName?.[0]}</div>
-                      <div style={{minWidth:0}}><div style={{fontSize:12,fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{v.ownerName}</div>{v.ownerCompany&&<div style={{fontSize:11,color:'var(--text2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{v.ownerCompany}</div>}</div>
-                    </div>
+
                   </div>
                 )})}
               </div>
@@ -2389,7 +2386,7 @@ function VehiclesPage({ user }) {
   )
 }
 
-//  APP 
+//  APP ------------------------
 export default function App() {
   const [user, setUser] = useState(null)
   const [activeTab, setActiveTab] = useState('dashboard')
