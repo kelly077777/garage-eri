@@ -2434,7 +2434,7 @@ function VehiclesPage({ user }) {
   )
 }
 
-//  APP 
+//  APP ---------------------------------
 export default function App() {
   const [user, setUser] = useState(null)
   const [activeTab, setActiveTab] = useState('dashboard')
