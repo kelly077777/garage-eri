@@ -2252,6 +2252,9 @@ function VehiclesPage({ user }) {
   const [showInsuranceModal, setShowInsuranceModal] = useState(false)
   const [insuranceVehicle, setInsuranceVehicle] = useState(null)
   const [insuranceForm, setInsuranceForm] = useState({insuranceCompany:'',insuranceNumber:'',insuranceExpiry:''})
+  const [showDriverModal, setShowDriverModal] = useState(false)
+  const [driverVehicle, setDriverVehicle] = useState(null)
+  const [driverForm, setDriverForm] = useState({driverName:'',driverPhone:'',driverLicense:''})
   const canAdd=user.role==='manager'||user.role==='supervisor'
 
   useEffect(()=>{fetchVehicles();fetchFleet()},[])
@@ -2277,6 +2280,15 @@ function VehiclesPage({ user }) {
     catch{alert('Failed to update insurance')}
   }
   const openInspModal=(v)=>{setInspVehicle(v);setInspForm({inspectionIssuedDate:v.inspectionIssuedDate||'',inspectionExpiry:v.inspectionExpiry||''});setShowInspModal(true)}
+  const openDriverModal=(v)=>{setDriverVehicle(v);setDriverForm({driverName:v.driverName||'',driverPhone:v.driverPhone||'',driverLicense:v.driverLicense||''});setShowDriverModal(true)}
+  const handleUpdateDriver=async()=>{
+    if(!driverVehicle||!driverForm.driverName||!driverForm.driverPhone){alert('Driver Name and Phone are required');return}
+    try{
+      await api.put(`/fleet/${driverVehicle.id}`,{...driverVehicle,...driverForm})
+      await logAudit(user,'EDIT','Fleet Vehicles',`Updated driver for: ${driverVehicle.plate} → ${driverForm.driverName}`)
+      fetchFleet();setShowDriverModal(false);setDriverVehicle(null)
+    }catch{alert('Failed to update driver')}
+  }
   const handleUpdateInspection=async()=>{
     if(!inspVehicle)return
     try{await api.put(`/fleet/${inspVehicle.id}`,{...inspVehicle,...inspForm});await logAudit(user,'EDIT','Fleet Vehicles',`Updated inspection for: ${inspVehicle.plate}`);fetchFleet();setShowInspModal(false);setInspVehicle(null)}
@@ -2351,6 +2363,7 @@ function VehiclesPage({ user }) {
                           <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
                             <button className="btn btn-ghost btn-sm" style={{color:'var(--blue)',borderColor:'var(--blue)'}} onClick={e=>{e.stopPropagation();openInsuranceModal(v)}}>Insurance</button>
                             <button className="btn btn-ghost btn-sm" style={{color:'var(--green)',borderColor:'var(--green)'}} onClick={e=>{e.stopPropagation();openInspModal(v)}}>Inspection</button>
+                            <button className="btn btn-ghost btn-sm" style={{color:'#7c3aed',borderColor:'#7c3aed'}} onClick={e=>{e.stopPropagation();openDriverModal(v)}}>Driver</button>
                             <button className="btn btn-ghost btn-sm" onClick={e=>{e.stopPropagation();setEditFleet(v);setShowAddFleet(true)}}>Edit</button>
                             {user.role==='manager' && (
                               <button className="btn btn-danger btn-sm" onClick={async e=>{
@@ -2471,8 +2484,34 @@ function VehiclesPage({ user }) {
             <div className="modal-body">
               <div style={{background:'#f0fdf4',border:'1px solid #86efac',borderRadius:10,padding:'12px 14px',marginBottom:16,fontSize:13,color:'#166534'}}>Update inspection dates after the vehicle has been inspected.</div>
               <div className="form-group"><label className="form-label">Current Inspection Expiry</label><div style={{fontSize:13,fontWeight:700,color:inspVehicle.inspectionExpiry&&new Date(inspVehicle.inspectionExpiry)<new Date()?'var(--red)':'var(--text2)',padding:'8px 0'}}>{inspVehicle.inspectionExpiry||'Not set'}</div></div>
-              <div className="form-group"><label className="form-label">Inspection Issued Date</label><input className="form-input" type="date" value={inspForm.inspectionIssuedDate} onChange={e=>setInspForm(f=>({...f,inspectionIssuedDate:e.target.value}))}/></div>
-              <div className="form-group"><label className="form-label">New Inspection Expiry Date *</label><input className="form-input" type="date" value={inspForm.inspectionExpiry} onChange={e=>setInspForm(f=>({...f,inspectionExpiry:e.target.value}))}/></div>
+              <div className="form-row" style={{marginBottom:14}}>
+                <div><label className="form-label">Issued Date</label><input className="form-input" type="date" value={inspForm.inspectionIssuedDate} onChange={e=>setInspForm(f=>({...f,inspectionIssuedDate:e.target.value}))}/></div>
+                <div><label className="form-label">New Expiry Date *</label><input className="form-input" type="date" value={inspForm.inspectionExpiry} onChange={e=>setInspForm(f=>({...f,inspectionExpiry:e.target.value}))}/></div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Upload Inspection Document (PDF / JPG / PNG)</label>
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <label style={{display:'inline-flex',alignItems:'center',gap:8,padding:'9px 16px',background:inspForm.inspectionFile?'#f0fdf4':'var(--blue)',color:inspForm.inspectionFile?'var(--green)':'#fff',border:inspForm.inspectionFile?'1px solid #86efac':'none',borderRadius:8,cursor:'pointer',fontSize:13,fontWeight:700,whiteSpace:'nowrap',flexShrink:0}}>
+                    {inspForm.inspectionFile?'✓ Uploaded':'+ Upload File'}
+                    <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{display:'none'}}
+                      onChange={e=>{
+                        const file=e.target.files[0]; if(!file) return
+                        const reader=new FileReader()
+                        reader.onload=()=>setInspForm(f=>({...f,inspectionFile:reader.result,inspectionFileName:file.name}))
+                        reader.readAsDataURL(file)
+                      }}
+                    />
+                  </label>
+                  {inspForm.inspectionFile?(
+                    <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0}}>
+                      <span style={{fontSize:12,color:'var(--green)',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{inspForm.inspectionFileName||'document'}</span>
+                      <button onClick={()=>setInspForm(f=>({...f,inspectionFile:'',inspectionFileName:''}))} style={{fontSize:12,color:'var(--red)',background:'none',border:'none',cursor:'pointer',fontWeight:700,flexShrink:0}}>✕</button>
+                    </div>
+                  ):(
+                    <span style={{fontSize:12,color:'var(--text3)'}}>No file chosen</span>
+                  )}
+                </div>
+              </div>
             </div>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={()=>setShowInspModal(false)}>Cancel</button>
@@ -2494,11 +2533,68 @@ function VehiclesPage({ user }) {
               <div className="form-group"><label className="form-label">Current Expiry</label><div style={{fontSize:13,fontWeight:700,color:insuranceVehicle.insuranceExpiry&&new Date(insuranceVehicle.insuranceExpiry)<new Date()?'var(--red)':'var(--text2)',padding:'8px 0'}}>{insuranceVehicle.insuranceExpiry||'Not set'}</div></div>
               <div className="form-group"><label className="form-label">Insurance Company</label><input className="form-input" value={insuranceForm.insuranceCompany} onChange={e=>setInsuranceForm(f=>({...f,insuranceCompany:e.target.value}))} placeholder="e.g. SONARWA"/></div>
               <div className="form-group"><label className="form-label">Insurance Number</label><input className="form-input" value={insuranceForm.insuranceNumber} onChange={e=>setInsuranceForm(f=>({...f,insuranceNumber:e.target.value}))} placeholder="e.g. INS-2026-001"/></div>
-              <div className="form-group"><label className="form-label">New Expiry Date *</label><input className="form-input" type="date" value={insuranceForm.insuranceExpiry} onChange={e=>setInsuranceForm(f=>({...f,insuranceExpiry:e.target.value}))}/></div>
+              <div className="form-row" style={{marginBottom:14}}>
+                <div><label className="form-label">Issued Date</label><input className="form-input" type="date" value={insuranceForm.insuranceIssuedDate||''} onChange={e=>setInsuranceForm(f=>({...f,insuranceIssuedDate:e.target.value}))}/></div>
+                <div><label className="form-label">New Expiry Date *</label><input className="form-input" type="date" value={insuranceForm.insuranceExpiry} onChange={e=>setInsuranceForm(f=>({...f,insuranceExpiry:e.target.value}))}/></div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Upload Insurance Document (PDF / JPG / PNG)</label>
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <label style={{display:'inline-flex',alignItems:'center',gap:8,padding:'9px 16px',background:insuranceForm.insuranceFile?'#f0fdf4':'var(--blue)',color:insuranceForm.insuranceFile?'var(--green)':'#fff',border:insuranceForm.insuranceFile?'1px solid #86efac':'none',borderRadius:8,cursor:'pointer',fontSize:13,fontWeight:700,whiteSpace:'nowrap',flexShrink:0}}>
+                    {insuranceForm.insuranceFile?'✓ Uploaded':'+ Upload File'}
+                    <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{display:'none'}}
+                      onChange={e=>{
+                        const file=e.target.files[0]; if(!file) return
+                        const reader=new FileReader()
+                        reader.onload=()=>setInsuranceForm(f=>({...f,insuranceFile:reader.result,insuranceFileName:file.name}))
+                        reader.readAsDataURL(file)
+                      }}
+                    />
+                  </label>
+                  {insuranceForm.insuranceFile?(
+                    <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0}}>
+                      <span style={{fontSize:12,color:'var(--green)',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{insuranceForm.insuranceFileName||'document'}</span>
+                      <button onClick={()=>setInsuranceForm(f=>({...f,insuranceFile:'',insuranceFileName:''}))} style={{fontSize:12,color:'var(--red)',background:'none',border:'none',cursor:'pointer',fontWeight:700,flexShrink:0}}>✕</button>
+                    </div>
+                  ):(
+                    <span style={{fontSize:12,color:'var(--text3)'}}>No file chosen</span>
+                  )}
+                </div>
+              </div>
             </div>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={()=>setShowInsuranceModal(false)}>Cancel</button>
               <button className="btn btn-blue" onClick={handleUpdateInsurance} disabled={!insuranceForm.insuranceExpiry}>Save Insurance</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Update Driver Modal */}
+      {showDriverModal&&driverVehicle&&(
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowDriverModal(false)}>
+          <div className="modal" style={{maxWidth:420}}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-title">Update Driver</div>
+                <div style={{fontSize:12,color:'var(--text2)',marginTop:2}}>{driverVehicle.plate} — {driverVehicle.make} {driverVehicle.model}</div>
+              </div>
+              <X onClick={()=>setShowDriverModal(false)}/>
+            </div>
+            <div className="modal-body">
+              <div style={{background:'#f5f3ff',border:'1px solid #c4b5fd',borderRadius:10,padding:'12px 14px',marginBottom:16,fontSize:13,color:'#6d28d9'}}>
+                Assign a new driver to this vehicle.
+              </div>
+              <div className="form-group">
+                <label className="form-label">Current Driver</label>
+                <div style={{fontSize:13,fontWeight:700,color:'var(--text2)',padding:'8px 0'}}>{driverVehicle.driverName||'Not assigned'} {driverVehicle.driverPhone?`— ${driverVehicle.driverPhone}`:''}</div>
+              </div>
+              <div className="form-group"><label className="form-label">New Driver Name *</label><input className="form-input" value={driverForm.driverName} onChange={e=>setDriverForm(f=>({...f,driverName:e.target.value}))} placeholder="Full name"/></div>
+              <div className="form-group"><label className="form-label">Driver Phone *</label><input className="form-input" value={driverForm.driverPhone} onChange={e=>setDriverForm(f=>({...f,driverPhone:e.target.value}))} placeholder="+250 788 000 000"/></div>
+              <div className="form-group"><label className="form-label">License ID</label><input className="form-input" value={driverForm.driverLicense} onChange={e=>setDriverForm(f=>({...f,driverLicense:e.target.value}))} placeholder="License number"/></div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={()=>setShowDriverModal(false)}>Cancel</button>
+              <button className="btn" style={{background:'#7c3aed',color:'#fff'}} onClick={handleUpdateDriver} disabled={!driverForm.driverName||!driverForm.driverPhone}>Save Driver</button>
             </div>
           </div>
         </div>
