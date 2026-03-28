@@ -1924,15 +1924,6 @@ function VehicleModal({ vehicle, onSave, onClose }) {
             <div><label className="form-label">Type *</label><select className="form-input" style={{appearance:'auto'}} value={form.type} onChange={e=>s('type',e.target.value)}>{['Sedan','SUV','Pickup Truck','Van','Minibus','Truck','Motorcycle'].map(t=><option key={t}>{t}</option>)}</select></div>
             <div><label className="form-label">Mileage (km) *</label><input className="form-input" type="number" value={form.mileage} onChange={e=>s('mileage',e.target.value)}/></div>
           </div>
-          <div style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.08em',margin:'18px 0 12px',paddingBottom:8,borderBottom:'1px solid var(--border)'}}>Owner Information</div>
-          <div className="form-row" style={{marginBottom:14}}>
-            <div><label className="form-label">Owner Name *</label><input className="form-input" value={form.ownerName} onChange={e=>s('ownerName',e.target.value)}/></div>
-            <div><label className="form-label">Phone *</label><input className="form-input" value={form.ownerPhone} onChange={e=>s('ownerPhone',e.target.value)} placeholder="+250 788 000 000"/></div>
-          </div>
-          <div className="form-row" style={{marginBottom:14}}>
-            <div><label className="form-label">Email *</label><input className="form-input" value={form.ownerEmail} onChange={e=>s('ownerEmail',e.target.value)}/></div>
-            <div><label className="form-label">Company *</label><input className="form-input" value={form.ownerCompany} onChange={e=>s('ownerCompany',e.target.value)}/></div>
-          </div>
           <div style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.08em',margin:'18px 0 12px',paddingBottom:8,borderBottom:'1px solid var(--border)'}}>Driver Information</div>
           <div className="form-row">
             <div><label className="form-label">Driver Name *</label><input className="form-input" value={form.driverName} onChange={e=>s('driverName',e.target.value)}/></div>
