@@ -2284,7 +2284,12 @@ function VehiclesPage({ user }) {
   const handleUpdateDriver=async()=>{
     if(!driverVehicle||!driverForm.driverName||!driverForm.driverPhone){alert('Driver Name and Phone are required');return}
     try{
-      await api.put(`/fleet/${driverVehicle.id}`,{...driverVehicle,...driverForm})
+      await api.put(`/fleet/${driverVehicle.id}`,{
+        ...driverVehicle,
+        driverName: driverForm.driverName,
+        driverPhone: driverForm.driverPhone,
+        driverLicenseFile: driverForm.driverLicenseFile||driverVehicle.driverLicenseFile||''
+      })
       await logAudit(user,'EDIT','Fleet Vehicles',`Updated driver for: ${driverVehicle.plate} → ${driverForm.driverName}`)
       fetchFleet();setShowDriverModal(false);setDriverVehicle(null)
     }catch{alert('Failed to update driver')}
@@ -2590,7 +2595,30 @@ function VehiclesPage({ user }) {
               </div>
               <div className="form-group"><label className="form-label">New Driver Name *</label><input className="form-input" value={driverForm.driverName} onChange={e=>setDriverForm(f=>({...f,driverName:e.target.value}))} placeholder="Full name"/></div>
               <div className="form-group"><label className="form-label">Driver Phone *</label><input className="form-input" value={driverForm.driverPhone} onChange={e=>setDriverForm(f=>({...f,driverPhone:e.target.value}))} placeholder="+250 788 000 000"/></div>
-              <div className="form-group"><label className="form-label">License ID</label><input className="form-input" value={driverForm.driverLicense} onChange={e=>setDriverForm(f=>({...f,driverLicense:e.target.value}))} placeholder="License number"/></div>
+              <div className="form-group">
+                <label className="form-label">Driver License Document (PDF / JPG / PNG)</label>
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <label style={{display:'inline-flex',alignItems:'center',gap:8,padding:'9px 16px',background:driverForm.driverLicenseFile?'#f0fdf4':'var(--blue)',color:driverForm.driverLicenseFile?'var(--green)':'#fff',border:driverForm.driverLicenseFile?'1px solid #86efac':'none',borderRadius:8,cursor:'pointer',fontSize:13,fontWeight:700,whiteSpace:'nowrap',flexShrink:0}}>
+                    {driverForm.driverLicenseFile?'✓ Uploaded':'+ Upload File'}
+                    <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{display:'none'}}
+                      onChange={e=>{
+                        const file=e.target.files[0]; if(!file) return
+                        const reader=new FileReader()
+                        reader.onload=()=>setDriverForm(f=>({...f,driverLicenseFile:reader.result,driverLicenseFileName:file.name}))
+                        reader.readAsDataURL(file)
+                      }}
+                    />
+                  </label>
+                  {driverForm.driverLicenseFile?(
+                    <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0}}>
+                      <span style={{fontSize:12,color:'var(--green)',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{driverForm.driverLicenseFileName||'document'}</span>
+                      <button onClick={()=>setDriverForm(f=>({...f,driverLicenseFile:'',driverLicenseFileName:''}))} style={{fontSize:12,color:'var(--red)',background:'none',border:'none',cursor:'pointer',fontWeight:700,flexShrink:0}}>✕</button>
+                    </div>
+                  ):(
+                    <span style={{fontSize:12,color:'var(--text3)'}}>No file chosen</span>
+                  )}
+                </div>
+              </div>
             </div>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={()=>setShowDriverModal(false)}>Cancel</button>
