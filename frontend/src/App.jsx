@@ -524,7 +524,7 @@ function DashboardPage({ onAlertsChange }) {
           {d.fuel.length===0?<div style={{padding:32,textAlign:'center',color:'var(--text3)'}}>No fuel logs yet</div>:(
             <div className="table-wrap">
               <table className="table">
-                <thead><tr><th>Vehicle</th><th>Date</th><th>Liters</th><th>Total Cost</th><th className="hide-mobile">Voucher Number</th></tr></thead>
+                <thead><tr><th>Vehicle</th><th>Date</th><th>Liters</th><th>Total Cost</th><th className="hide-mobile">Voucher Name</th></tr></thead>
                 <tbody>
                   {[...d.fuel].reverse().slice(0,8).map(f=>(
                     <tr key={f.id}>
@@ -1998,7 +1998,8 @@ function VehicleModal({ vehicle, onSave, onClose }) {
           <button className="btn btn-success" onClick={()=>{
             const missing=[]
             if(!form.plate)missing.push('Plate');if(!form.make)missing.push('Make');if(!form.model)missing.push('Model')
-            if(!form.driverName)missing.push('Driver Name');if(!form.driverPhone)missing.push('Driver Phone')
+            // Driver fields only required for new registrations, not edits
+            if(!vehicle){if(!form.driverName)missing.push('Driver Name');if(!form.driverPhone)missing.push('Driver Phone')}
             if(missing.length>0){alert('Required fields missing:\n• '+missing.join('\n• '));return}
             onSave(form)
           }}>{vehicle?'Save Changes':'Register Vehicle'}</button>
