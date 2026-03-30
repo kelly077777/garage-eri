@@ -237,9 +237,10 @@ const ROLE_CONFIG = {
 const hasPerm = (user, page, action='view') => {
   if(!user) return false
   if(user.role === 'manager') return true
-  if(!user.permissions) return false
+  if(!user.permissions || user.permissions === '') return false
   try {
     const perms = typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions
+    if(!perms || typeof perms !== 'object') return false
     return perms?.[page]?.[action] === true
   } catch { return false }
 }
