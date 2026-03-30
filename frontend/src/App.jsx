@@ -290,10 +290,10 @@ function LoginPage({ onLogin }) {
           <button className="btn-primary" onClick={handleLogin} disabled={loading}>{loading?'Signing in...':'Sign In'}</button>
         </div>
         <div style={{ flex:1, textAlign:'right', maxWidth:260, display:'flex', flexDirection:'column', alignItems:'flex-end' }}>
-          <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>ERI-RWANDA LTD</div>
+        {/*  <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>ERI-RWANDA LTD</div>
           <div style={{ fontSize:28, fontWeight:800, color:'#fff', lineHeight:1.25, textShadow:'0 2px 12px rgba(0,0,0,0.5)', marginBottom:14, fontFamily:'Nunito,sans-serif' }}>Your Trusted<br/>Importer &<br/>Distributor</div>
           <div style={{ width:50, height:3, background:'#2563eb', borderRadius:2, marginBottom:14 }}/>
-          <div style={{ fontSize:13, color:'rgba(255,255,255,0.85)', lineHeight:1.8, textShadow:'0 1px 6px rgba(0,0,0,0.4)', fontFamily:'Nunito,sans-serif' }}>Bringing quality products<br/>across Rwanda with a<br/>reliable fleet since day one.</div>
+          <div style={{ fontSize:13, color:'rgba(255,255,255,0.85)', lineHeight:1.8, textShadow:'0 1px 6px rgba(0,0,0,0.4)', fontFamily:'Nunito,sans-serif' }}>Bringing quality products<br/>across Rwanda with a<br/>reliable fleet since day one.</div>  */}
         </div>
       </div>
     </div>
@@ -524,7 +524,7 @@ function DashboardPage({ onAlertsChange }) {
           {d.fuel.length===0?<div style={{padding:32,textAlign:'center',color:'var(--text3)'}}>No fuel logs yet</div>:(
             <div className="table-wrap">
               <table className="table">
-                <thead><tr><th>Vehicle</th><th>Date</th><th>Liters</th><th>Total Cost</th><th className="hide-mobile">Station</th></tr></thead>
+                <thead><tr><th>Vehicle</th><th>Date</th><th>Liters</th><th>Total Cost</th><th className="hide-mobile">Voucher Number</th></tr></thead>
                 <tbody>
                   {[...d.fuel].reverse().slice(0,8).map(f=>(
                     <tr key={f.id}>
@@ -1003,11 +1003,13 @@ function ReportsPage() {
             <button key={t.key} className="tab-btn" onClick={()=>{setActiveReport(t.key);setSearch('')}} style={{background:activeReport===t.key?'var(--blue)':'transparent',color:activeReport===t.key?'#fff':'var(--text2)'}}>{t.label}</button>
           ))}
         </div>
+        {activeReport!=='monthly'&&(
         <div style={{marginBottom:16,display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
           <input className="form-input" style={{flex:1,minWidth:160}} placeholder="Search..." value={search} onChange={e=>setSearch(e.target.value)}/>
           {search&&<button className="btn btn-ghost btn-sm" onClick={()=>setSearch('')}></button>}
           <span style={{fontSize:13,color:'var(--text2)',fontWeight:600,whiteSpace:'nowrap'}}>{currentCount} records</span>
         </div>
+        )}
         <div className="card">
           {activeReport==='fleet'&&(
             filteredFleet.length===0?<div style={{padding:48,textAlign:'center',color:'var(--text3)'}}>No fleet vehicles found</div>:(
@@ -1089,118 +1091,104 @@ function ReportsPage() {
             )
           )}
           {activeReport==='monthly'&&(()=>{
-            // Build monthly summary from fuel and expenses data
-            const monthlyData = MONTHS.map((month, mi) => {
-              if(selectedReportMonth !== 'ALL' && month !== selectedReportMonth) return null
-              const fuelMonth = data.fuel.filter(l => l.date && new Date(l.date).getMonth() === mi)
-              const getFT = (log) => {
-                if(log.filledBy?.startsWith('PETROL:')) return 'PETROL'
-                if(log.filledBy?.startsWith('DIESEL:')) return 'DIESEL'
-                return log.fuelType || 'DIESEL'
-              }
-              const diesel = fuelMonth.filter(l => getFT(l) === 'DIESEL')
-              const petrol = fuelMonth.filter(l => getFT(l) === 'PETROL')
-              const expMonth = data.expenses.filter(e => e.date && new Date(e.date).getMonth() === mi)
-              return {
-                month,
-                dieselLiters: diesel.reduce((s,l)=>s+(l.liters||0),0),
-                dieselCost: diesel.reduce((s,l)=>s+(l.totalCost||0),0),
-                petrolLiters: petrol.reduce((s,l)=>s+(l.liters||0),0),
-                petrolCost: petrol.reduce((s,l)=>s+(l.totalCost||0),0),
-                totalFuelCost: fuelMonth.reduce((s,l)=>s+(l.totalCost||0),0),
-                expensesTotal: expMonth.reduce((s,e)=>s+(e.amount||0),0),
-                expensesCount: expMonth.length,
-              }
-            }).filter(m => m && (m.dieselCost > 0 || m.petrolCost > 0 || m.expensesTotal > 0))
+            const getFT=(log)=>{
+              if(log.filledBy?.startsWith('PETROL:')) return 'PETROL'
+              if(log.filledBy?.startsWith('DIESEL:')) return 'DIESEL'
+              return log.fuelType||'DIESEL'
+            }
+            const mi = MONTHS.indexOf(selectedReportMonth)
+            const fuelRows = selectedReportMonth==='ALL' ? data.fuel
+              : data.fuel.filter(l=>l.date&&new Date(l.date).getMonth()===mi)
+            const expRows = selectedReportMonth==='ALL' ? data.expenses
+              : data.expenses.filter(e=>e.date&&new Date(e.date).getMonth()===mi)
 
-            const grandDieselC = monthlyData.reduce((s,m)=>s+m.dieselCost,0)
-            const grandPetrolC = monthlyData.reduce((s,m)=>s+m.petrolCost,0)
-            const grandExpenses = monthlyData.reduce((s,m)=>s+m.expensesTotal,0)
-            const grandTotal = grandDieselC + grandPetrolC + grandExpenses
+            const diesel = fuelRows.filter(l=>getFT(l)==='DIESEL')
+            const petrol = fuelRows.filter(l=>getFT(l)==='PETROL')
+            const totalDieselL = diesel.reduce((s,l)=>s+(l.liters||0),0)
+            const totalDieselC = diesel.reduce((s,l)=>s+(l.totalCost||0),0)
+            const totalPetrolL = petrol.reduce((s,l)=>s+(l.liters||0),0)
+            const totalPetrolC = petrol.reduce((s,l)=>s+(l.totalCost||0),0)
+            const totalExpenses = expRows.reduce((s,e)=>s+(e.amount||0),0)
 
-            return monthlyData.length === 0 ? (
-              <div style={{padding:48,textAlign:'center',color:'var(--text3)'}}>No data available yet</div>
-            ) : (
+            return (
               <>
                 {/* Month selector */}
                 <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20,flexWrap:'wrap'}}>
+                  <label style={{fontSize:13,fontWeight:700,color:'var(--text2)'}}>Select Month:</label>
                   <select className="form-input" style={{width:180,appearance:'auto'}} value={selectedReportMonth} onChange={e=>setSelectedReportMonth(e.target.value)}>
                     <option value="ALL">All Months</option>
                     {MONTHS.map(m=><option key={m} value={m}>{m}</option>)}
                   </select>
-                  {selectedReportMonth!=='ALL'&&(
-                    <button className="btn btn-ghost btn-sm" onClick={()=>setSelectedReportMonth('ALL')}>✕ Clear</button>
+                </div>
+
+                {/* Fuel Report */}
+                <div className="card" style={{marginBottom:16}}>
+                  <div className="card-header">
+                    <div className="card-title">Fuel Report {selectedReportMonth!=='ALL'?`— ${selectedReportMonth}`:''}</div>
+                    <span style={{fontSize:12,color:'var(--text2)',fontWeight:600}}>{fuelRows.length} records</span>
+                  </div>
+                  {fuelRows.length===0?(
+                    <div style={{padding:32,textAlign:'center',color:'var(--text3)'}}>No fuel data for this period</div>
+                  ):(
+                    <div className="table-wrap">
+                      <table className="table">
+                        <thead><tr><th>Date</th><th>Plate</th><th>Type</th><th>Department</th><th>Liters</th><th>Value (RWF)</th></tr></thead>
+                        <tbody>
+                          {[...fuelRows].reverse().map(l=>{
+                            const ft=getFT(l)
+                            const dept=l.filledBy?.includes(':')?l.filledBy.split(':').slice(1).join(':'):l.filledBy||'—'
+                            return(
+                              <tr key={l.id}>
+                                <td style={{color:'var(--text2)',whiteSpace:'nowrap'}}>{l.date}</td>
+                                <td style={{fontFamily:'DM Mono,monospace',color:'var(--blue)',fontWeight:700}}>{l.fleetVehicle?.plate||'—'}</td>
+                                <td><span style={{fontSize:11,fontWeight:800,borderRadius:20,padding:'3px 9px',background:ft==='PETROL'?'#dbeafe':'#fef3c7',color:ft==='PETROL'?'#1e40af':'#92400e'}}>{ft}</span></td>
+                                <td style={{color:'var(--text2)'}}>{dept}</td>
+                                <td style={{fontWeight:700}}>{l.liters}L</td>
+                                <td style={{fontFamily:'DM Mono,monospace',color:'var(--green)',fontWeight:700}}>{(l.totalCost||0).toLocaleString()}</td>
+                              </tr>
+                            )
+                          })}
+                          <tr style={{background:'var(--surface2)',borderTop:'2px solid var(--border)'}}>
+                            <td colSpan={4} style={{fontWeight:800}}>TOTAL</td>
+                            <td style={{fontFamily:'DM Mono,monospace',fontWeight:800}}>{(totalDieselL+totalPetrolL).toFixed(1)}L<span style={{fontSize:11,color:'var(--text3)',marginLeft:6}}>D:{totalDieselL.toFixed(1)} P:{totalPetrolL.toFixed(1)}</span></td>
+                            <td style={{fontFamily:'DM Mono,monospace',color:'var(--green)',fontWeight:800}}>{(totalDieselC+totalPetrolC).toLocaleString()}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
                   )}
-                  <span style={{fontSize:13,color:'var(--text2)',fontWeight:600}}>
-                    {selectedReportMonth==='ALL'?`Showing all ${monthlyData.length} month(s)`:`Showing: ${selectedReportMonth}`}
-                  </span>
                 </div>
 
-                {/* Grand total cards */}
-                <div className="stat-grid-4" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
-                  <div className="stat-card" style={{borderLeft:'3px solid #f59e0b'}}>
-                    <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',marginBottom:4}}>Total Diesel</div>
-                    <div style={{fontSize:20,fontWeight:800,color:'#92400e'}}>{grandDieselC.toLocaleString()}</div>
-                    <div style={{fontSize:11,color:'var(--text3)'}}>RWF</div>
+                {/* Expenses Report */}
+                <div className="card">
+                  <div className="card-header">
+                    <div className="card-title">Expenses Report {selectedReportMonth!=='ALL'?`— ${selectedReportMonth}`:''}</div>
+                    <span style={{fontFamily:'DM Mono,monospace',fontSize:13,color:'var(--red)',fontWeight:700}}>{totalExpenses.toLocaleString()} RWF</span>
                   </div>
-                  <div className="stat-card" style={{borderLeft:'3px solid #2563eb'}}>
-                    <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',marginBottom:4}}>Total Petrol</div>
-                    <div style={{fontSize:20,fontWeight:800,color:'#1e40af'}}>{grandPetrolC.toLocaleString()}</div>
-                    <div style={{fontSize:11,color:'var(--text3)'}}>RWF</div>
-                  </div>
-                  <div className="stat-card" style={{borderLeft:'3px solid #dc2626'}}>
-                    <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',marginBottom:4}}>Total Expenses</div>
-                    <div style={{fontSize:20,fontWeight:800,color:'var(--red)'}}>{grandExpenses.toLocaleString()}</div>
-                    <div style={{fontSize:11,color:'var(--text3)'}}>RWF</div>
-                  </div>
-                  <div className="stat-card" style={{borderLeft:'3px solid #059669'}}>
-                    <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',marginBottom:4}}>Grand Total</div>
-                    <div style={{fontSize:20,fontWeight:800,color:'var(--green)'}}>{grandTotal.toLocaleString()}</div>
-                    <div style={{fontSize:11,color:'var(--text3)'}}>RWF</div>
-                  </div>
-                </div>
-
-                {/* Monthly breakdown table */}
-                <div className="table-wrap">
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>Month</th>
-                        <th>Diesel (L)</th>
-                        <th>Diesel Cost</th>
-                        <th>Petrol (L)</th>
-                        <th>Petrol Cost</th>
-                        <th>Total Fuel</th>
-                        <th>Expenses</th>
-                        <th>Grand Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {monthlyData.map(m=>(
-                        <tr key={m.month}>
-                          <td style={{fontWeight:700,color:'var(--text)'}}>{m.month}</td>
-                          <td style={{fontFamily:'DM Mono,monospace',color:'#92400e',fontWeight:600}}>{m.dieselLiters.toFixed(1)}L</td>
-                          <td style={{fontFamily:'DM Mono,monospace',color:'#92400e',fontWeight:700}}>{m.dieselCost.toLocaleString()}</td>
-                          <td style={{fontFamily:'DM Mono,monospace',color:'#1e40af',fontWeight:600}}>{m.petrolLiters.toFixed(1)}L</td>
-                          <td style={{fontFamily:'DM Mono,monospace',color:'#1e40af',fontWeight:700}}>{m.petrolCost.toLocaleString()}</td>
-                          <td style={{fontFamily:'DM Mono,monospace',color:'var(--green)',fontWeight:700}}>{m.totalFuelCost.toLocaleString()}</td>
-                          <td style={{fontFamily:'DM Mono,monospace',color:'var(--red)',fontWeight:700}}>{m.expensesTotal.toLocaleString()}<span style={{fontSize:11,color:'var(--text3)',marginLeft:4}}>({m.expensesCount})</span></td>
-                          <td style={{fontFamily:'DM Mono,monospace',fontWeight:800,color:'var(--text)',background:'var(--surface2)'}}>{(m.totalFuelCost+m.expensesTotal).toLocaleString()}</td>
-                        </tr>
-                      ))}
-                      {/* Totals row */}
-                      <tr style={{background:'var(--surface2)',borderTop:'2px solid var(--border)'}}>
-                        <td style={{fontWeight:800,color:'var(--text)'}}>TOTAL</td>
-                        <td style={{fontFamily:'DM Mono,monospace',color:'#92400e',fontWeight:700}}>{monthlyData.reduce((s,m)=>s+m.dieselLiters,0).toFixed(1)}L</td>
-                        <td style={{fontFamily:'DM Mono,monospace',color:'#92400e',fontWeight:800}}>{grandDieselC.toLocaleString()}</td>
-                        <td style={{fontFamily:'DM Mono,monospace',color:'#1e40af',fontWeight:700}}>{monthlyData.reduce((s,m)=>s+m.petrolLiters,0).toFixed(1)}L</td>
-                        <td style={{fontFamily:'DM Mono,monospace',color:'#1e40af',fontWeight:800}}>{grandPetrolC.toLocaleString()}</td>
-                        <td style={{fontFamily:'DM Mono,monospace',color:'var(--green)',fontWeight:800}}>{(grandDieselC+grandPetrolC).toLocaleString()}</td>
-                        <td style={{fontFamily:'DM Mono,monospace',color:'var(--red)',fontWeight:800}}>{grandExpenses.toLocaleString()}</td>
-                        <td style={{fontFamily:'DM Mono,monospace',fontWeight:800,color:'var(--text)',background:'var(--surface2)'}}>{grandTotal.toLocaleString()}</td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  {expRows.length===0?(
+                    <div style={{padding:32,textAlign:'center',color:'var(--text3)'}}>No expenses for this period</div>
+                  ):(
+                    <div className="table-wrap">
+                      <table className="table">
+                        <thead><tr><th>Date</th><th>Plate</th><th>Reason</th><th>Received By</th><th>Amount (RWF)</th></tr></thead>
+                        <tbody>
+                          {expRows.map(e=>(
+                            <tr key={e.id}>
+                              <td style={{color:'var(--text2)',whiteSpace:'nowrap'}}>{e.date}</td>
+                              <td style={{fontFamily:'DM Mono,monospace',color:'var(--blue)',fontWeight:700}}>{e.plate||'—'}</td>
+                              <td style={{fontWeight:600}}>{e.reason}</td>
+                              <td style={{color:'var(--text2)'}}>{e.assignment||e.receivedBy||'—'}</td>
+                              <td style={{fontFamily:'DM Mono,monospace',fontWeight:700,color:'var(--red)'}}>{(e.amount||0).toLocaleString()}</td>
+                            </tr>
+                          ))}
+                          <tr style={{background:'var(--surface2)',borderTop:'2px solid var(--border)'}}>
+                            <td colSpan={4} style={{fontWeight:800}}>TOTAL</td>
+                            <td style={{fontFamily:'DM Mono,monospace',color:'var(--red)',fontWeight:800}}>{totalExpenses.toLocaleString()}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               </>
             )
