@@ -532,7 +532,7 @@ function DashboardPage({ onAlertsChange }) {
                       <td style={{color:'var(--text2)'}}>{f.date}</td>
                       <td style={{fontWeight:600}}>{f.liters}L</td>
                       <td style={{fontFamily:'DM Mono,monospace',color:'var(--green)',fontWeight:700}}>{(f.totalCost||0).toLocaleString()} RWF</td>
-                      <td className="hide-mobile" style={{color:'var(--text2)'}}>{f.voucherNumber||'—'}</td>
+                      <td className="hide-mobile" style={{color:'var(--text2)'}}>{f.station||'—'}</td>
                     </tr>
                   ))}
                 </tbody>
