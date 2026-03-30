@@ -237,6 +237,42 @@ const ROLE_CONFIG = {
 const hasPerm = (user, page, action='view') => {
   if(!user) return false
   if(user.role === 'manager') return true
+  // Supervisor default access
+  if(user.role === 'supervisor') {
+    const supervisorDefaults = {
+      vehicles:{view:true,add:true,edit:true,delete:false},
+      fuel:{view:true,add:false,edit:false,delete:false},
+      expenses:{view:true,add:true,edit:true,delete:false},
+      inventory:{view:true,add:true,edit:true,delete:false},
+      alerts:{view:true,add:false,edit:false,delete:false},
+    }
+    // Override with custom permissions if set
+    if(user.permissions && user.permissions !== '') {
+      try {
+        const perms = typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions
+        if(perms && typeof perms === 'object' && Object.keys(perms).length > 0)
+          return perms?.[page]?.[action] === true
+      } catch {}
+    }
+    return supervisorDefaults[page]?.[action] === true
+  }
+  // Mechanic default access
+  if(user.role === 'mechanic') {
+    const mechanicDefaults = {
+      vehicles:{view:true,add:false,edit:true,delete:false},
+      inventory:{view:true,add:false,edit:false,delete:false},
+      alerts:{view:true,add:false,edit:false,delete:false},
+    }
+    if(user.permissions && user.permissions !== '') {
+      try {
+        const perms = typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions
+        if(perms && typeof perms === 'object' && Object.keys(perms).length > 0)
+          return perms?.[page]?.[action] === true
+      } catch {}
+    }
+    return mechanicDefaults[page]?.[action] === true
+  }
+  // Viewer — only custom permissions, no defaults
   if(!user.permissions || user.permissions === '') return false
   try {
     const perms = typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions
@@ -413,6 +449,8 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout, alertCount, menuOpen
             <div style={{minWidth:0}}>
               <div style={{fontSize:13,fontWeight:700,color:'var(--text)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{user.name}</div>
               <div style={{fontSize:11,color:'var(--text2)'}}>{rc.label}</div>
+              {user.permissions&&user.permissions!==''&&<div style={{fontSize:10,color:'var(--green)',fontWeight:600}}>✓ Permissions loaded</div>}
+              {(!user.permissions||user.permissions==='')&&user.role!=='manager'&&<div style={{fontSize:10,color:'var(--red)',fontWeight:600}}>⚠ No permissions — sign out & in</div>}
             </div>
           </div>
           <button onClick={onLogout} style={{width:'100%',background:'transparent',border:'1px solid var(--border)',color:'var(--text2)',borderRadius:8,padding:10,fontSize:13,cursor:'pointer',fontFamily:'Nunito,sans-serif',fontWeight:600}}>Sign Out →</button>
@@ -2850,4 +2888,4 @@ export default function App() {
       )}
     </>
   )
-}
+}  
