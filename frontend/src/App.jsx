@@ -290,7 +290,7 @@ function LoginPage({ onLogin }) {
           <button className="btn-primary" onClick={handleLogin} disabled={loading}>{loading?'Signing in...':'Sign In'}</button>
         </div>
         <div style={{ flex:1, textAlign:'right', maxWidth:260, display:'flex', flexDirection:'column', alignItems:'flex-end' }}>
-        {/*  <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>ERI-RWANDA LTD</div>
+         {/* <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>ERI-RWANDA LTD</div>
           <div style={{ fontSize:28, fontWeight:800, color:'#fff', lineHeight:1.25, textShadow:'0 2px 12px rgba(0,0,0,0.5)', marginBottom:14, fontFamily:'Nunito,sans-serif' }}>Your Trusted<br/>Importer &<br/>Distributor</div>
           <div style={{ width:50, height:3, background:'#2563eb', borderRadius:2, marginBottom:14 }}/>
           <div style={{ fontSize:13, color:'rgba(255,255,255,0.85)', lineHeight:1.8, textShadow:'0 1px 6px rgba(0,0,0,0.4)', fontFamily:'Nunito,sans-serif' }}>Bringing quality products<br/>across Rwanda with a<br/>reliable fleet since day one.</div>   */}
@@ -524,7 +524,7 @@ function DashboardPage({ onAlertsChange }) {
           {d.fuel.length===0?<div style={{padding:32,textAlign:'center',color:'var(--text3)'}}>No fuel logs yet</div>:(
             <div className="table-wrap">
               <table className="table">
-                <thead><tr><th>Vehicle</th><th>Date</th><th>Liters</th><th>Total Cost</th><th className="hide-mobile">Station</th></tr></thead>
+                <thead><tr><th>Vehicle</th><th>Date</th><th>Liters</th><th>Total Cost</th><th className="hide-mobile">Voucher Number</th></tr></thead>
                 <tbody>
                   {[...d.fuel].reverse().slice(0,8).map(f=>(
                     <tr key={f.id}>
@@ -685,25 +685,33 @@ function ExpensesPage({ user }) {
       const XLSX=await import('https://cdn.sheetjs.com/xlsx-0.20.1/package/xlsx.mjs')
       const data=await file.arrayBuffer()
       const wb=XLSX.read(data,{cellDates:true})
-      const ws=wb.Sheets[wb.SheetNames[0]]
+      // Try to find sheet matching the selected month name, fallback to first sheet
+      const sheetName = wb.SheetNames.find(s=>s.toUpperCase()===selectedMonth.toUpperCase()) || wb.SheetNames[0]
+      const ws=wb.Sheets[sheetName]
       const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''})
       let success=0,failed=0,skipped=0,errors=[]
       const selectedMonthIndex=MONTHS.indexOf(selectedMonth)+1
+      const SKIP_KEYS=['date','recharge','garage','january','february','march','april','may','june','july','august','september','october','november','december','balance']
       for(const row of rows){
-        const rawDate=row[0];const plate=String(row[1]||'').trim()
-        const receivedBy=String(row[2]||'').trim();const reason=String(row[3]||'').trim();const amount=parseFloat(row[4])||0
-        if(!rawDate){skipped++;continue}
-        if(String(rawDate).toUpperCase()==='DATE'){skipped++;continue}
-        if(!amount){skipped++;continue}
-        let dateStr=''
-        if(rawDate instanceof Date){const y=rawDate.getFullYear();const m=String(rawDate.getMonth()+1).padStart(2,'0');const d=String(rawDate.getDate()).padStart(2,'0');dateStr=`${y}-${m}-${d}`}
-        else if(typeof rawDate==='string'&&rawDate.trim()){const raw=rawDate.trim();if(raw.includes('/')){const parts=raw.split('/');if(parts.length===3){const day=parts[0].padStart(2,'0');const month=parts[1].padStart(2,'0');const year=parts[2].length===2?'20'+parts[2]:parts[2];dateStr=`${year}-${month}-${day}`}}else if(raw.match(/^\d{4}-\d{2}-\d{2}$/)){dateStr=raw}}
-        if(!dateStr||isNaN(new Date(dateStr).getTime())){skipped++;continue}
-        const cleanAmount=parseFloat(amount)||0
-        if(!cleanAmount){skipped++;continue}
-        const rowMonth=new Date(dateStr).getMonth()+1
-        if(rowMonth!==selectedMonthIndex){skipped++;continue}
-        try{await api.post('/expenses',{date:dateStr,plate,assignment:receivedBy,reason,amount:Math.round(cleanAmount)});success++}
+        const rawDate=row[0]
+        const plate=String(row[1]||'').trim()
+        const reason=String(row[2]||'').trim()
+        // If amount col 3 is 0, check col 6 as fallback (some rows have amount in wrong column)
+        const amount=(parseFloat(row[3])||0) > 0 ? parseFloat(row[3]) : (parseFloat(row[6])||0)
+        const receivedBy=String(row[4]||'').trim()
+        // Skip blank, header or summary rows
+        if(!rawDate||!reason){skipped++;continue}
+        if(SKIP_KEYS.some(k=>String(rawDate).toLowerCase().includes(k)||reason.toLowerCase()===k)){skipped++;continue}
+        if(!(rawDate instanceof Date)){skipped++;continue}
+        if(!amount||amount<=0){skipped++;continue}
+        // Use local date parts to avoid UTC timezone shift
+        const y=rawDate.getFullYear()
+        const mo=String(rawDate.getMonth()+1).padStart(2,'0')
+        const dy=String(rawDate.getDate()).padStart(2,'0')
+        const dateStr=`${y}-${mo}-${dy}`
+        // Month filter
+        if(rawDate.getMonth()+1!==selectedMonthIndex){skipped++;continue}
+        try{await api.post('/expenses',{date:dateStr,plate,assignment:receivedBy,reason,amount:Math.round(amount)});success++}
         catch{failed++;if(errors.length<8)errors.push(`Failed: ${reason} on ${dateStr}`)}
       }
       setImportResult({success,failed,skipped,errors})
@@ -821,7 +829,8 @@ function ExpensesPage({ user }) {
                 {selectedMonth&&<div style={{fontSize:11,color:'var(--blue)',marginTop:6,fontWeight:600}}>Only {selectedMonth} records will be imported</div>}
               </div>
               <div style={{background:'var(--surface2)',borderRadius:10,padding:'12px 14px',fontSize:13,color:'var(--text2)',lineHeight:1.6}}>
-                <strong style={{color:'var(--text)'}}>Excel format:</strong><br/>DATE | PLATE | ASSIGNMENT | REASON | DOMAIN | AMOUNT
+                <strong style={{color:'var(--text)'}}>Excel format:</strong><br/>DATE | PLATE | REASON | AMOUNT | RECEIVED BY<br/>
+                <span style={{fontSize:11,color:'var(--text3)'}}>Sheet name should match the month (e.g. JANUARY)</span>
               </div>
             </div>
             <div className="modal-footer">
