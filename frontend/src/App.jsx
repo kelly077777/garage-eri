@@ -237,46 +237,9 @@ const ROLE_CONFIG = {
 const hasPerm = (user, page, action='view') => {
   if(!user) return false
   if(user.role === 'manager') return true
-  // Supervisor default access
-  if(user.role === 'supervisor') {
-    const supervisorDefaults = {
-      vehicles:{view:true,add:true,edit:true,delete:false},
-      fuel:{view:true,add:false,edit:false,delete:false},
-      expenses:{view:true,add:true,edit:true,delete:false},
-      inventory:{view:true,add:true,edit:true,delete:false},
-      alerts:{view:true,add:false,edit:false,delete:false},
-    }
-    // Override with custom permissions if set
-    if(user.permissions && user.permissions !== '') {
-      try {
-        const perms = typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions
-        if(perms && typeof perms === 'object' && Object.keys(perms).length > 0)
-          return perms?.[page]?.[action] === true
-      } catch {}
-    }
-    return supervisorDefaults[page]?.[action] === true
-  }
-  // Mechanic default access
-  if(user.role === 'mechanic') {
-    const mechanicDefaults = {
-      vehicles:{view:true,add:false,edit:true,delete:false},
-      inventory:{view:true,add:false,edit:false,delete:false},
-      alerts:{view:true,add:false,edit:false,delete:false},
-    }
-    if(user.permissions && user.permissions !== '') {
-      try {
-        const perms = typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions
-        if(perms && typeof perms === 'object' && Object.keys(perms).length > 0)
-          return perms?.[page]?.[action] === true
-      } catch {}
-    }
-    return mechanicDefaults[page]?.[action] === true
-  }
-  // Viewer — only custom permissions, no defaults
   if(!user.permissions || user.permissions === '') return false
   try {
-    const perms = typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions
-    if(!perms || typeof perms !== 'object') return false
+    const perms = JSON.parse(user.permissions)
     return perms?.[page]?.[action] === true
   } catch { return false }
 }
@@ -2888,4 +2851,4 @@ export default function App() {
       )}
     </>
   )
-}  
+}
