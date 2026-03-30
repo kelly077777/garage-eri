@@ -293,7 +293,7 @@ function LoginPage({ onLogin }) {
         {/*  <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>ERI-RWANDA LTD</div>
           <div style={{ fontSize:28, fontWeight:800, color:'#fff', lineHeight:1.25, textShadow:'0 2px 12px rgba(0,0,0,0.5)', marginBottom:14, fontFamily:'Nunito,sans-serif' }}>Your Trusted<br/>Importer &<br/>Distributor</div>
           <div style={{ width:50, height:3, background:'#2563eb', borderRadius:2, marginBottom:14 }}/>
-          <div style={{ fontSize:13, color:'rgba(255,255,255,0.85)', lineHeight:1.8, textShadow:'0 1px 6px rgba(0,0,0,0.4)', fontFamily:'Nunito,sans-serif' }}>Bringing quality products<br/>across Rwanda with a<br/>reliable fleet since day one.</div>   */}
+          <div style={{ fontSize:13, color:'rgba(255,255,255,0.85)', lineHeight:1.8, textShadow:'0 1px 6px rgba(0,0,0,0.4)', fontFamily:'Nunito,sans-serif' }}>Bringing quality products<br/>across Rwanda with a<br/>reliable fleet since day one.</div>  */}
         </div>
       </div>
     </div>
@@ -938,6 +938,9 @@ function AuditLogPage() {
 function ReportsPage() {
   const [activeReport, setActiveReport] = useState('fleet')
   const [search, setSearch] = useState('')
+  const [fuelMonth, setFuelMonth] = useState('ALL')
+  const [fuelTypeFilter, setFuelTypeFilter] = useState('ALL')
+  const [expMonth, setExpMonth] = useState('ALL')
   const [data, setData] = useState({vehicles:[],fleet:[],fuel:[],inventory:[],staff:[],expenses:[]})
   useEffect(()=>{
     Promise.all([api.get('/vehicles'),api.get('/fleet'),api.get('/fleet/fuel/all'),api.get('/inventory'),api.get('/auth/users'),api.get('/expenses')])
@@ -1041,8 +1044,6 @@ function ReportsPage() {
             )
           )}
           {activeReport==='fuel'&&(()=>{
-            const [fuelMonth, setFuelMonth] = React.useState('ALL')
-            const [fuelType, setFuelType] = React.useState('ALL')
             const getFT=(log)=>{
               if(log.filledBy?.startsWith('PETROL:')) return 'PETROL'
               if(log.filledBy?.startsWith('DIESEL:')) return 'DIESEL'
@@ -1050,7 +1051,7 @@ function ReportsPage() {
             }
             const fuelFiltered = data.fuel
               .filter(l=> fuelMonth==='ALL' || (l.date && new Date(l.date).getMonth()===MONTHS.indexOf(fuelMonth)))
-              .filter(l=> fuelType==='ALL' || getFT(l)===fuelType)
+              .filter(l=> fuelTypeFilter==='ALL' || getFT(l)===fuelTypeFilter)
               .filter(l=> !q || l.fleetVehicle?.plate?.toLowerCase().includes(q))
             const dieselRows = fuelFiltered.filter(l=>getFT(l)==='DIESEL')
             const petrolRows = fuelFiltered.filter(l=>getFT(l)==='PETROL')
@@ -1067,8 +1068,8 @@ function ReportsPage() {
                   </select>
                   <div className="tab-bar" style={{width:'auto'}}>
                     {[['ALL','All'],['DIESEL','Diesel'],['PETROL','Petrol']].map(([val,label])=>(
-                      <button key={val} className="tab-btn" onClick={()=>setFuelType(val)}
-                        style={{background:fuelType===val?'var(--blue)':'transparent',color:fuelType===val?'#fff':'var(--text2)',padding:'7px 14px'}}>
+                      <button key={val} className="tab-btn" onClick={()=>setFuelTypeFilter(val)}
+                        style={{background:fuelTypeFilter===val?'var(--blue)':'transparent',color:fuelTypeFilter===val?'#fff':'var(--text2)',padding:'7px 14px'}}>
                         {label}
                       </button>
                     ))}
@@ -1137,7 +1138,6 @@ function ReportsPage() {
           )}
 
                     {activeReport==='expenses'&&(()=>{
-            const [expMonth, setExpMonth] = React.useState('ALL')
             const expFiltered = data.expenses
               .filter(e=> expMonth==='ALL' || (e.date && new Date(e.date).getMonth()===MONTHS.indexOf(expMonth)))
               .filter(e=> !q || e.plate?.toLowerCase().includes(q) || e.reason?.toLowerCase().includes(q))
