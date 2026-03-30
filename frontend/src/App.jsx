@@ -290,11 +290,11 @@ function LoginPage({ onLogin }) {
           <button className="btn-primary" onClick={handleLogin} disabled={loading}>{loading?'Signing in...':'Sign In'}</button>
         </div>
         <div style={{ flex:1, textAlign:'right', maxWidth:260, display:'flex', flexDirection:'column', alignItems:'flex-end' }}>
-          {/*<div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>ERI-RWANDA LTD</div>
+        {/*  <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>ERI-RWANDA LTD</div>
           <div style={{ fontSize:28, fontWeight:800, color:'#fff', lineHeight:1.25, textShadow:'0 2px 12px rgba(0,0,0,0.5)', marginBottom:14, fontFamily:'Nunito,sans-serif' }}>Your Trusted<br/>Importer &<br/>Distributor</div>
           <div style={{ width:50, height:3, background:'#2563eb', borderRadius:2, marginBottom:14 }}/>
-          <div style={{ fontSize:13, color:'rgba(255,255,255,0.85)', lineHeight:1.8, textShadow:'0 1px 6px rgba(0,0,0,0.4)', fontFamily:'Nunito,sans-serif' }}>Bringing quality products<br/>across Rwanda with a<br/>reliable fleet since day one.</div>
-       */} </div>
+          <div style={{ fontSize:13, color:'rgba(255,255,255,0.85)', lineHeight:1.8, textShadow:'0 1px 6px rgba(0,0,0,0.4)', fontFamily:'Nunito,sans-serif' }}>Bringing quality products<br/>across Rwanda with a<br/>reliable fleet since day one.</div>   */}
+        </div>
       </div>
     </div>
   )
@@ -639,16 +639,9 @@ function ExpensesPage({ user }) {
   const [selectedMonth, setSelectedMonth] = useState('')
   const [deleteMonth, setDeleteMonth] = useState('')
   const [filterMonth, setFilterMonth] = useState('ALL')
-  const [filterDomain, setFilterDomain] = useState('ALL')
   const [search, setSearch] = useState('')
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
-  const DOMAINS = ['GENERAL','TYRE','TRANSPORT','PARKING','WIREMAN','MODIFICATION']
-  const DOMAIN_STYLE = {
-    'GENERAL':{bg:'#eff6ff',color:'#1d4ed8'},'TYRE':{bg:'#fef3c7',color:'#92400e'},'TIYRE':{bg:'#fef3c7',color:'#92400e'},
-    'TRANSPORT':{bg:'#f0fdf4',color:'#166534'},'PARKING':{bg:'#f5f3ff',color:'#6d28d9'},
-    'WIREMAN':{bg:'#fff7ed',color:'#c2410c'},'MODIFICATION':{bg:'#fdf2f8',color:'#9d174d'},
-  }
-  const empty = {date:'',plate:'',assignment:'',reason:'',domain:'GENERAL',amount:''}
+  const empty = {date:'',plate:'',receivedBy:'',reason:'',amount:''}
   const [form, setForm] = useState(empty)
   const sf = (k,v) => setForm(f=>({...f,[k]:v}))
 
@@ -666,7 +659,7 @@ function ExpensesPage({ user }) {
   }
   const openEdit = (exp) => {
     setEditing(exp)
-    setForm({date:exp.date||'',plate:exp.plate||'',assignment:exp.assignment||'',reason:exp.reason||'',domain:exp.domain||'GENERAL',amount:exp.amount||''})
+    setForm({date:exp.date||'',plate:exp.plate||'',receivedBy:exp.assignment||exp.receivedBy||'',reason:exp.reason||'',amount:exp.amount||''})
     setShowAdd(true)
   }
   const handleDelete = async (id) => {
@@ -697,8 +690,8 @@ function ExpensesPage({ user }) {
       let success=0,failed=0,skipped=0,errors=[]
       const selectedMonthIndex=MONTHS.indexOf(selectedMonth)+1
       for(const row of rows){
-        const rawDate=row[0];const plate=String(row[1]||'').trim();const assignment=String(row[2]||'').trim()
-        const reason=String(row[3]||'').trim();const domain=String(row[4]||'').trim().toUpperCase();const amount=parseFloat(row[5])||0
+        const rawDate=row[0];const plate=String(row[1]||'').trim()
+        const receivedBy=String(row[2]||'').trim();const reason=String(row[3]||'').trim();const amount=parseFloat(row[4])||0
         if(!rawDate){skipped++;continue}
         if(String(rawDate).toUpperCase()==='DATE'){skipped++;continue}
         if(!amount){skipped++;continue}
@@ -706,11 +699,11 @@ function ExpensesPage({ user }) {
         if(rawDate instanceof Date){const y=rawDate.getFullYear();const m=String(rawDate.getMonth()+1).padStart(2,'0');const d=String(rawDate.getDate()).padStart(2,'0');dateStr=`${y}-${m}-${d}`}
         else if(typeof rawDate==='string'&&rawDate.trim()){const raw=rawDate.trim();if(raw.includes('/')){const parts=raw.split('/');if(parts.length===3){const day=parts[0].padStart(2,'0');const month=parts[1].padStart(2,'0');const year=parts[2].length===2?'20'+parts[2]:parts[2];dateStr=`${year}-${month}-${day}`}}else if(raw.match(/^\d{4}-\d{2}-\d{2}$/)){dateStr=raw}}
         if(!dateStr||isNaN(new Date(dateStr).getTime())){skipped++;continue}
-        const cleanAmount=typeof amount==='string'&&amount.startsWith('=')?0:parseFloat(amount)||0
+        const cleanAmount=parseFloat(amount)||0
         if(!cleanAmount){skipped++;continue}
         const rowMonth=new Date(dateStr).getMonth()+1
         if(rowMonth!==selectedMonthIndex){skipped++;continue}
-        try{await api.post('/expenses',{date:dateStr,plate,assignment,reason,domain:domain||'GENERAL',amount:Math.round(cleanAmount)});success++}
+        try{await api.post('/expenses',{date:dateStr,plate,assignment:receivedBy,reason,amount:Math.round(cleanAmount)});success++}
         catch{failed++;if(errors.length<8)errors.push(`Failed: ${reason} on ${dateStr}`)}
       }
       setImportResult({success,failed,skipped,errors})
@@ -721,13 +714,10 @@ function ExpensesPage({ user }) {
   const filtered=expenses.filter(e=>{
     const q=search.toLowerCase()
     const monthMatch=filterMonth==='ALL'||(e.date&&new Date(e.date).getMonth()===MONTHS.indexOf(filterMonth))
-    const domainMatch=filterDomain==='ALL'||e.domain===filterDomain
-    const searchMatch=!q||e.plate?.toLowerCase().includes(q)||e.reason?.toLowerCase().includes(q)||e.assignment?.toLowerCase().includes(q)
-    return monthMatch&&domainMatch&&searchMatch
+    const searchMatch=!q||e.plate?.toLowerCase().includes(q)||e.reason?.toLowerCase().includes(q)||(e.assignment||e.receivedBy)?.toLowerCase().includes(q)
+    return monthMatch&&searchMatch
   })
   const totalAmount=filtered.reduce((s,e)=>s+(e.amount||0),0)
-  const byDomain={}
-  filtered.forEach(e=>{const d=e.domain||'GENERAL';byDomain[d]=(byDomain[d]||0)+(e.amount||0)})
 
   return (
     <>
@@ -748,24 +738,19 @@ function ExpensesPage({ user }) {
               </div>
               {importResult.errors.length>0&&<div style={{fontSize:12,color:'#dc2626'}}>{importResult.errors.map((e,i)=><div key={i}>• {e}</div>)}</div>}
             </div>
-            <button onClick={()=>setImportResult(null)} style={{background:'none',border:'none',cursor:'pointer',fontSize:18,color:'#9096ab',flexShrink:0}}></button>
+            <button onClick={()=>setImportResult(null)} style={{background:'none',border:'none',cursor:'pointer',fontSize:18,color:'#9096ab',flexShrink:0}}>×</button>
           </div>
         )}
 
-        <div className="stat-grid-4" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
-          <div className="stat-card"><div style={{fontSize:11,color:'var(--text2)',marginBottom:4,fontWeight:600}}>Total</div><div style={{fontSize:18,fontWeight:800,color:'var(--red)'}}>{totalAmount.toLocaleString()}</div><div style={{fontSize:10,color:'var(--text3)'}}>RWF</div></div>
-          <div className="stat-card"><div style={{fontSize:11,color:'var(--text2)',marginBottom:4,fontWeight:600}}>Records</div><div style={{fontSize:18,fontWeight:800,color:'var(--blue)'}}>{filtered.length}</div><div style={{fontSize:10,color:'var(--text3)'}}>entries</div></div>
-          <div className="stat-card"><div style={{fontSize:11,color:'var(--text2)',marginBottom:4,fontWeight:600}}>General</div><div style={{fontSize:18,fontWeight:800,color:'#1d4ed8'}}>{(byDomain['GENERAL']||0).toLocaleString()}</div><div style={{fontSize:10,color:'var(--text3)'}}>RWF</div></div>
-          <div className="stat-card"><div style={{fontSize:11,color:'var(--text2)',marginBottom:4,fontWeight:600}}>Transport</div><div style={{fontSize:18,fontWeight:800,color:'#166534'}}>{(byDomain['TRANSPORT']||0).toLocaleString()}</div><div style={{fontSize:10,color:'var(--text3)'}}>RWF</div></div>
+        <div className="stat-grid-2" style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:12,marginBottom:16}}>
+          <div className="stat-card"><div style={{fontSize:11,color:'var(--text2)',marginBottom:4,fontWeight:600}}>Total Amount</div><div style={{fontSize:22,fontWeight:800,color:'var(--red)'}}>{totalAmount.toLocaleString()}</div><div style={{fontSize:10,color:'var(--text3)'}}>RWF</div></div>
+          <div className="stat-card"><div style={{fontSize:11,color:'var(--text2)',marginBottom:4,fontWeight:600}}>Records</div><div style={{fontSize:22,fontWeight:800,color:'var(--blue)'}}>{filtered.length}</div><div style={{fontSize:10,color:'var(--text3)'}}>entries</div></div>
         </div>
 
         <div style={{display:'flex',gap:10,marginBottom:16,flexWrap:'wrap'}}>
-          <input className="form-input" style={{flex:1,minWidth:160}} placeholder="Search plate, reason..." value={search} onChange={e=>setSearch(e.target.value)}/>
-          <select className="form-input" style={{width:140,appearance:'auto'}} value={filterMonth} onChange={e=>setFilterMonth(e.target.value)}>
+          <input className="form-input" style={{flex:1,minWidth:160}} placeholder="Search plate, reason, received by..." value={search} onChange={e=>setSearch(e.target.value)}/>
+          <select className="form-input" style={{width:160,appearance:'auto'}} value={filterMonth} onChange={e=>setFilterMonth(e.target.value)}>
             <option value="ALL">All Months</option>{MONTHS.map(m=><option key={m} value={m}>{m}</option>)}
-          </select>
-          <select className="form-input" style={{width:140,appearance:'auto'}} value={filterDomain} onChange={e=>setFilterDomain(e.target.value)}>
-            <option value="ALL">All Categories</option>{DOMAINS.map(d=><option key={d} value={d}>{d}</option>)}
           </select>
         </div>
 
@@ -779,26 +764,22 @@ function ExpensesPage({ user }) {
           ):(
             <div className="table-wrap">
               <table className="table">
-                <thead><tr><th>Date</th><th>Plate</th><th className="hide-mobile">Assignment</th><th>Reason</th><th className="hide-mobile">Category</th><th>Amount</th><th>Actions</th></tr></thead>
-                <tbody>{filtered.map(e=>{
-                  const ds=DOMAIN_STYLE[e.domain]||DOMAIN_STYLE['GENERAL']
-                  return(
-                    <tr key={e.id}>
-                      <td style={{color:'var(--text2)',whiteSpace:'nowrap'}}>{e.date}</td>
-                      <td style={{fontFamily:'DM Mono,monospace',color:'var(--blue)',fontWeight:700}}>{e.plate||'—'}</td>
-                      <td className="hide-mobile" style={{color:'var(--text2)'}}>{e.assignment||'—'}</td>
-                      <td style={{fontWeight:600}}>{e.reason}</td>
-                      <td className="hide-mobile"><span style={{fontSize:11,fontWeight:700,borderRadius:20,padding:'3px 10px',background:ds.bg,color:ds.color}}>{e.domain}</span></td>
-                      <td style={{fontFamily:'DM Mono,monospace',fontWeight:700,color:'var(--red)',whiteSpace:'nowrap'}}>{(e.amount||0).toLocaleString()}</td>
-                      <td>
-                        <div style={{display:'flex',gap:4}}>
-                          <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(e)}>Edit</button>
-                          {user?.role==='manager'&&<button className="btn btn-danger btn-sm" onClick={()=>handleDelete(e.id)}>Del</button>}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}</tbody>
+                <thead><tr><th>Date</th><th>Plate</th><th>Reason</th><th>Received By</th><th>Amount (RWF)</th><th>Actions</th></tr></thead>
+                <tbody>{filtered.map(e=>(
+                  <tr key={e.id}>
+                    <td style={{color:'var(--text2)',whiteSpace:'nowrap'}}>{e.date}</td>
+                    <td style={{fontFamily:'DM Mono,monospace',color:'var(--blue)',fontWeight:700}}>{e.plate||'—'}</td>
+                    <td style={{fontWeight:600}}>{e.reason}</td>
+                    <td style={{color:'var(--text2)'}}>{e.assignment||e.receivedBy||'—'}</td>
+                    <td style={{fontFamily:'DM Mono,monospace',fontWeight:700,color:'var(--red)',whiteSpace:'nowrap'}}>{(e.amount||0).toLocaleString()}</td>
+                    <td>
+                      <div style={{display:'flex',gap:4}}>
+                        <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(e)}>Edit</button>
+                        {user?.role==='manager'&&<button className="btn btn-danger btn-sm" onClick={()=>handleDelete(e.id)}>Del</button>}
+                      </div>
+                    </td>
+                  </tr>
+                ))}</tbody>
               </table>
             </div>
           )}
@@ -807,22 +788,15 @@ function ExpensesPage({ user }) {
 
       {showAdd&&(
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowAdd(false)}>
-          <div className="modal" style={{maxWidth:520}}>
+          <div className="modal" style={{maxWidth:460}}>
             <div className="modal-header"><div className="modal-title">{editing?'Edit Expense':'Add Expense'}</div><X onClick={()=>{setShowAdd(false);setEditing(null)}}/></div>
             <div className="modal-body">
               <div className="form-row" style={{marginBottom:14}}>
                 <div><label className="form-label">Date *</label><input className="form-input" type="date" value={form.date} onChange={e=>sf('date',e.target.value)}/></div>
                 <div><label className="form-label">Plate</label><input className="form-input" value={form.plate} onChange={e=>sf('plate',e.target.value.toUpperCase())} placeholder="RAG510W"/></div>
               </div>
-              <div className="form-row" style={{marginBottom:14}}>
-                <div><label className="form-label">Assignment</label><input className="form-input" value={form.assignment} onChange={e=>sf('assignment',e.target.value)} placeholder="COLGATE, DELIVERY"/></div>
-                <div><label className="form-label">Category *</label>
-                  <select className="form-input" style={{appearance:'auto'}} value={form.domain} onChange={e=>sf('domain',e.target.value)}>
-                    {[...DOMAINS,'TIYRE'].map(d=><option key={d} value={d}>{d}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div className="form-group"><label className="form-label">Reason *</label><input className="form-input" value={form.reason} onChange={e=>sf('reason',e.target.value)} placeholder="REPAIR TIRES"/></div>
+              <div className="form-group"><label className="form-label">Reason *</label><input className="form-input" value={form.reason} onChange={e=>sf('reason',e.target.value)} placeholder="e.g. REPAIR TIRES"/></div>
+              <div className="form-group"><label className="form-label">Received By</label><input className="form-input" value={form.receivedBy} onChange={e=>sf('receivedBy',e.target.value)} placeholder="Name of person who received the money"/></div>
               <div className="form-group"><label className="form-label">Amount (RWF) *</label><input className="form-input" type="number" value={form.amount} onChange={e=>sf('amount',e.target.value)} placeholder="15000"/></div>
             </div>
             <div className="modal-footer">
@@ -991,7 +965,7 @@ function ReportsPage() {
     else if(activeReport==='fuel')exportCSV(filteredFuel.map(f=>[f.fleetVehicle?.plate,f.date,f.liters,f.totalCost,f.station,f.filledBy]),['Vehicle','Date','Liters','Total Cost','Station','Filled By'],'fuel')
     else if(activeReport==='inventory')exportCSV(filteredInventory.map(i=>[i.name,i.category,i.quantity,i.unit,i.unitPrice,i.status,i.supplier]),['Name','Category','Qty','Unit','Price','Status','Supplier'],'inventory')
     else if(activeReport==='staff')exportCSV(filteredStaff.map(s=>[s.name,s.email,s.role]),['Name','Email','Role'],'staff')
-    else if(activeReport==='expenses')exportCSV(filteredExpenses.map(e=>[e.date,e.plate,e.assignment,e.reason,e.domain,e.amount]),['Date','Plate','Assignment','Reason','Domain','Amount'],'expenses')
+    else if(activeReport==='expenses')exportCSV(filteredExpenses.map(e=>[e.date,e.plate,e.reason,e.assignment||e.receivedBy||'',e.amount]),['Date','Plate','Reason','Received By','Amount'],'expenses')
   }
   const handleExportPDF=()=>{
     if(activeReport==='fleet')exportPDF('Fleet Vehicles Report',['Plate','Make','Model','Year','Status','Driver','Mileage','Ins. Expiry'],filteredFleet.map(v=>[v.plate,v.make,v.model,v.year,v.status,v.driverName,v.mileage,v.insuranceExpiry]))
@@ -999,7 +973,7 @@ function ReportsPage() {
     else if(activeReport==='fuel')exportPDF('Fuel Logs Report',['Vehicle','Date','Liters','Total Cost (RWF)','Station','Filled By'],filteredFuel.map(f=>[f.fleetVehicle?.plate,f.date,f.liters,f.totalCost,f.station,f.filledBy]))
     else if(activeReport==='inventory')exportPDF('Inventory Report',['Name','Category','Qty','Unit Price','Status','Supplier'],filteredInventory.map(i=>[i.name,i.category,`${i.quantity} ${i.unit}`,i.unitPrice,i.status,i.supplier]))
     else if(activeReport==='staff')exportPDF('Staff Report',['Name','Email','Role'],filteredStaff.map(s=>[s.name,s.email,s.role]))
-    else if(activeReport==='expenses')exportPDF('Expenses Report',['Date','Plate','Assignment','Reason','Domain','Amount (RWF)'],filteredExpenses.map(e=>[e.date,e.plate||'—',e.assignment||'—',e.reason,e.domain,(e.amount||0).toLocaleString()]))
+    else if(activeReport==='expenses')exportPDF('Expenses Report',['Date','Plate','Reason','Received By','Amount (RWF)'],filteredExpenses.map(e=>[e.date,e.plate||'—',e.reason,e.assignment||e.receivedBy||'—',(e.amount||0).toLocaleString()]))
   }
   const currentCount={fleet:filteredFleet.length,garage:filteredGarage.length,fuel:filteredFuel.length,inventory:filteredInventory.length,staff:filteredStaff.length,expenses:filteredExpenses.length}[activeReport]
   return (
@@ -1105,13 +1079,13 @@ function ReportsPage() {
           {activeReport==='expenses'&&(
             filteredExpenses.length===0?<div style={{padding:48,textAlign:'center',color:'var(--text3)'}}>No expense records</div>:(
               <div className="table-wrap"><table className="table">
-                <thead><tr><th>Date</th><th>Plate</th><th className="hide-mobile">Reason</th><th className="hide-mobile">Category</th><th>Amount</th></tr></thead>
+                <thead><tr><th>Date</th><th>Plate</th><th>Reason</th><th className="hide-mobile">Received By</th><th>Amount</th></tr></thead>
                 <tbody>{filteredExpenses.map(e=>(
                   <tr key={e.id}>
                     <td style={{color:'var(--text2)',whiteSpace:'nowrap'}}>{e.date}</td>
                     <td style={{fontFamily:'DM Mono,monospace',color:'var(--blue)',fontWeight:700}}>{e.plate||'—'}</td>
-                    <td className="hide-mobile" style={{fontWeight:600}}>{e.reason}</td>
-                    <td className="hide-mobile"><span style={{fontSize:11,fontWeight:700,borderRadius:20,padding:'3px 8px',background:'#eff6ff',color:'#1d4ed8'}}>{e.domain}</span></td>
+                    <td style={{fontWeight:600}}>{e.reason}</td>
+                    <td className="hide-mobile" style={{color:'var(--text2)'}}>{e.assignment||e.receivedBy||'—'}</td>
                     <td style={{fontFamily:'DM Mono,monospace',fontWeight:700,color:'var(--red)',whiteSpace:'nowrap'}}>{(e.amount||0).toLocaleString()}</td>
                   </tr>
                 ))}</tbody>
@@ -2631,7 +2605,7 @@ function VehiclesPage({ user }) {
   )
 }
 
-//  APP ---------------------
+//  APP 
 export default function App() {
   const [user, setUser] = useState(null)
   const [activeTab, setActiveTab] = useState('dashboard')
