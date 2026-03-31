@@ -233,6 +233,51 @@ const ROLE_CONFIG = {
 
 
 
+//  LOGIN 
+function LoginPage({ onLogin }) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const handleLogin = async () => {
+    if (!email || !password) { setError('Please enter email and password'); return }
+    setLoading(true); setError('')
+    try {
+      const res = await api.post('/auth/login', { email, password })
+      localStorage.setItem('token', res.data.token)
+      localStorage.setItem('user', JSON.stringify(res.data.user))
+      onLogin(res.data.user)
+    } catch { setError('Invalid email or password.') }
+    setLoading(false)
+  }
+  return (
+    <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'100vh', width:'100%', position:'relative', overflow:'hidden' }}>
+      <video autoPlay muted loop playsInline style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', zIndex:0 }}>
+        <source src="/bg.mp4" type="video/mp4"/>
+      </video>
+      <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.15)', zIndex:1 }} />
+      <div style={{ position:'relative', zIndex:2, display:'flex', alignItems:'center', justifyContent:'center', width:'100%', maxWidth:1200, padding:'16px', gap:32, flexWrap:'wrap' }}>
+        <div style={{ flex:1, minWidth:0 }}/>
+        <div className="login-card" style={{ background:'rgba(255,255,255,0.5)', backdropFilter:'blur(18px)', WebkitBackdropFilter:'blur(18px)', border:'1px solid rgba(255,255,255,0.5)', boxShadow:'0 8px 40px rgba(0,0,0,0.18)', flexShrink:0, width:320, padding:28, maxWidth:'calc(100vw - 32px)' }}>
+          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginBottom:22 }}>
+            <div style={{ width:60, height:60, borderRadius:14, overflow:'hidden', marginBottom:12, boxShadow:'0 4px 20px rgba(0,0,0,0.18)', border:'3px solid rgba(255,255,255,0.15)' }}>
+              <img src="/canvas.png" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+            </div>
+            <div style={{ fontFamily:'Nunito,sans-serif', fontSize:17, fontWeight:800, color:'var(--text)', textAlign:'center', letterSpacing:'-0.3px', lineHeight:1.3 }}>
+              ERI-RWANDA<br/><span style={{ color:'var(--blue)', fontSize:13 }}>Fleet Management System</span>
+            </div>
+          </div>
+          {error && <div className="error-msg">{error}</div>}
+          <div className="form-group"><label className="form-label">Email</label><input className="form-input" type="email" placeholder="you@garage.com" value={email} onChange={e=>{setEmail(e.target.value);setError('')}}/></div>
+          <div className="form-group"><label className="form-label">Password</label><input className="form-input" type="password" placeholder="••••••••" value={password} onChange={e=>{setPassword(e.target.value);setError('')}} onKeyDown={e=>e.key==='Enter'&&handleLogin()}/></div>
+          <button className="btn-primary" onClick={handleLogin} disabled={loading}>{loading?'Signing in...':'Sign In'}</button>
+        </div>
+        <div style={{ flex:1 }}/>
+      </div>
+    </div>
+  )
+}
+
 //  EXPIRY HELPERS 
 function getDaysUntil(dateStr) {
   if (!dateStr) return null
@@ -2631,7 +2676,7 @@ function VehiclesPage({ user }) {
   )
 }
 
-//  APP ------------
+//  APP 
 export default function App() {
   const [user, setUser] = useState(null)
   const [activeTab, setActiveTab] = useState('dashboard')
