@@ -304,10 +304,10 @@ function LoginPage({ onLogin }) {
           <button className="btn-primary" onClick={handleLogin} disabled={loading}>{loading?'Signing in...':'Sign In'}</button>
         </div>
         <div style={{ flex:1, textAlign:'right', maxWidth:260, display:'flex', flexDirection:'column', alignItems:'flex-end' }}>
-          <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>ERI-RWANDA LTD</div>
+        {/*  <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>ERI-RWANDA LTD</div>
           <div style={{ fontSize:28, fontWeight:800, color:'#fff', lineHeight:1.25, textShadow:'0 2px 12px rgba(0,0,0,0.5)', marginBottom:14, fontFamily:'Nunito,sans-serif' }}>Your Trusted<br/>Importer &<br/>Distributor</div>
           <div style={{ width:50, height:3, background:'#2563eb', borderRadius:2, marginBottom:14 }}/>
-          <div style={{ fontSize:13, color:'rgba(255,255,255,0.85)', lineHeight:1.8, textShadow:'0 1px 6px rgba(0,0,0,0.4)', fontFamily:'Nunito,sans-serif' }}>Bringing quality products<br/>across Rwanda with a<br/>reliable fleet since day one.</div>
+          <div style={{ fontSize:13, color:'rgba(255,255,255,0.85)', lineHeight:1.8, textShadow:'0 1px 6px rgba(0,0,0,0.4)', fontFamily:'Nunito,sans-serif' }}>Bringing quality products<br/>across Rwanda with a<br/>reliable fleet since day one.</div>  */}
         </div>
       </div>
     </div>
@@ -540,7 +540,7 @@ function DashboardPage({ onAlertsChange }) {
           {d.fuel.length===0?<div style={{padding:32,textAlign:'center',color:'var(--text3)'}}>No fuel logs yet</div>:(
             <div className="table-wrap">
               <table className="table">
-                <thead><tr><th>Vehicle</th><th>Date</th><th>Liters</th><th>Total Cost</th><th className="hide-mobile">Station</th></tr></thead>
+                <thead><tr><th>Vehicle</th><th>Date</th><th>Liters</th><th>Total Cost</th><th className="hide-mobile">Voucher Number</th></tr></thead>
                 <tbody>
                   {[...d.fuel].reverse().slice(0,8).map(f=>(
                     <tr key={f.id}>
@@ -548,7 +548,7 @@ function DashboardPage({ onAlertsChange }) {
                       <td style={{color:'var(--text2)'}}>{f.date}</td>
                       <td style={{fontWeight:600}}>{f.liters}L</td>
                       <td style={{fontFamily:'DM Mono,monospace',color:'var(--green)',fontWeight:700}}>{(f.totalCost||0).toLocaleString()} RWF</td>
-                      <td className="hide-mobile" style={{color:'var(--text2)'}}>{f.station||'—'}</td>
+                      <td className="hide-mobile" style={{color:'var(--text2)'}}>{f.station||'—'}</td> 
                     </tr>
                   ))}
                 </tbody>
