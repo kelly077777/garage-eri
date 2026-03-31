@@ -224,6 +224,23 @@ const styles = `
   }
 `
 
+const STATUS_STYLE = {
+  'Ready': { bg: '#d1fae5', color: '#065f46', dot: '#10b981' },
+  'In_Service': { bg: '#fef3c7', color: '#92400e', dot: '#f59e0b' },
+  'Awaiting_Parts': { bg: '#fee2e2', color: '#991b1b', dot: '#ef4444' },
+  'Completed': { bg: '#e0e7ff', color: '#3730a3', dot: '#6366f1' },
+}
+const FLEET_STATUS = {
+  'Active': { bg: '#d1fae5', color: '#065f46', dot: '#10b981' },
+  'In_Maintenance': { bg: '#fef3c7', color: '#92400e', dot: '#f59e0b' },
+  'Out_of_Service': { bg: '#fee2e2', color: '#991b1b', dot: '#ef4444' },
+}
+const INV_STATUS = {
+  'In_Stock': { bg: '#d1fae5', color: '#065f46' },
+  'Low_Stock': { bg: '#fef3c7', color: '#92400e' },
+  'Out_of_Stock': { bg: '#fee2e2', color: '#991b1b' },
+}
+
 const ROLE_CONFIG = {
   manager: { color: '#2563eb', bg: 'rgba(37,99,235,0.1)', label: 'Manager' },
   supervisor: { color: '#7c3aed', bg: 'rgba(124,58,237,0.1)', label: 'Supervisor' },
@@ -232,6 +249,11 @@ const ROLE_CONFIG = {
 }
 
 
+
+
+const X = ({ onClick }) => (
+  <button onClick={onClick} style={{ background:'none', border:'none', color:'var(--text2)', fontSize:22, cursor:'pointer', lineHeight:1, padding:'0 4px', flexShrink:0 }}>×</button>
+)
 
 //  LOGIN 
 function LoginPage({ onLogin }) {
