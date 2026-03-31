@@ -231,88 +231,7 @@ const ROLE_CONFIG = {
   viewer: { color: '#0891b2', bg: 'rgba(8,145,178,0.1)', label: 'Viewer' },
 }
 
-// Check if user has a specific permission
-// Manager always has full access
-// Others check their permissions JSON
-const hasPerm = (user, page, action='view') => {
-  if(!user) return false
-  if(user.role === 'manager') return true
-  if(!user.permissions || user.permissions === '') return false
-  try {
-    const perms = JSON.parse(user.permissions)
-    return perms?.[page]?.[action] === true
-  } catch { return false }
-}
-const STATUS_STYLE = {
-  'Ready': { bg: '#d1fae5', color: '#065f46', dot: '#10b981' },
-  'In_Service': { bg: '#fef3c7', color: '#92400e', dot: '#f59e0b' },
-  'Awaiting_Parts': { bg: '#fee2e2', color: '#991b1b', dot: '#ef4444' },
-  'Completed': { bg: '#e0e7ff', color: '#3730a3', dot: '#6366f1' },
-}
-const FLEET_STATUS = {
-  'Active': { bg: '#d1fae5', color: '#065f46', dot: '#10b981' },
-  'In_Maintenance': { bg: '#fef3c7', color: '#92400e', dot: '#f59e0b' },
-  'Out_of_Service': { bg: '#fee2e2', color: '#991b1b', dot: '#ef4444' },
-}
-const INV_STATUS = {
-  'In_Stock': { bg: '#d1fae5', color: '#065f46' },
-  'Low_Stock': { bg: '#fef3c7', color: '#92400e' },
-  'Out_of_Stock': { bg: '#fee2e2', color: '#991b1b' },
-}
 
-const X = ({ onClick }) => (
-  <button onClick={onClick} style={{ background:'none', border:'none', color:'var(--text2)', fontSize:22, cursor:'pointer', lineHeight:1, padding:'0 4px', flexShrink:0 }}>×</button>
-)
-
-//  LOGIN 
-function LoginPage({ onLogin }) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const handleLogin = async () => {
-    if (!email || !password) { setError('Please enter email and password'); return }
-    setLoading(true); setError('')
-    try {
-      const res = await api.post('/auth/login', { email, password })
-      localStorage.setItem('token', res.data.token)
-      localStorage.setItem('user', JSON.stringify(res.data.user))
-      onLogin(res.data.user)
-    } catch { setError('Invalid email or password.') }
-    setLoading(false)
-  }
-  return (
-    <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'100vh', width:'100%', position:'relative', overflow:'hidden' }}>
-      <video autoPlay muted loop playsInline style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', zIndex:0 }}>
-        <source src="/bg.mp4" type="video/mp4"/>
-      </video>
-      <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.15)', zIndex:1 }} />
-      <div style={{ position:'relative', zIndex:2, display:'flex', alignItems:'center', justifyContent:'center', width:'100%', maxWidth:1200, padding:'16px', gap:32, flexWrap:'wrap' }}>
-        <div style={{ flex:1, minWidth:0 }}/>
-        <div className="login-card" style={{ background:'rgba(255,255,255,0.5)', backdropFilter:'blur(18px)', WebkitBackdropFilter:'blur(18px)', border:'1px solid rgba(255,255,255,0.5)', boxShadow:'0 8px 40px rgba(0,0,0,0.18)', flexShrink:0, width:320, padding:28, maxWidth:'calc(100vw - 32px)' }}>
-          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginBottom:22 }}>
-            <div style={{ width:60, height:60, borderRadius:14, overflow:'hidden', marginBottom:12, boxShadow:'0 4px 20px rgba(0,0,0,0.18)', border:'3px solid rgba(255,255,255,0.15)' }}>
-              <img src="/canvas.png" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-            </div>
-            <div style={{ fontFamily:'Nunito,sans-serif', fontSize:17, fontWeight:800, color:'var(--text)', textAlign:'center', letterSpacing:'-0.3px', lineHeight:1.3 }}>
-              ERI-RWANDA<br/><span style={{ color:'var(--blue)', fontSize:13 }}>Fleet Management System</span>
-            </div>
-          </div>
-          {error && <div className="error-msg">{error}</div>}
-          <div className="form-group"><label className="form-label">Email</label><input className="form-input" type="email" placeholder="you@garage.com" value={email} onChange={e=>{setEmail(e.target.value);setError('')}}/></div>
-          <div className="form-group"><label className="form-label">Password</label><input className="form-input" type="password" placeholder="••••••••" value={password} onChange={e=>{setPassword(e.target.value);setError('')}} onKeyDown={e=>e.key==='Enter'&&handleLogin()}/></div>
-          <button className="btn-primary" onClick={handleLogin} disabled={loading}>{loading?'Signing in...':'Sign In'}</button>
-        </div>
-        <div style={{ flex:1, textAlign:'right', maxWidth:260, display:'flex', flexDirection:'column', alignItems:'flex-end' }}>
-        {/*  <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.7)', letterSpacing:'0.15em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 6px rgba(0,0,0,0.4)' }}>ERI-RWANDA LTD</div>
-          <div style={{ fontSize:28, fontWeight:800, color:'#fff', lineHeight:1.25, textShadow:'0 2px 12px rgba(0,0,0,0.5)', marginBottom:14, fontFamily:'Nunito,sans-serif' }}>Your Trusted<br/>Importer &<br/>Distributor</div>
-          <div style={{ width:50, height:3, background:'#2563eb', borderRadius:2, marginBottom:14 }}/>
-          <div style={{ fontSize:13, color:'rgba(255,255,255,0.85)', lineHeight:1.8, textShadow:'0 1px 6px rgba(0,0,0,0.4)', fontFamily:'Nunito,sans-serif' }}>Bringing quality products<br/>across Rwanda with a<br/>reliable fleet since day one.</div>  */}
-        </div>
-      </div>
-    </div>
-  )
-}
 
 //  EXPIRY HELPERS 
 function getDaysUntil(dateStr) {
@@ -396,11 +315,11 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout, alertCount, menuOpen
           <div style={{padding:'8px 12px 6px',fontSize:10,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.1em'}}>Main</div>
           {user.role==='manager'&&N('dashboard','Dashboard',alertCount)}
           {user.role!=='manager'&&N('alerts','Alerts',alertCount)}
-          {(user.role==='manager'||hasPerm(user,'vehicles'))&&N('vehicles','Vehicles')}
-          {(user.role==='manager'||hasPerm(user,'fuel'))&&N('fuel','Fuel Logs')}
-          {(user.role==='manager'||hasPerm(user,'inventory'))&&N('inventory','Inventory')}
+          {N('vehicles','Vehicles')}
+          {(user.role==='manager'||user.role==='supervisor'||user.role==='viewer')&&N('fuel','Fuel Logs')}
+          {user.role!=='viewer'&&N('inventory','Inventory')}
           {user.role==='manager'&&N('staff','Staff')}
-          {(user.role==='manager'||hasPerm(user,'expenses'))&&N('expenses','Expenses')}
+          {(user.role==='manager'||user.role==='supervisor')&&N('expenses','Expenses')}
           {user.role==='manager'&&N('audit','Audit Log')}
           {user.role==='manager'&&N('reports','Reports')}
         </nav>
@@ -412,8 +331,6 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout, alertCount, menuOpen
             <div style={{minWidth:0}}>
               <div style={{fontSize:13,fontWeight:700,color:'var(--text)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{user.name}</div>
               <div style={{fontSize:11,color:'var(--text2)'}}>{rc.label}</div>
-              {user.permissions&&user.permissions!==''&&<div style={{fontSize:10,color:'var(--green)',fontWeight:600}}>✓ Permissions loaded</div>}
-              {(!user.permissions||user.permissions==='')&&user.role!=='manager'&&<div style={{fontSize:10,color:'var(--red)',fontWeight:600}}>⚠ No permissions — sign out & in</div>}
             </div>
           </div>
           <button onClick={onLogout} style={{width:'100%',background:'transparent',border:'1px solid var(--border)',color:'var(--text2)',borderRadius:8,padding:10,fontSize:13,cursor:'pointer',fontFamily:'Nunito,sans-serif',fontWeight:600}}>Sign Out →</button>
@@ -540,7 +457,7 @@ function DashboardPage({ onAlertsChange }) {
           {d.fuel.length===0?<div style={{padding:32,textAlign:'center',color:'var(--text3)'}}>No fuel logs yet</div>:(
             <div className="table-wrap">
               <table className="table">
-                <thead><tr><th>Vehicle</th><th>Date</th><th>Liters</th><th>Total Cost</th><th className="hide-mobile">Voucher Number</th></tr></thead>
+                <thead><tr><th>Vehicle</th><th>Date</th><th>Liters</th><th>Total Cost</th><th className="hide-mobile">Station</th></tr></thead>
                 <tbody>
                   {[...d.fuel].reverse().slice(0,8).map(f=>(
                     <tr key={f.id}>
@@ -548,7 +465,7 @@ function DashboardPage({ onAlertsChange }) {
                       <td style={{color:'var(--text2)'}}>{f.date}</td>
                       <td style={{fontWeight:600}}>{f.liters}L</td>
                       <td style={{fontFamily:'DM Mono,monospace',color:'var(--green)',fontWeight:700}}>{(f.totalCost||0).toLocaleString()} RWF</td>
-                      <td className="hide-mobile" style={{color:'var(--text2)'}}>{f.station||'—'}</td> 
+                      <td className="hide-mobile" style={{color:'var(--text2)'}}>{f.station||'—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -748,7 +665,7 @@ function ExpensesPage({ user }) {
       <div className="page-header">
         <div><div className="page-title">Garage Expenses</div><div className="page-sub">Daily expense records</div></div>
         <div className="page-actions">
-          {(user?.role==='manager'||hasPerm(user,'expenses','delete'))&&<button className="btn btn-danger btn-sm" onClick={()=>{setShowDeleteModal(true);setDeleteMonth('')}}>Delete Month</button>}
+          {user?.role==='manager'&&<button className="btn btn-danger btn-sm" onClick={()=>{setShowDeleteModal(true);setDeleteMonth('')}}>Delete Month</button>}
           <button className="btn btn-ghost btn-sm" onClick={()=>{setShowImportModal(true);setImportResult(null)}} disabled={importing}>{importing?'Importing...':'Import Excel'}</button>
           <button className="btn btn-success btn-sm" onClick={()=>{setForm(empty);setEditing(null);setShowAdd(true)}}>+ Add</button>
         </div>
@@ -799,7 +716,7 @@ function ExpensesPage({ user }) {
                     <td>
                       <div style={{display:'flex',gap:4}}>
                         <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(e)}>Edit</button>
-                        {(user?.role==='manager'||hasPerm(user,'expenses','delete'))&&<button className="btn btn-danger btn-sm" onClick={()=>handleDelete(e.id)}>Del</button>}
+                        {user?.role==='manager'&&<button className="btn btn-danger btn-sm" onClick={()=>handleDelete(e.id)}>Del</button>}
                       </div>
                     </td>
                   </tr>
@@ -1431,7 +1348,7 @@ function FuelLogsPage({ user }) {
       <div className="page-header">
         <div><div className="page-title">Fuel Logs</div><div className="page-sub">Diesel &amp; Petrol consumption tracking</div></div>
         <div className="page-actions">
-          {(user.role==='manager'||hasPerm(user,'fuel','add'))&&<>
+          {user.role==='manager'&&<>
           <button className="btn btn-danger btn-sm" onClick={()=>{ setShowDeleteModal(true); setDeleteMonth('') }}>Delete Month</button>
           <button className="btn btn-ghost btn-sm" style={{borderColor:'#f59e0b',color:'#92400e'}}
             onClick={()=>{ setPendingFuelType('DIESEL'); setSelectedMonth(''); setShowImportModal(true); setImportResult(null) }}
@@ -1572,9 +1489,9 @@ function FuelLogsPage({ user }) {
                         <td style={{fontWeight:700}}>{l.liters}L</td>
                         <td style={{fontFamily:'DM Mono,monospace',color:'var(--green)',fontWeight:700}}>{(l.totalCost||0).toLocaleString()}</td>
                         <td>
-                          {(user.role==='manager'||hasPerm(user,'fuel','edit')||hasPerm(user,'fuel','delete'))&&<div style={{display:'flex',gap:4}}>
-                            {(user.role==='manager'||hasPerm(user,'fuel','edit'))&&<button className="btn btn-ghost btn-sm" onClick={()=>openEdit(l)}>Edit</button>}
-                            {(user.role==='manager'||hasPerm(user,'fuel','delete'))&&<button className="btn btn-danger btn-sm" onClick={()=>handleDelete(l)}>Del</button>}
+                          {user.role!=='viewer'&&<div style={{display:'flex',gap:4}}>
+                            <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(l)}>Edit</button>
+                            <button className="btn btn-danger btn-sm" onClick={()=>handleDelete(l)}>Del</button>
                           </div>}
                         </td>
                       </tr>
@@ -1849,161 +1766,62 @@ function StaffPage() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingStaff, setEditingStaff] = useState(null)
+  const [addForm, setAddForm] = useState({name:'',email:'',password:'',role:'mechanic'})
+  const [editForm, setEditForm] = useState({name:'',email:'',newPassword:'',role:'mechanic'})
   const [addError, setAddError] = useState('')
   const [editError, setEditError] = useState('')
   const [loading, setLoading] = useState(false)
-
-  const PAGES = [
-    {key:'vehicles', label:'Vehicles',  hasAdd:true, hasEdit:true, hasDelete:true},
-    {key:'fuel',     label:'Fuel Logs', hasAdd:true, hasEdit:true, hasDelete:true},
-    {key:'expenses', label:'Expenses',  hasAdd:true, hasEdit:true, hasDelete:true},
-    {key:'inventory',label:'Inventory', hasAdd:true, hasEdit:true, hasDelete:true},
-    {key:'alerts',   label:'Alerts',    hasAdd:false,hasEdit:false,hasDelete:false},
-  ]
-  const defaultPerms = () => {
-    const p = {}
-    PAGES.forEach(pg => { p[pg.key] = {view:false, add:false, edit:false, delete:false} })
-    return p
-  }
-  const parsePerms = (str) => {
-    if(!str) return defaultPerms()
-    try { return {...defaultPerms(), ...JSON.parse(str)} } catch { return defaultPerms() }
-  }
-
-  const emptyAdd = {name:'',email:'',password:'',role:'mechanic', perms: defaultPerms()}
-  const [addForm, setAddForm] = useState(emptyAdd)
-  const [editForm, setEditForm] = useState({name:'',email:'',newPassword:'',role:'mechanic', perms: defaultPerms()})
-
   useEffect(()=>{fetchStaff()},[])
-  const fetchStaff = async () => { try{const r=await api.get('/auth/users');setStaff(r.data)}catch{setStaff([])} }
-
-  const togglePerm = (form, setForm, page, key, val) => {
-    const perms = {...form.perms}
-    if(key==='view' && !val){ perms[page]={view:false,add:false,edit:false,delete:false} }
-    else { perms[page]={...perms[page],[key]:val} }
-    setForm(f=>({...f, perms}))
-  }
-
-  const PermTable = ({form, setForm}) => (
-    <div style={{marginTop:16}}>
-      <div style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10,paddingTop:12,borderTop:'1px solid var(--border)'}}>Page Permissions</div>
-      <div style={{overflowX:'auto'}}>
-        <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
-          <thead>
-            <tr>
-              <th style={{textAlign:'left',padding:'6px 8px 6px 0',color:'var(--text3)',fontWeight:700,fontSize:11,textTransform:'uppercase'}}>Page</th>
-              <th style={{textAlign:'center',padding:'6px 4px',color:'var(--text3)',fontWeight:700,fontSize:11,textTransform:'uppercase'}}>View</th>
-              <th style={{textAlign:'center',padding:'6px 4px',color:'var(--text3)',fontWeight:700,fontSize:11,textTransform:'uppercase'}}>Add</th>
-              <th style={{textAlign:'center',padding:'6px 4px',color:'var(--text3)',fontWeight:700,fontSize:11,textTransform:'uppercase'}}>Edit</th>
-              <th style={{textAlign:'center',padding:'6px 4px',color:'var(--text3)',fontWeight:700,fontSize:11,textTransform:'uppercase'}}>Delete</th>
-            </tr>
-          </thead>
-          <tbody>
-            {PAGES.map(pg => {
-              const p = form.perms[pg.key]||{view:false,add:false,edit:false,delete:false}
-              const disabled = !p.view
-              return(
-                <tr key={pg.key} style={{borderTop:'1px solid var(--border)'}}>
-                  <td style={{padding:'10px 8px 10px 0',fontWeight:600,color:'var(--text)'}}>{pg.label}</td>
-                  <td style={{textAlign:'center',padding:'10px 4px'}}>
-                    <input type="checkbox" checked={p.view} onChange={e=>togglePerm(form,setForm,pg.key,'view',e.target.checked)}/>
-                  </td>
-                  <td style={{textAlign:'center',padding:'10px 4px'}}>
-                    {pg.hasAdd ? <input type="checkbox" checked={p.add} disabled={disabled} onChange={e=>togglePerm(form,setForm,pg.key,'add',e.target.checked)}/> : <span style={{color:'var(--text3)'}}>—</span>}
-                  </td>
-                  <td style={{textAlign:'center',padding:'10px 4px'}}>
-                    {pg.hasEdit ? <input type="checkbox" checked={p.edit} disabled={disabled} onChange={e=>togglePerm(form,setForm,pg.key,'edit',e.target.checked)}/> : <span style={{color:'var(--text3)'}}>—</span>}
-                  </td>
-                  <td style={{textAlign:'center',padding:'10px 4px'}}>
-                    {pg.hasDelete ? <input type="checkbox" checked={p.delete} disabled={disabled} onChange={e=>togglePerm(form,setForm,pg.key,'delete',e.target.checked)}/> : <span style={{color:'var(--text3)'}}>—</span>}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-
-  const handleCreate = async () => {
+  const fetchStaff=async()=>{try{const r=await api.get('/auth/users');setStaff(r.data)}catch{setStaff([])}}
+  const handleCreate=async()=>{
     if(!addForm.name||!addForm.email||!addForm.password){setAddError('All fields required');return}
     setLoading(true);setAddError('')
-    try{
-      await api.post('/auth/register', {
-        name:addForm.name, email:addForm.email, password:addForm.password, role:addForm.role,
-        permissions: JSON.stringify(addForm.perms)
-      })
-      setAddForm(emptyAdd);setShowAddModal(false);fetchStaff()
-    }catch{setAddError('Failed. Email may already exist.')}
+    try{await api.post('/auth/register',addForm);setAddForm({name:'',email:'',password:'',role:'mechanic'});setShowAddModal(false);fetchStaff()}
+    catch{setAddError('Failed. Email may already exist.')}
     setLoading(false)
   }
-
-  const openEdit = (s) => {
-    setEditingStaff(s)
-    setEditForm({name:s.name,email:s.email,newPassword:'',role:s.role, perms:parsePerms(s.permissions)})
-    setEditError('');setShowEditModal(true)
-  }
-
-  const handleEdit = async () => {
+  const openEdit=(s)=>{setEditingStaff(s);setEditForm({name:s.name,email:s.email,newPassword:'',role:s.role});setEditError('');setShowEditModal(true)}
+  const handleEdit=async()=>{
     if(!editForm.name||!editForm.email){setEditError('Name and email required');return}
     setLoading(true);setEditError('')
     try{
-      const payload = {name:editForm.name, email:editForm.email, role:editForm.role, permissions:JSON.stringify(editForm.perms)}
-      if(editForm.newPassword.trim()) payload.password = editForm.newPassword.trim()
-      await api.put(`/auth/users/${editingStaff.id}`, payload)
-      setShowEditModal(false);fetchStaff()
+      const payload={name:editForm.name,email:editForm.email,role:editForm.role}
+      if(editForm.newPassword.trim())payload.password=editForm.newPassword.trim()
+      await api.put(`/auth/users/${editingStaff.id}`,payload);setShowEditModal(false);fetchStaff()
     }catch{setEditError('Failed to update. Try again.')}
     setLoading(false)
   }
-
-  const handleDelete = async (id) => {
-    if(!window.confirm('Remove this staff member?'))return
-    try{await api.delete(`/auth/users/${id}`);fetchStaff()}catch{alert('Failed')}
-  }
-
+  const handleDelete=async(id)=>{if(!window.confirm('Remove this staff member?'))return;try{await api.delete(`/auth/users/${id}`);fetchStaff()}catch{alert('Failed')}}
   return (
     <>
       <div className="page-header">
         <div><div className="page-title">Staff Management</div><div className="page-sub">Manage team accounts</div></div>
-        <div className="page-actions"><button className="btn btn-success btn-sm" onClick={()=>{setAddForm(emptyAdd);setShowAddModal(true)}}>+ Add Staff</button></div>
+        <div className="page-actions"><button className="btn btn-success btn-sm" onClick={()=>setShowAddModal(true)}>+ Add Staff</button></div>
       </div>
       <div className="page-content">
         <div className="card">
           <div className="card-header"><div className="card-title">Team Members</div><span style={{fontSize:12,color:'var(--text2)',fontWeight:600}}>{staff.length} members</span></div>
           <div className="table-wrap">
             <table className="table">
-              <thead><tr><th>Name</th><th className="hide-mobile">Email</th><th>Role</th><th>Permissions</th><th>Actions</th></tr></thead>
-              <tbody>{staff.map(s=>{
-                const rc=ROLE_CONFIG[s.role]
-                const perms = s.permissions ? JSON.parse(s.permissions) : null
-                const pages = perms ? Object.entries(perms).filter(([,v])=>v.view).map(([k])=>k) : []
-                return(
-                  <tr key={s.id}>
-                    <td style={{fontWeight:600}}>{s.name}</td>
-                    <td className="hide-mobile" style={{color:'var(--text2)',fontFamily:'DM Mono,monospace',fontSize:13}}>{s.email}</td>
-                    <td><span style={{display:'inline-flex',alignItems:'center',padding:'3px 10px',borderRadius:20,fontSize:12,fontWeight:700,background:rc?.bg,color:rc?.color}}>{rc?.label||s.role}</span></td>
-                    <td style={{fontSize:12,color:'var(--text2)'}}>
-                      {s.role==='manager' ? <span style={{color:'var(--green)',fontWeight:600}}>Full access</span>
-                       : pages.length > 0 ? pages.join(', ')
-                       : <span style={{color:'var(--text3)'}}>No permissions</span>}
-                    </td>
-                    <td><div style={{display:'flex',gap:4}}>
-                      <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(s)}>Edit</button>
-                      <button className="btn btn-danger btn-sm" onClick={()=>handleDelete(s.id)}>Remove</button>
-                    </div></td>
-                  </tr>
-                )
-              })}</tbody>
+              <thead><tr><th>Name</th><th className="hide-mobile">Email</th><th>Role</th><th>Actions</th></tr></thead>
+              <tbody>{staff.map(s=>{const rc=ROLE_CONFIG[s.role];return(
+                <tr key={s.id}>
+                  <td style={{fontWeight:600}}>{s.name}</td>
+                  <td className="hide-mobile" style={{color:'var(--text2)',fontFamily:'DM Mono,monospace',fontSize:13}}>{s.email}</td>
+                  <td><span style={{display:'inline-flex',alignItems:'center',padding:'3px 10px',borderRadius:20,fontSize:12,fontWeight:700,background:rc?.bg,color:rc?.color}}>{rc?.label||s.role}</span></td>
+                  <td><div style={{display:'flex',gap:4}}>
+                    <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(s)}>Edit</button>
+                    <button className="btn btn-danger btn-sm" onClick={()=>handleDelete(s.id)}>Remove</button>
+                  </div></td>
+                </tr>
+              )})}</tbody>
             </table>
           </div>
         </div>
       </div>
-
-      {/* Add Modal */}
       {showAddModal&&(
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowAddModal(false)}>
-          <div className="modal" style={{maxWidth:520}}>
+          <div className="modal">
             <div className="modal-header"><div className="modal-title">Add Staff Member</div><X onClick={()=>setShowAddModal(false)}/></div>
             <div className="modal-body">
               {addError&&<div className="error-msg">{addError}</div>}
@@ -2019,7 +1837,6 @@ function StaffPage() {
               </div>
               <div className="form-group"><label className="form-label">Email</label><input className="form-input" type="email" value={addForm.email} onChange={e=>setAddForm(f=>({...f,email:e.target.value}))}/></div>
               <div className="form-group"><label className="form-label">Password</label><input className="form-input" type="password" value={addForm.password} onChange={e=>setAddForm(f=>({...f,password:e.target.value}))}/></div>
-              <PermTable form={addForm} setForm={setAddForm}/>
             </div>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={()=>setShowAddModal(false)}>Cancel</button>
@@ -2028,15 +1845,13 @@ function StaffPage() {
           </div>
         </div>
       )}
-
-      {/* Edit Modal */}
       {showEditModal&&editingStaff&&(
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowEditModal(false)}>
-          <div className="modal" style={{maxWidth:520}}>
+          <div className="modal">
             <div className="modal-header"><div className="modal-title">Edit Staff Member</div><X onClick={()=>setShowEditModal(false)}/></div>
             <div className="modal-body">
               {editError&&<div className="error-msg">{editError}</div>}
-              <div style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'12px 16px',marginBottom:16,display:'flex',alignItems:'center',gap:12}}>
+              <div style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'12px 16px',marginBottom:20,display:'flex',alignItems:'center',gap:12}}>
                 <div style={{width:40,height:40,borderRadius:'50%',background:ROLE_CONFIG[editingStaff.role]?.color||'var(--blue)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:800,fontSize:16,flexShrink:0}}>{editingStaff.name?.split(' ').map(n=>n[0]).join('')}</div>
                 <div><div style={{fontSize:14,fontWeight:700}}>{editingStaff.name}</div><div style={{fontSize:12,color:'var(--text2)'}}>Editing account details</div></div>
               </div>
@@ -2055,7 +1870,6 @@ function StaffPage() {
                 <label className="form-label">New Password</label>
                 <input className="form-input" type="password" placeholder="Leave blank to keep current" value={editForm.newPassword} onChange={e=>setEditForm(f=>({...f,newPassword:e.target.value}))}/>
               </div>
-              <PermTable form={editForm} setForm={setEditForm}/>
             </div>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={()=>setShowEditModal(false)}>Cancel</button>
@@ -2336,8 +2150,8 @@ function VehicleDetail({ vehicle, user, onBack, onUpdate }) {
   const [showEdit, setShowEdit] = useState(false)
   const [history, setHistory] = useState([])
   const ss=STATUS_STYLE[vehicle.status]||STATUS_STYLE['Ready']
-  const canEdit=user.role==='manager'||hasPerm(user,'vehicles','edit')
-  const canDelete=user.role==='manager'||hasPerm(user,'vehicles','delete')
+  const canEdit=user.role==='manager'||user.role==='supervisor'
+  const canDelete=user.role==='manager'
   const totalSpend=history.reduce((s,h)=>s+(h.cost||0),0)
   useEffect(()=>{api.get(`/vehicles/${vehicle.id}/history`).then(r=>setHistory(Array.isArray(r.data)?r.data:[]))},[vehicle.id])
   const addService=async(entry)=>{
@@ -2440,8 +2254,8 @@ function VehiclesPage({ user }) {
   const [showDriverModal, setShowDriverModal] = useState(false)
   const [driverVehicle, setDriverVehicle] = useState(null)
   const [driverForm, setDriverForm] = useState({driverName:'',driverPhone:'',driverLicense:''})
-  const canAdd=user.role==='manager'||hasPerm(user,'vehicles','add')
-  const canDelete=user.role==='manager'||hasPerm(user,'vehicles','delete')
+  const canAdd=user.role==='manager'||user.role==='supervisor'
+  const canDelete=user.role==='manager'
 
   useEffect(()=>{fetchVehicles();fetchFleet()},[])
   const fetchVehicles=async()=>{try{const r=await api.get('/vehicles');setVehicles(Array.isArray(r.data)?r.data:r.data?.content||[])}catch{alert('Failed to load vehicles')}setLoading(false)}
@@ -2839,11 +2653,11 @@ export default function App() {
           <div className="main">
             {activeTab==='dashboard'&&user.role==='manager'&&<DashboardPage onAlertsChange={setAlertCount}/>}
             {activeTab==='alerts'&&(user.role==='supervisor'||user.role==='mechanic'||user.role==='viewer')&&<AlertsDashboard onAlertsChange={setAlertCount}/>}
-            {activeTab==='vehicles'&&(user.role==='manager'||hasPerm(user,'vehicles'))&&<VehiclesPage user={user}/>}
-            {activeTab==='fuel'&&(user.role==='manager'||hasPerm(user,'fuel'))&&<FuelLogsPage user={user}/>}
-            {activeTab==='inventory'&&(user.role==='manager'||hasPerm(user,'inventory'))&&<InventoryPage user={user}/>}
+            {activeTab==='vehicles'&&<VehiclesPage user={user}/>}
+            {activeTab==='fuel'&&(user.role==='manager'||user.role==='supervisor'||user.role==='viewer')&&<FuelLogsPage user={user}/>}
+            {activeTab==='inventory'&&user.role!=='viewer'&&<InventoryPage user={user}/>}
             {activeTab==='staff'&&user.role==='manager'&&<StaffPage/>}
-            {activeTab==='expenses'&&(user.role==='manager'||hasPerm(user,'expenses'))&&<ExpensesPage user={user}/>}
+            {activeTab==='expenses'&&(user.role==='manager'||user.role==='supervisor')&&<ExpensesPage user={user}/>}
             {activeTab==='audit'&&user.role==='manager'&&<AuditLogPage/>}
             {activeTab==='reports'&&user.role==='manager'&&<ReportsPage/>}
           </div>
