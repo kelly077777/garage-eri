@@ -347,6 +347,39 @@ const viewFile = (base64, name='document') => {
   win.document.title = name
 }
 
+// Compress image files before storing as base64. PDFs pass through unchanged.
+const compressFile = (file, maxSizeKB=800) => new Promise((resolve) => {
+  if(file.type === 'application/pdf'){
+    const reader = new FileReader()
+    reader.onload = () => resolve({ data: reader.result, name: file.name, size: file.size })
+    reader.readAsDataURL(file)
+    return
+  }
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    const img = new Image()
+    img.onload = () => {
+      let w = img.width, h = img.height
+      // Scale down if very large
+      const MAX = 1200
+      if(w > MAX || h > MAX){ const r = Math.min(MAX/w, MAX/h); w = Math.round(w*r); h = Math.round(h*r) }
+      const canvas = document.createElement('canvas')
+      canvas.width = w; canvas.height = h
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h)
+      // Try quality 0.7 first, reduce if still large
+      let quality = 0.75
+      let data = canvas.toDataURL('image/jpeg', quality)
+      while(data.length > maxSizeKB * 1024 * 1.37 && quality > 0.3){
+        quality -= 0.1
+        data = canvas.toDataURL('image/jpeg', quality)
+      }
+      resolve({ data, name: file.name.replace(/\.[^.]+$/, '.jpg'), size: Math.round(data.length * 0.75) })
+    }
+    img.src = e.target.result
+  }
+  reader.readAsDataURL(file)
+})
+
 // Input validation helpers
 const onlyLetters = (e) => { if(!/^[a-zA-Z\s]$/.test(e.key) && !['Backspace','Delete','ArrowLeft','ArrowRight','Tab'].includes(e.key)) e.preventDefault() }
 const onlyNumbers = (e) => { if(!/^[0-9]$/.test(e.key) && !['Backspace','Delete','ArrowLeft','ArrowRight','Tab','.'].includes(e.key)) e.preventDefault() }
@@ -1589,34 +1622,36 @@ function FuelLogsPage({ user }) {
           </div>
         )}
 
-        {/* Stats — 6 cards */}
-        <div className="stat-grid-3" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}}>
-          <div className="stat-card" style={{borderLeft:`3px solid #f59e0b`}}>
+        {/* Stats — Row 1: Liters | Row 2: Costs */}
+        <div className="stat-grid-3" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:12}}>
+          <div className="stat-card" style={{borderLeft:'3px solid #f59e0b'}}>
             <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Diesel Liters</div>
             <div style={{fontSize:22,fontWeight:800,color:'#92400e'}}>{totalDieselL.toFixed(1)} L</div>
             <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>{dieselLogs.length} fills</div>
           </div>
-          <div className="stat-card" style={{borderLeft:`3px solid #f59e0b`}}>
-            <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Diesel Cost</div>
-            <div style={{fontSize:22,fontWeight:800,color:'#92400e'}}>{totalDieselC.toLocaleString()}</div>
-            <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>RWF</div>
-          </div>
-          <div className="stat-card" style={{borderLeft:`3px solid #2563eb`}}>
+          <div className="stat-card" style={{borderLeft:'3px solid #2563eb'}}>
             <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Petrol Liters</div>
             <div style={{fontSize:22,fontWeight:800,color:'#1e40af'}}>{totalPetrolL.toFixed(1)} L</div>
             <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>{petrolLogs.length} fills</div>
           </div>
-          <div className="stat-card" style={{borderLeft:`3px solid #2563eb`}}>
-            <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Petrol Cost</div>
-            <div style={{fontSize:22,fontWeight:800,color:'#1e40af'}}>{totalPetrolC.toLocaleString()}</div>
-            <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>RWF</div>
-          </div>
-          <div className="stat-card" style={{borderLeft:`3px solid #059669`}}>
+          <div className="stat-card" style={{borderLeft:'3px solid #059669'}}>
             <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Total Liters</div>
             <div style={{fontSize:22,fontWeight:800,color:'var(--green)'}}>{totalL.toFixed(1)} L</div>
             <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>All fuel</div>
           </div>
-          <div className="stat-card" style={{borderLeft:`3px solid #059669`}}>
+        </div>
+        <div className="stat-grid-3" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}}>
+          <div className="stat-card" style={{borderLeft:'3px solid #f59e0b'}}>
+            <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Diesel Cost</div>
+            <div style={{fontSize:22,fontWeight:800,color:'#92400e'}}>{totalDieselC.toLocaleString()}</div>
+            <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>RWF</div>
+          </div>
+          <div className="stat-card" style={{borderLeft:'3px solid #2563eb'}}>
+            <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Petrol Cost</div>
+            <div style={{fontSize:22,fontWeight:800,color:'#1e40af'}}>{totalPetrolC.toLocaleString()}</div>
+            <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>RWF</div>
+          </div>
+          <div className="stat-card" style={{borderLeft:'3px solid #059669'}}>
             <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Total Cost</div>
             <div style={{fontSize:22,fontWeight:800,color:'var(--green)'}}>{totalC.toLocaleString()}</div>
             <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>RWF</div>
@@ -2250,14 +2285,11 @@ function FleetModal({ vehicle, onSave, onClose, backLabel }) {
                   }}>
                     {form[doc.fileKey] ? '✓ Uploaded' : '+ Upload File'}
                     <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{display:'none'}}
-                      onChange={e=>{
+                      onChange={async e=>{
                         const file=e.target.files[0]; if(!file) return
-                        const reader=new FileReader()
-                        reader.onload=()=>{
-                          s(doc.fileKey, reader.result)
-                          s(doc.fileKey+'Name', file.name)
-                        }
-                        reader.readAsDataURL(file)
+                        const compressed = await compressFile(file)
+                        s(doc.fileKey, compressed.data)
+                        s(doc.fileKey+'Name', compressed.name)
                       }}
                     />
                   </label>
@@ -2285,7 +2317,7 @@ function FleetModal({ vehicle, onSave, onClose, backLabel }) {
                 <div style={{display:'flex',alignItems:'center',gap:10}}>
                   <label style={{display:'inline-flex',alignItems:'center',gap:8,padding:'9px 16px',background:form.driverLicenseFile?'#f0fdf4':'var(--blue)',color:form.driverLicenseFile?'var(--green)':'#fff',border:form.driverLicenseFile?'1px solid #86efac':'none',borderRadius:8,cursor:'pointer',fontSize:13,fontWeight:700,whiteSpace:'nowrap',flexShrink:0}}>
                     {form.driverLicenseFile?'✓ Uploaded':'+ Upload File'}
-                    <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{display:'none'}} onChange={e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{s('driverLicenseFile',reader.result);s('driverLicenseFileName',file.name)};reader.readAsDataURL(file)}}/>
+                    <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{display:'none'}} onChange={async e=>{const file=e.target.files[0];if(!file)return;const c=await compressFile(file);s('driverLicenseFile',c.data);s('driverLicenseFileName',c.name)}}/>
                   </label>
                   {form.driverLicenseFile?(
                     <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0,flexWrap:'wrap'}}>
@@ -2306,7 +2338,7 @@ function FleetModal({ vehicle, onSave, onClose, backLabel }) {
             <div style={{display:'flex',alignItems:'center',gap:10}}>
               <label style={{display:'inline-flex',alignItems:'center',gap:8,padding:'9px 16px',background:form.yellowCardFile?'#f0fdf4':'var(--blue)',color:form.yellowCardFile?'var(--green)':'#fff',border:form.yellowCardFile?'1px solid #86efac':'none',borderRadius:8,cursor:'pointer',fontSize:13,fontWeight:700,whiteSpace:'nowrap',flexShrink:0}}>
                 {form.yellowCardFile?'✓ Uploaded':'+ Upload File'}
-                <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{display:'none'}} onChange={e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{s('yellowCardFile',reader.result);s('yellowCardFileName',file.name)};reader.readAsDataURL(file)}}/>
+                <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{display:'none'}} onChange={async e=>{const file=e.target.files[0];if(!file)return;const c=await compressFile(file);s('yellowCardFile',c.data);s('yellowCardFileName',c.name)}}/>
               </label>
               {form.yellowCardFile?(
                 <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0,flexWrap:'wrap'}}>
@@ -2487,10 +2519,19 @@ function VehiclesPage({ user, initialEditVehicle, onInitialEditDone, initialSele
       const normalizedNew=data.plate?.replace(/[\s\-]/g,'').toUpperCase()
       const duplicate=fleet.find(v=>{if(editFleet&&v.id===editFleet.id)return false;return v.plate?.replace(/[\s\-]/g,'').toUpperCase()===normalizedNew})
       if(duplicate){alert(`Plate "${data.plate}" already registered in fleet.`);return}
+      // Check payload size — base64 files can be very large
+      const payloadSize = JSON.stringify(data).length
+      if(payloadSize > 4000000){
+        alert(`Files are too large (${(payloadSize/1024/1024).toFixed(1)}MB total). Please use smaller files — compress PDFs or use JPG images under 1MB each.`)
+        return
+      }
       if(editFleet){await api.put(`/fleet/${editFleet.id}`,data);await logAudit(user,'EDIT','Fleet Vehicles',`Edited fleet vehicle: ${data.plate}`)}
       else{await api.post('/fleet',data);await logAudit(user,'ADD','Fleet Vehicles',`Added fleet vehicle: ${data.plate}`)}
       fetchFleet();setShowAddFleet(false);setEditFleet(null)
-    }catch{alert('Failed')}
+    }catch(err){
+      const msg = err?.response?.data?.message || err?.response?.data || err?.message || 'Unknown error'
+      alert('Failed to save: ' + msg)
+    }
   }
   const updateVehicle=(u)=>{setVehicles(p=>p.map(v=>v.id===u.id?u:v));setSelected(u)}
 
@@ -2775,11 +2816,10 @@ function VehiclesPage({ user, initialEditVehicle, onInitialEditDone, initialSele
                   <label style={{display:'inline-flex',alignItems:'center',gap:8,padding:'9px 16px',background:inspForm.inspectionFile?'#f0fdf4':'var(--blue)',color:inspForm.inspectionFile?'var(--green)':'#fff',border:inspForm.inspectionFile?'1px solid #86efac':'none',borderRadius:8,cursor:'pointer',fontSize:13,fontWeight:700,whiteSpace:'nowrap',flexShrink:0}}>
                     {inspForm.inspectionFile?'✓ Uploaded':'+ Upload File'}
                     <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{display:'none'}}
-                      onChange={e=>{
+                      onChange={async e=>{
                         const file=e.target.files[0]; if(!file) return
-                        const reader=new FileReader()
-                        reader.onload=()=>setInspForm(f=>({...f,inspectionFile:reader.result,inspectionFileName:file.name}))
-                        reader.readAsDataURL(file)
+                        const c=await compressFile(file)
+                        setInspForm(f=>({...f,inspectionFile:c.data,inspectionFileName:c.name}))
                       }}
                     />
                   </label>
@@ -2825,11 +2865,10 @@ function VehiclesPage({ user, initialEditVehicle, onInitialEditDone, initialSele
                   <label style={{display:'inline-flex',alignItems:'center',gap:8,padding:'9px 16px',background:insuranceForm.insuranceFile?'#f0fdf4':'var(--blue)',color:insuranceForm.insuranceFile?'var(--green)':'#fff',border:insuranceForm.insuranceFile?'1px solid #86efac':'none',borderRadius:8,cursor:'pointer',fontSize:13,fontWeight:700,whiteSpace:'nowrap',flexShrink:0}}>
                     {insuranceForm.insuranceFile?'✓ Uploaded':'+ Upload File'}
                     <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{display:'none'}}
-                      onChange={e=>{
+                      onChange={async e=>{
                         const file=e.target.files[0]; if(!file) return
-                        const reader=new FileReader()
-                        reader.onload=()=>setInsuranceForm(f=>({...f,insuranceFile:reader.result,insuranceFileName:file.name}))
-                        reader.readAsDataURL(file)
+                        const c=await compressFile(file)
+                        setInsuranceForm(f=>({...f,insuranceFile:c.data,insuranceFileName:c.name}))
                       }}
                     />
                   </label>
@@ -2879,11 +2918,10 @@ function VehiclesPage({ user, initialEditVehicle, onInitialEditDone, initialSele
                   <label style={{display:'inline-flex',alignItems:'center',gap:8,padding:'9px 16px',background:driverForm.driverLicenseFile?'#f0fdf4':'var(--blue)',color:driverForm.driverLicenseFile?'var(--green)':'#fff',border:driverForm.driverLicenseFile?'1px solid #86efac':'none',borderRadius:8,cursor:'pointer',fontSize:13,fontWeight:700,whiteSpace:'nowrap',flexShrink:0}}>
                     {driverForm.driverLicenseFile?'✓ Uploaded':'+ Upload File'}
                     <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{display:'none'}}
-                      onChange={e=>{
+                      onChange={async e=>{
                         const file=e.target.files[0]; if(!file) return
-                        const reader=new FileReader()
-                        reader.onload=()=>setDriverForm(f=>({...f,driverLicenseFile:reader.result,driverLicenseFileName:file.name}))
-                        reader.readAsDataURL(file)
+                        const c=await compressFile(file)
+                        setDriverForm(f=>({...f,driverLicenseFile:c.data,driverLicenseFileName:c.name}))
                       }}
                     />
                   </label>
