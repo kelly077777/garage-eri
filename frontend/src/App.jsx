@@ -313,12 +313,12 @@ function getExpiryAlerts(fleet, warningDays=7) {
       { key:'insp',  type:'Inspection',      expiry: v.inspectionExpiry },
       { key:'spd',   type:'Speed Governor',  expiry: v.speedGovernorExpiry },
       { key:'lic',   type:'Driver License',  expiry: v.driverLicenseExpiry },
-      { key:'yc',    type:'Yellow Card',     expiry: v.yellowCardExpiry },
+      // Yellow Card has no expiry date
     ]
     docs.forEach(doc => {
       const days = getDaysUntil(doc.expiry)
       if(days !== null && days <= warningDays)
-        alerts.push({ id:`${doc.key}-${v.id}`, plate:v.plate, type:doc.type, expiry:doc.expiry, days, expired:days<0 })
+        alerts.push({ id:`${doc.key}-${v.id}`, plate:v.plate, type:doc.type, expiry:doc.expiry, days, expired:days<0, vehicle:v })
     })
   })
   return alerts
@@ -335,6 +335,23 @@ const logAudit = async (user, action, module, details) => {
   } catch(e) { console.error('Audit log failed:',e) }
 }
 
+// View a base64 file in a new tab
+const viewFile = (base64, name='document') => {
+  if(!base64) return
+  const win = window.open('', '_blank')
+  if(base64.startsWith('data:image')) {
+    win.document.write(`<img src="${base64}" style="max-width:100%;height:auto;" title="${name}"/>`)
+  } else {
+    win.document.write(`<iframe src="${base64}" style="width:100%;height:100vh;border:none;" title="${name}"></iframe>`)
+  }
+  win.document.title = name
+}
+
+// Input validation helpers
+const onlyLetters = (e) => { if(!/^[a-zA-Z\s]$/.test(e.key) && !['Backspace','Delete','ArrowLeft','ArrowRight','Tab'].includes(e.key)) e.preventDefault() }
+const onlyNumbers = (e) => { if(!/^[0-9]$/.test(e.key) && !['Backspace','Delete','ArrowLeft','ArrowRight','Tab','.'].includes(e.key)) e.preventDefault() }
+const onlyPlate = (e) => { if(!/^[a-zA-Z0-9]$/.test(e.key) && !['Backspace','Delete','ArrowLeft','ArrowRight','Tab',' '].includes(e.key)) e.preventDefault() }
+
 //  SIDEBAR 
 function Sidebar({ user, activeTab, setActiveTab, onLogout, alertCount, menuOpen, setMenuOpen }) {
   const rc = ROLE_CONFIG[user.role]
@@ -350,7 +367,7 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout, alertCount, menuOpen
       <div className={`sidebar${menuOpen?' open':''}`}>
         {/*  MOBILE TOP BAR  */}
         <div className="mobile-topbar" style={{alignItems:'center',justifyContent:'space-between',padding:'0 16px',height:56,flexShrink:0,width:'100%',borderBottom:menuOpen?'1px solid var(--border)':'none'}}>
-          <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <div style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer'}} onClick={()=>{setActiveTab(user.role==='manager'?'dashboard':'alerts');setMenuOpen(false)}}>
             <div style={{width:34,height:34,borderRadius:10,overflow:'hidden',border:'1px solid var(--border)',flexShrink:0}}>
               <img src="/canvas.png" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
             </div>
@@ -367,7 +384,7 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout, alertCount, menuOpen
         </div>
 
         {/*  DESKTOP LOGO  */}
-        <div className="desktop-logo" style={{padding:'24px 16px 20px',borderBottom:'1px solid var(--border)',flexDirection:'column',alignItems:'center',gap:12,background:'#fff'}}>
+        <div className="desktop-logo" style={{padding:'24px 16px 20px',borderBottom:'1px solid var(--border)',flexDirection:'column',alignItems:'center',gap:12,background:'#fff',cursor:'pointer'}} onClick={()=>setActiveTab(user.role==='manager'?'dashboard':'alerts')}>
           <div style={{width:80,height:80,borderRadius:18,overflow:'hidden',border:'2px solid var(--border)',boxShadow:'0 2px 12px rgba(0,0,0,0.10)',flexShrink:0}}>
             <img src="/canvas.png" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
           </div>
@@ -381,6 +398,7 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout, alertCount, menuOpen
         <nav style={{flex:1,padding:'16px 10px',display:'flex',flexDirection:'column',gap:2}}>
           <div style={{padding:'8px 12px 6px',fontSize:10,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.1em'}}>Main</div>
           {user.role==='manager'&&N('dashboard','Dashboard',alertCount)}
+          {user.role==='manager'&&N('alerts','Alerts',alertCount)}
           {user.role!=='manager'&&N('alerts','Alerts',alertCount)}
           {N('vehicles','Vehicles')}
           {(user.role==='manager'||user.role==='supervisor'||user.role==='viewer')&&N('fuel','Fuel Logs')}
@@ -410,7 +428,7 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout, alertCount, menuOpen
 }
 
 //  DASHBOARD 
-function DashboardPage({ onAlertsChange }) {
+function DashboardPage({ onAlertsChange, onNavigate, onSelectGarageVehicle }) {
   const [d, setD] = useState({ vehicles:[], fleet:[], fuel:[], inventory:[], staff:[] })
   useEffect(() => {
     Promise.all([api.get('/vehicles'),api.get('/fleet'),api.get('/fleet/fuel/all'),api.get('/inventory'),api.get('/auth/users')])
@@ -429,12 +447,18 @@ function DashboardPage({ onAlertsChange }) {
   const totalFuelCost = (d.fuel||[]).reduce((s,f)=>s+(f.totalCost||0),0)
   const lowStock = (d.inventory||[]).filter(i=>i.status==='Low_Stock'||i.status==='Out_of_Stock')
   const expiryAlerts = getExpiryAlerts(d.fleet)
+  const [statusPopup, setStatusPopup] = useState(null)
+  const [dashMonth, setDashMonth] = useState('ALL')
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
+  const nav = (tab) => onNavigate && onNavigate(tab)
+  const clickStyle = { cursor:'pointer', transition:'box-shadow 0.15s,transform 0.15s' }
+  const hoverProps = { onMouseEnter:e=>{e.currentTarget.style.boxShadow='0 4px 16px rgba(37,99,235,0.13)';e.currentTarget.style.transform='translateY(-2px)'}, onMouseLeave:e=>{e.currentTarget.style.boxShadow='';e.currentTarget.style.transform=''} }
   const stats = [
-    {label:'Garage Vehicles',value:d.vehicles.length,sub:`${d.vehicles.filter(v=>v.status==='In_Service').length} in service`,color:'var(--blue)'},
-    {label:'Fleet Vehicles',value:d.fleet.length,sub:`${d.fleet.filter(f=>f.status==='Active').length} active`,color:'var(--blue)'},
-    {label:'Fuel Cost',value:totalFuelCost.toLocaleString()+'RWF',sub:'All time',color:'var(--green)'},
-    {label:'Staff',value:d.staff.length,sub:`${d.staff.filter(s=>s.role==='mechanic').length} mechanics`,color:'var(--text)'},
-    {label:'Inventory',value:d.inventory.length,sub:`${lowStock.length} low/out`,color:lowStock.length>0?'var(--red)':'var(--text)'},
+    {label:'Garage Vehicles',value:d.vehicles.length,sub:`${d.vehicles.filter(v=>v.status==='In_Service').length} in service`,color:'var(--blue)',tab:'vehicles'},
+    {label:'Fleet Vehicles',value:d.fleet.length,sub:`${d.fleet.filter(f=>f.status==='Active').length} active`,color:'var(--blue)',tab:'vehicles'},
+    {label:'Fuel Cost',value:totalFuelCost.toLocaleString()+'RWF',sub:'All time',color:'var(--green)',tab:'fuel'},
+    {label:'Staff',value:d.staff.length,sub:`${d.staff.filter(s=>s.role==='mechanic').length} mechanics`,color:'var(--text)',tab:'staff'},
+    {label:'Inventory',value:d.inventory.length,sub:`${lowStock.length} low/out`,color:lowStock.length>0?'var(--red)':'var(--text)',tab:'inventory'},
   ]
   return (
     <>
@@ -442,22 +466,23 @@ function DashboardPage({ onAlertsChange }) {
       <div className="page-content">
         <div className="stat-grid-5" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:20}}>
           {stats.map(s=>(
-            <div key={s.label} className="stat-card">
+            <div key={s.label} className="stat-card" style={{...clickStyle}} {...hoverProps} onClick={()=>nav(s.tab)}>
               <div style={{fontSize:12,color:'var(--text2)',marginBottom:6,fontWeight:600}}>{s.label}</div>
               <div style={{fontFamily:'Nunito,sans-serif',fontSize:22,fontWeight:800,color:s.color,lineHeight:1.2}}>{s.value}</div>
               <div style={{fontSize:11,color:'var(--text3)',marginTop:4}}>{s.sub}</div>
+              <div style={{fontSize:10,color:'var(--blue)',marginTop:6,fontWeight:700}}>View →</div>
             </div>
           ))}
         </div>
 
         {expiryAlerts.length>0&&(
-          <div className="card" style={{marginBottom:16,borderColor:'#fca5a5'}}>
+          <div className="card" style={{marginBottom:16,borderColor:'#fca5a5',cursor:'pointer'}} onClick={()=>nav('alerts')} {...hoverProps}>
             <div className="card-header" style={{background:'#fff7f7'}}>
               <div style={{display:'flex',alignItems:'center',gap:8}}>
                 <span style={{fontSize:18}}></span>
                 <div className="card-title" style={{color:'#dc2626'}}>Document Expiry Alerts</div>
               </div>
-              <span style={{fontSize:12,fontWeight:700,color:'#dc2626',background:'#fee2e2',borderRadius:20,padding:'3px 10px'}}>{expiryAlerts.length} alert{expiryAlerts.length>1?'s':''}</span>
+              <span style={{fontSize:12,fontWeight:700,color:'#dc2626',background:'#fee2e2',borderRadius:20,padding:'3px 10px'}}>{expiryAlerts.length} alert{expiryAlerts.length>1?'s':''} — View all →</span>
             </div>
             <div>
               {expiryAlerts.map(a=>(
@@ -483,16 +508,25 @@ function DashboardPage({ onAlertsChange }) {
 
         <div className="dash-two-col" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
           <div className="card">
-            <div className="card-header"><div className="card-title">Garage Vehicle Status</div></div>
+            <div className="card-header">
+              <div className="card-title">Garage Vehicle Status</div>
+              <button onClick={()=>nav('vehicles')} style={{background:'none',border:'none',cursor:'pointer',fontSize:11,color:'var(--blue)',fontWeight:700}}>View all →</button>
+            </div>
             <div style={{padding:20}}>
               {Object.entries(STATUS_STYLE).map(([status,ss])=>{
                 const count=d.vehicles.filter(v=>v.status===status).length
                 const pct=d.vehicles.length?Math.round(count/d.vehicles.length*100):0
                 return (
-                  <div key={status} style={{marginBottom:14}}>
-                    <div style={{display:'flex',justifyContent:'space-between',marginBottom:5}}>
+                  <div key={status} style={{marginBottom:14,cursor:count>0?'pointer':'default',borderRadius:8,padding:'6px 8px',margin:'0 -8px 8px',transition:'background 0.15s'}}
+                    onClick={()=>count>0&&setStatusPopup({status,vehicles:d.vehicles.filter(v=>v.status===status),ss})}
+                    onMouseEnter={e=>{if(count>0)e.currentTarget.style.background='var(--surface2)'}}
+                    onMouseLeave={e=>e.currentTarget.style.background=''}>
+                    <div style={{display:'flex',justifyContent:'space-between',marginBottom:5,alignItems:'center'}}>
                       <span style={{fontSize:13,color:'var(--text2)',fontWeight:600}}>{status.replace('_',' ')}</span>
-                      <span style={{fontSize:13,fontWeight:700}}>{count}</span>
+                      <div style={{display:'flex',alignItems:'center',gap:8}}>
+                        <span style={{fontSize:13,fontWeight:700}}>{count}</span>
+                        {count>0&&<span style={{fontSize:11,color:'var(--blue)',fontWeight:700}}>→</span>}
+                      </div>
                     </div>
                     <div style={{height:6,background:'var(--surface2)',borderRadius:3}}>
                       <div style={{height:'100%',width:`${pct}%`,background:ss.dot,borderRadius:3,transition:'width 0.5s'}}/>
@@ -502,8 +536,14 @@ function DashboardPage({ onAlertsChange }) {
               })}
             </div>
           </div>
-          <div className="card">
-            <div className="card-header"><div className="card-title">Stock Alerts</div><span style={{fontSize:12,color:lowStock.length>0?'#dc2626':'var(--text2)',fontWeight:600}}>{lowStock.length} items</span></div>
+          <div className="card" style={{cursor:'pointer'}} {...hoverProps} onClick={()=>nav('inventory')}>
+            <div className="card-header">
+              <div className="card-title">Stock Alerts</div>
+              <div style={{display:'flex',alignItems:'center',gap:8}}>
+                <span style={{fontSize:12,color:lowStock.length>0?'#dc2626':'var(--text2)',fontWeight:600}}>{lowStock.length} items</span>
+                <span style={{fontSize:11,color:'var(--blue)',fontWeight:700}}>View all →</span>
+              </div>
+            </div>
             {lowStock.length===0?(
               <div style={{padding:32,textAlign:'center',color:'var(--text3)'}}><div style={{fontSize:28,marginBottom:8}}></div><div>All items well stocked</div></div>
             ):(
@@ -520,33 +560,109 @@ function DashboardPage({ onAlertsChange }) {
         </div>
 
         <div className="card">
-          <div className="card-header"><div className="card-title">Recent Fuel Logs</div><span style={{fontSize:12,color:'var(--text2)'}}>{d.fuel.length} total</span></div>
-          {d.fuel.length===0?<div style={{padding:32,textAlign:'center',color:'var(--text3)'}}>No fuel logs yet</div>:(
-            <div className="table-wrap">
-              <table className="table">
-                <thead><tr><th>Vehicle</th><th>Date</th><th>Liters</th><th>Total Cost</th><th className="hide-mobile">Voucher Number</th></tr></thead>
-                <tbody>
-                  {[...d.fuel].reverse().slice(0,8).map(f=>(
-                    <tr key={f.id}>
-                      <td style={{fontFamily:'DM Mono,monospace',color:'var(--blue)',fontSize:13,fontWeight:700}}>{f.fleetVehicle?.plate||'—'}</td>
-                      <td style={{color:'var(--text2)'}}>{f.date}</td>
-                      <td style={{fontWeight:600}}>{f.liters}L</td>
-                      <td style={{fontFamily:'DM Mono,monospace',color:'var(--green)',fontWeight:700}}>{(f.totalCost||0).toLocaleString()} RWF</td>
-                      <td className="hide-mobile" style={{color:'var(--text2)'}}>{f.station||'—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div className="card-header">
+            <div className="card-title">Recent Fuel Logs</div>
+            <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+              <select style={{fontSize:12,border:'1px solid var(--border)',borderRadius:6,padding:'4px 8px',background:'var(--surface2)',color:'var(--text)',fontFamily:'Nunito,sans-serif',cursor:'pointer'}}
+                value={dashMonth} onChange={e=>setDashMonth(e.target.value)}>
+                <option value="ALL">All Months</option>
+                {MONTHS.map(m=><option key={m} value={m}>{m}</option>)}
+              </select>
+              <span style={{fontSize:12,color:'var(--text2)'}}>
+                {dashMonth==='ALL'?`${d.fuel.length} total`:`${d.fuel.filter(f=>f.date&&new Date(f.date).getMonth()===MONTHS.indexOf(dashMonth)).length} records`}
+              </span>
+              <button onClick={()=>nav('fuel')} style={{background:'none',border:'none',cursor:'pointer',fontSize:11,color:'var(--blue)',fontWeight:700}}>View all →</button>
             </div>
-          )}
+          </div>
+          {(()=>{
+            const fuelFiltered = dashMonth==='ALL' ? [...d.fuel].reverse().slice(0,8)
+              : d.fuel.filter(f=>f.date&&new Date(f.date).getMonth()===MONTHS.indexOf(dashMonth)).reverse().slice(0,8)
+            const monthTotal = dashMonth==='ALL' ? null : d.fuel.filter(f=>f.date&&new Date(f.date).getMonth()===MONTHS.indexOf(dashMonth)).reduce((s,f)=>s+(f.totalCost||0),0)
+            return fuelFiltered.length===0?(
+              <div style={{padding:32,textAlign:'center',color:'var(--text3)'}}>No fuel logs {dashMonth!=='ALL'?`for ${dashMonth}`:''}</div>
+            ):(
+              <>
+                {monthTotal!==null&&(
+                  <div style={{padding:'8px 20px',background:'var(--surface2)',borderBottom:'1px solid var(--border)',display:'flex',gap:16,flexWrap:'wrap'}}>
+                    <span style={{fontSize:12,fontWeight:700,color:'var(--green)'}}>Total: {monthTotal.toLocaleString()} RWF</span>
+                    <span style={{fontSize:12,color:'var(--text2)'}}>for {dashMonth}</span>
+                  </div>
+                )}
+                <div className="table-wrap">
+                  <table className="table">
+                    <thead><tr><th>Vehicle</th><th>Date</th><th>Liters</th><th>Total Cost</th><th className="hide-mobile">Voucher Number</th></tr></thead>
+                    <tbody>
+                      {fuelFiltered.map(f=>(
+                        <tr key={f.id} style={{cursor:'pointer'}} onClick={()=>nav('fuel')}>
+                          <td style={{fontFamily:'DM Mono,monospace',color:'var(--blue)',fontSize:13,fontWeight:700}}>{f.fleetVehicle?.plate||'—'}</td>
+                          <td style={{color:'var(--text2)'}}>{f.date}</td>
+                          <td style={{fontWeight:600}}>{f.liters}L</td>
+                          <td style={{fontFamily:'DM Mono,monospace',color:'var(--green)',fontWeight:700}}>{(f.totalCost||0).toLocaleString()} RWF</td>
+                          <td className="hide-mobile" style={{color:'var(--text2)'}}>{f.station||'—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )
+          })()}
         </div>
       </div>
+
+      {/* Status Popup Modal */}
+      {statusPopup&&(
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setStatusPopup(null)}>
+          <div className="modal" style={{maxWidth:520}}>
+            <div className="modal-header">
+              <div style={{display:'flex',alignItems:'center',gap:10}}>
+                <span style={{display:'inline-flex',alignItems:'center',gap:6,fontSize:13,fontWeight:700,borderRadius:20,padding:'4px 12px',background:statusPopup.ss.bg,color:statusPopup.ss.color}}>
+                  <span style={{width:7,height:7,borderRadius:'50%',background:statusPopup.ss.dot,display:'inline-block'}}/>
+                  {statusPopup.status.replace('_',' ')}
+                </span>
+                <div className="modal-title">{statusPopup.vehicles.length} Vehicle{statusPopup.vehicles.length>1?'s':''}</div>
+              </div>
+              <X onClick={()=>setStatusPopup(null)}/>
+            </div>
+            <div className="modal-body" style={{padding:0}}>
+              {statusPopup.vehicles.map((v,i)=>(
+                <div key={v.id} onClick={()=>{setStatusPopup(null);onSelectGarageVehicle&&onSelectGarageVehicle(v)}} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 20px',borderBottom:i<statusPopup.vehicles.length-1?'1px solid var(--border)':'none',gap:12,flexWrap:'wrap',cursor:'pointer',transition:'background 0.15s'}} onMouseEnter={e=>e.currentTarget.style.background='var(--surface2)'} onMouseLeave={e=>e.currentTarget.style.background=''}>
+                  <div style={{display:'flex',alignItems:'center',gap:12,minWidth:0}}>
+                    <div style={{width:36,height:36,borderRadius:8,background:statusPopup.ss.bg,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                      <span style={{fontSize:16}}>🚗</span>
+                    </div>
+                    <div style={{minWidth:0}}>
+                      <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                        <span style={{fontFamily:'DM Mono,monospace',fontSize:14,fontWeight:800,color:'var(--blue)'}}>{v.plate}</span>
+                        <span style={{fontSize:12,color:'var(--text2)',fontWeight:600}}>{v.make} {v.model}</span>
+                      </div>
+                      <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>{v.type} · {v.color} · {v.year}</div>
+                      {v.driverName&&<div style={{fontSize:11,color:'var(--text2)',marginTop:1}}>Driver: <strong>{v.driverName}</strong></div>}
+                    </div>
+                  </div>
+                  <div style={{textAlign:'right',flexShrink:0,display:'flex',alignItems:'center',gap:12}}>
+                    <div>
+                      <div style={{fontSize:12,color:'var(--text3)'}}>{v.mileage?`${Number(v.mileage).toLocaleString()} km`:''}</div>
+                      <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>{(v.serviceHistory||[]).length} services</div>
+                    </div>
+                    <span style={{fontSize:14,color:'var(--blue)',fontWeight:700}}>→</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={()=>setStatusPopup(null)}>Close</button>
+              <button className="btn btn-blue" onClick={()=>{setStatusPopup(null);nav('vehicles')}}>Go to Vehicles →</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
 
 //  ALERTS DASHBOARD 
-function AlertsDashboard({ onAlertsChange }) {
+function AlertsDashboard({ onAlertsChange, onNavigate, onEditVehicle }) {
   const [fleet, setFleet] = useState([])
   useEffect(()=>{
     api.get('/fleet').then(r=>{
@@ -558,10 +674,43 @@ function AlertsDashboard({ onAlertsChange }) {
   const alerts=getExpiryAlerts(fleet)
   const expired=alerts.filter(a=>a.expired)
   const upcoming=alerts.filter(a=>!a.expired)
+
+  const AlertRow = ({a, i, total, bg, borderColor}) => (
+    <div key={a.id}
+      onClick={()=>onEditVehicle&&onEditVehicle(a.vehicle)}
+      style={{padding:'14px 16px',borderBottom:i<total-1?`1px solid ${borderColor}`:'none',
+        display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,
+        background:bg,flexWrap:'wrap',cursor:'pointer',transition:'filter 0.15s'}}
+      onMouseEnter={e=>e.currentTarget.style.filter='brightness(0.97)'}
+      onMouseLeave={e=>e.currentTarget.style.filter=''}>
+      <div style={{display:'flex',alignItems:'center',gap:12,minWidth:0}}>
+        <div style={{width:40,height:40,borderRadius:10,background:a.expired?'#fee2e2':'#fef3c7',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>
+          {a.type==='Insurance'?'':''}
+        </div>
+        <div>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:2,flexWrap:'wrap'}}>
+            <span style={{fontFamily:'DM Mono,monospace',fontSize:14,fontWeight:800,color:'var(--blue)'}}>{a.plate}</span>
+            <span style={{fontSize:11,fontWeight:700,background:'var(--surface2)',color:'var(--text2)',borderRadius:6,padding:'2px 7px'}}>{a.type}</span>
+          </div>
+          <div style={{fontSize:12,color:'var(--text3)'}}>{a.expired?'Expired on':'Expires on'}: <strong>{a.expiry}</strong></div>
+        </div>
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
+        <span style={{fontSize:12,fontWeight:800,borderRadius:20,padding:'5px 12px',
+          background:a.expired?'#fee2e2':a.days===0?'#fee2e2':'#fef3c7',
+          color:a.expired?'#dc2626':a.days===0?'#dc2626':'#92400e',
+          border:a.expired?'1px solid #fca5a5':a.days===0?'1px solid #fca5a5':'1px solid #fcd34d'}}>
+          {a.expired?`Expired ${Math.abs(a.days)}d ago`:a.days===0?'Expires TODAY':`${a.days}d left`}
+        </span>
+        <span style={{fontSize:11,color:'var(--blue)',fontWeight:700}}>View →</span>
+      </div>
+    </div>
+  )
+
   return (
     <>
       <div className="page-header">
-        <div><div className="page-title">Alerts</div><div className="page-sub">Document expiry alerts for fleet vehicles</div></div>
+        <div><div className="page-title">Alerts</div><div className="page-sub">Click any alert to view the vehicle registration</div></div>
         {alerts.length>0&&<span style={{background:'#fee2e2',color:'#dc2626',borderRadius:20,fontSize:13,fontWeight:800,padding:'6px 14px',border:'1px solid #fca5a5',flexShrink:0}}>{alerts.length} alert{alerts.length>1?'s':''}</span>}
       </div>
       <div className="page-content">
@@ -577,21 +726,7 @@ function AlertsDashboard({ onAlertsChange }) {
               <div style={{marginBottom:20}}>
                 <div style={{fontSize:12,fontWeight:800,color:'#dc2626',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10}}>Already Expired ({expired.length})</div>
                 <div className="card" style={{borderColor:'#fca5a5'}}>
-                  {expired.map((a,i)=>(
-                    <div key={a.id} style={{padding:'14px 16px',borderBottom:i<expired.length-1?'1px solid #fee2e2':'none',display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,background:'#fff5f5',flexWrap:'wrap'}}>
-                      <div style={{display:'flex',alignItems:'center',gap:12,minWidth:0}}>
-                        <div style={{width:40,height:40,borderRadius:10,background:'#fee2e2',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{a.type==='Insurance'?'':''}</div>
-                        <div>
-                          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:2,flexWrap:'wrap'}}>
-                            <span style={{fontFamily:'DM Mono,monospace',fontSize:14,fontWeight:800,color:'var(--blue)'}}>{a.plate}</span>
-                            <span style={{fontSize:11,fontWeight:700,background:'var(--surface2)',color:'var(--text2)',borderRadius:6,padding:'2px 7px'}}>{a.type}</span>
-                          </div>
-                          <div style={{fontSize:12,color:'var(--text3)'}}>Expired on: <strong>{a.expiry}</strong></div>
-                        </div>
-                      </div>
-                      <span style={{fontSize:12,fontWeight:800,borderRadius:20,padding:'5px 12px',background:'#fee2e2',color:'#dc2626',border:'1px solid #fca5a5',flexShrink:0}}>Expired {Math.abs(a.days)}d ago</span>
-                    </div>
-                  ))}
+                  {expired.map((a,i)=><AlertRow key={a.id} a={a} i={i} total={expired.length} bg="#fff5f5" borderColor="#fee2e2"/>)}
                 </div>
               </div>
             )}
@@ -599,29 +734,14 @@ function AlertsDashboard({ onAlertsChange }) {
               <div>
                 <div style={{fontSize:12,fontWeight:800,color:'#92400e',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10}}>Expiring Within 7 Days ({upcoming.length})</div>
                 <div className="card" style={{borderColor:'#fcd34d'}}>
-                  {upcoming.map((a,i)=>(
-                    <div key={a.id} style={{padding:'14px 16px',borderBottom:i<upcoming.length-1?'1px solid #fef3c7':'none',display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,background:'#fffbeb',flexWrap:'wrap'}}>
-                      <div style={{display:'flex',alignItems:'center',gap:12,minWidth:0}}>
-                        <div style={{width:40,height:40,borderRadius:10,background:'#fef3c7',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{a.type==='Insurance'?'':''}</div>
-                        <div>
-                          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:2,flexWrap:'wrap'}}>
-                            <span style={{fontFamily:'DM Mono,monospace',fontSize:14,fontWeight:800,color:'var(--blue)'}}>{a.plate}</span>
-                            <span style={{fontSize:11,fontWeight:700,background:'var(--surface2)',color:'var(--text2)',borderRadius:6,padding:'2px 7px'}}>{a.type}</span>
-                          </div>
-                          <div style={{fontSize:12,color:'var(--text3)'}}>Expires on: <strong>{a.expiry}</strong></div>
-                        </div>
-                      </div>
-                      <span style={{fontSize:12,fontWeight:800,borderRadius:20,padding:'5px 12px',background:a.days===0?'#fee2e2':'#fef3c7',color:a.days===0?'#dc2626':'#92400e',border:a.days===0?'1px solid #fca5a5':'1px solid #fcd34d',flexShrink:0}}>
-                        {a.days===0?'Expires TODAY':`${a.days}d left`}
-                      </span>
-                    </div>
-                  ))}
+                  {upcoming.map((a,i)=><AlertRow key={a.id} a={a} i={i} total={upcoming.length} bg="#fffbeb" borderColor="#fef3c7"/>)}
                 </div>
               </div>
             )}
           </>
         )}
       </div>
+
     </>
   )
 }
@@ -1189,6 +1309,8 @@ function FuelLogsPage({ user }) {
   const [editing, setEditing] = useState(null)
   const [filterVehicle, setFilterVehicle] = useState('all')
   const [filterFuelType, setFilterFuelType] = useState('ALL')
+  const [fuelSearch, setFuelSearch] = useState('')
+  const [filterMonth, setFilterMonth] = useState('ALL')
   const [showImportModal, setShowImportModal] = useState(false)
   const [pendingFuelType, setPendingFuelType] = useState('DIESEL')
   const [selectedMonth, setSelectedMonth] = useState('')
@@ -1392,12 +1514,15 @@ function FuelLogsPage({ user }) {
 
   // Filtered list
   const filtered = logs
+    .filter(l => filterMonth === 'ALL' || (l.date && new Date(l.date).getMonth() === MONTHS.indexOf(filterMonth)))
     .filter(l => filterVehicle === 'all' || l.fleetVehicle?.id === parseInt(filterVehicle))
     .filter(l => filterFuelType === 'ALL' || getFuelType(l) === filterFuelType)
+    .filter(l => !fuelSearch || l.fleetVehicle?.plate?.toLowerCase().includes(fuelSearch.toLowerCase()) || (l.station||'').toLowerCase().includes(fuelSearch.toLowerCase()))
 
-  // Stats
-  const dieselLogs = logs.filter(l => getFuelType(l) === 'DIESEL')
-  const petrolLogs = logs.filter(l => getFuelType(l) === 'PETROL')
+  // Stats — filtered by month if selected
+  const statLogs = filterMonth === 'ALL' ? logs : logs.filter(l => l.date && new Date(l.date).getMonth() === MONTHS.indexOf(filterMonth))
+  const dieselLogs = statLogs.filter(l => getFuelType(l) === 'DIESEL')
+  const petrolLogs = statLogs.filter(l => getFuelType(l) === 'PETROL')
   const totalDieselL = dieselLogs.reduce((s,l) => s+(l.liters||0), 0)
   const totalDieselC = dieselLogs.reduce((s,l) => s+(l.totalCost||0), 0)
   const totalPetrolL = petrolLogs.reduce((s,l) => s+(l.liters||0), 0)
@@ -1500,7 +1625,12 @@ function FuelLogsPage({ user }) {
 
         {/* Filters */}
         <div style={{display:'flex',gap:10,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}>
-          <select className="form-input" style={{maxWidth:260,appearance:'auto'}} value={filterVehicle} onChange={e=>setFilterVehicle(e.target.value)}>
+          <select className="form-input" style={{width:160,appearance:'auto'}} value={filterMonth} onChange={e=>setFilterMonth(e.target.value)}>
+            <option value="ALL">All Months</option>
+            {MONTHS.map(m=><option key={m} value={m}>{m}</option>)}
+          </select>
+          <input className="form-input" style={{width:190}} placeholder="Search plate or voucher..." value={fuelSearch} onChange={e=>setFuelSearch(e.target.value)}/>
+          <select className="form-input" style={{maxWidth:200,appearance:'auto'}} value={filterVehicle} onChange={e=>setFilterVehicle(e.target.value)}>
             <option value="all">All Fleet Vehicles</option>
             {fleet.map(v=><option key={v.id} value={v.id}>{v.plate} — {v.make} {v.model}</option>)}
           </select>
@@ -1512,6 +1642,7 @@ function FuelLogsPage({ user }) {
               </button>
             ))}
           </div>
+          {(fuelSearch||filterMonth!=='ALL')&&<button className="btn btn-ghost btn-sm" onClick={()=>{setFuelSearch('');setFilterMonth('ALL')}}>✕ Clear</button>}
         </div>
 
         {/* Table */}
@@ -1893,7 +2024,7 @@ function StaffPage() {
             <div className="modal-body">
               {addError&&<div className="error-msg">{addError}</div>}
               <div className="form-row" style={{marginBottom:14}}>
-                <div><label className="form-label">Full Name</label><input className="form-input" value={addForm.name} onChange={e=>setAddForm(f=>({...f,name:e.target.value}))}/></div>
+                <div><label className="form-label">Full Name</label><input className="form-input" value={addForm.name} onChange={e=>setAddForm(f=>({...f,name:e.target.value}))} onKeyDown={onlyLetters}/></div>
                 <div><label className="form-label">Role</label>
                   <select className="form-input" style={{appearance:'auto'}} value={addForm.role} onChange={e=>setAddForm(f=>({...f,role:e.target.value}))}>
                     <option value="mechanic">Mechanic</option>
@@ -1979,16 +2110,16 @@ function VehicleModal({ vehicle, onSave, onClose }) {
           )}
           <div style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:12,paddingBottom:8,borderBottom:'1px solid var(--border)'}}>Vehicle Details</div>
           <div className="form-row" style={{marginBottom:14}}>
-            <div><label className="form-label">Plate *</label><input className="form-input" value={form.plate} onChange={e=>s('plate',e.target.value.toUpperCase())} placeholder="KCA 123A"/></div>
+            <div><label className="form-label">Plate *</label><input className="form-input" value={form.plate} onChange={e=>s('plate',e.target.value.toUpperCase())} onKeyDown={onlyPlate} placeholder="KCA 123A"/></div>
             <div><label className="form-label">Status *</label><select className="form-input" style={{appearance:'auto'}} value={form.status} onChange={e=>s('status',e.target.value)}>{['Ready','In_Service','Awaiting_Parts','Completed'].map(x=><option key={x}>{x}</option>)}</select></div>
           </div>
           <div className="form-row" style={{marginBottom:14}}>
-            <div><label className="form-label">Make *</label><input className="form-input" value={form.make} onChange={e=>s('make',e.target.value)} placeholder="Toyota"/></div>
+            <div><label className="form-label">Make *</label><input className="form-input" value={form.make} onChange={e=>s('make',e.target.value)} onKeyDown={onlyLetters} placeholder="Toyota"/></div>
             <div><label className="form-label">Model *</label><input className="form-input" value={form.model} onChange={e=>s('model',e.target.value)} placeholder="Hilux"/></div>
           </div>
           <div className="form-row" style={{marginBottom:14}}>
-            <div><label className="form-label">Year *</label><input className="form-input" type="number" value={form.year} onChange={e=>s('year',e.target.value)}/></div>
-            <div><label className="form-label">Color *</label><input className="form-input" value={form.color} onChange={e=>s('color',e.target.value)} placeholder="White"/></div>
+            <div><label className="form-label">Year *</label><input className="form-input" type="number" value={form.year} onChange={e=>s('year',e.target.value)} onKeyDown={onlyNumbers}/></div>
+            <div><label className="form-label">Color *</label><input className="form-input" value={form.color} onChange={e=>s('color',e.target.value)} onKeyDown={onlyLetters} placeholder="White"/></div>
           </div>
           <div className="form-row" style={{marginBottom:14}}>
             <div><label className="form-label">Type *</label><select className="form-input" style={{appearance:'auto'}} value={form.type} onChange={e=>s('type',e.target.value)}>{['Sedan','SUV','Pickup Truck','Van','Minibus','Truck','Motorcycle'].map(t=><option key={t}>{t}</option>)}</select></div>
@@ -1996,8 +2127,8 @@ function VehicleModal({ vehicle, onSave, onClose }) {
           </div>
           <div style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.08em',margin:'18px 0 12px',paddingBottom:8,borderBottom:'1px solid var(--border)'}}>Driver Information</div>
           <div className="form-row">
-            <div><label className="form-label">Driver Name *</label><input className="form-input" value={form.driverName} onChange={e=>s('driverName',e.target.value)}/></div>
-            <div><label className="form-label">Driver Phone *</label><input className="form-input" value={form.driverPhone} onChange={e=>s('driverPhone',e.target.value)}/></div>
+            <div><label className="form-label">Driver Name *</label><input className="form-input" value={form.driverName} onChange={e=>s('driverName',e.target.value)} onKeyDown={onlyLetters} placeholder="Full name"/></div>
+            <div><label className="form-label">Driver Phone *</label><input className="form-input" value={form.driverPhone} onChange={e=>s('driverPhone',e.target.value)} onKeyDown={onlyNumbers} placeholder="e.g. 0788000000"/></div>
           </div>
         </div>
         <div className="modal-footer">
@@ -2046,31 +2177,37 @@ function ServiceModal({ onSave, onClose, currentUser }) {
 }
 
 //  FLEET MODAL 
-function FleetModal({ vehicle, onSave, onClose }) {
+function FleetModal({ vehicle, onSave, onClose, backLabel }) {
   const empty={plate:'',make:'',model:'',cardNumber:'',year:new Date().getFullYear(),color:'',vin:'',type:'Sedan',mileage:0,driverName:'',driverPhone:'',driverLicense:'',insuranceCompany:'',insuranceNumber:'',insuranceExpiry:'',inspectionIssuedDate:'',inspectionExpiry:'',speedGovernorExpiry:'',driverLicenseExpiry:'',yellowCardExpiry:'',status:'Active'}
   const [form, setForm] = useState(vehicle||empty)
   const s=(k,v)=>setForm(f=>({...f,[k]:v}))
   return (
     <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div className="modal" style={{maxWidth:580}}>
-        <div className="modal-header"><div className="modal-title">{vehicle?'Edit Fleet Vehicle':'Add Fleet Vehicle'}</div><X onClick={onClose}/></div>
+        <div className="modal-header">
+          <div style={{display:'flex',alignItems:'center',gap:10,minWidth:0}}>
+            {backLabel&&<button onClick={onClose} style={{background:'none',border:'none',color:'var(--blue)',cursor:'pointer',fontFamily:'Nunito,sans-serif',fontSize:13,fontWeight:700,padding:0,flexShrink:0}}>{backLabel}</button>}
+            <div className="modal-title">{vehicle?'Edit Fleet Vehicle':'Add Fleet Vehicle'}</div>
+          </div>
+          <X onClick={onClose}/>
+        </div>
         <div className="modal-body">
           <div style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:12,paddingBottom:8,borderBottom:'1px solid var(--border)'}}>Vehicle Details</div>
           <div className="form-row" style={{marginBottom:14}}>
-            <div><label className="form-label">Plate *</label><input className="form-input" value={form.plate} onChange={e=>s('plate',e.target.value.toUpperCase())} placeholder="RAA 001A"/></div>
+            <div><label className="form-label">Plate *</label><input className="form-input" value={form.plate} onChange={e=>s('plate',e.target.value.toUpperCase())} onKeyDown={onlyPlate} placeholder="RAA 001A"/></div>
             <div><label className="form-label">Status *</label><select className="form-input" style={{appearance:'auto'}} value={form.status} onChange={e=>s('status',e.target.value)}>{['Active','In_Maintenance','Out_of_Service'].map(x=><option key={x}>{x}</option>)}</select></div>
           </div>
           <div className="form-row" style={{marginBottom:14}}>
-            <div><label className="form-label">Make *</label><input className="form-input" value={form.make} onChange={e=>s('make',e.target.value)}/></div>
-            <div><label className="form-label">Model *</label><input className="form-input" value={form.model} onChange={e=>s('model',e.target.value)}/></div>
+            <div><label className="form-label">Make *</label><input className="form-input" value={form.make} onChange={e=>s('make',e.target.value)} onKeyDown={onlyLetters} placeholder="e.g. Toyota"/></div>
+            <div><label className="form-label">Model *</label><input className="form-input" value={form.model} onChange={e=>s('model',e.target.value)} placeholder="e.g. Hilux"/></div>
           </div>
           <div className="form-row" style={{marginBottom:14}}>
             <div><label className="form-label">Card Number *</label><input className="form-input" value={form.cardNumber} onChange={e=>s('cardNumber',e.target.value.toUpperCase())} style={{fontFamily:'DM Mono,monospace'}}/></div>
             <div><label className="form-label">Department *</label><select className="form-input" style={{appearance:'auto'}} value={form.companyDepartment} onChange={e=>s('companyDepartment',e.target.value)}>{['--Please Select--','Blue_Band','Colgate','OXI','Nestle','Indomie'].map(x=><option key={x}>{x}</option>)}</select></div>
           </div>
           <div className="form-row" style={{marginBottom:14}}>
-            <div><label className="form-label">Year *</label><input className="form-input" type="number" value={form.year} onChange={e=>s('year',e.target.value)}/></div>
-            <div><label className="form-label">Color *</label><input className="form-input" value={form.color} onChange={e=>s('color',e.target.value)}/></div>
+            <div><label className="form-label">Year *</label><input className="form-input" type="number" value={form.year} onChange={e=>s('year',e.target.value)} onKeyDown={onlyNumbers}/></div>
+            <div><label className="form-label">Color *</label><input className="form-input" value={form.color} onChange={e=>s('color',e.target.value)} onKeyDown={onlyLetters} placeholder="e.g. White"/></div>
           </div>
           <div className="form-row" style={{marginBottom:14}}>
             <div><label className="form-label">Type *</label><select className="form-input" style={{appearance:'auto'}} value={form.type} onChange={e=>s('type',e.target.value)}>{['Sedan','SUV','Pickup Truck','Van','Minibus','Truck','Motorcycle'].map(t=><option key={t}>{t}</option>)}</select></div>
@@ -2078,8 +2215,8 @@ function FleetModal({ vehicle, onSave, onClose }) {
           </div>
           <div style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.08em',margin:'18px 0 12px',paddingBottom:8,borderBottom:'1px solid var(--border)'}}>Assigned Driver</div>
           <div className="form-row" style={{marginBottom:14}}>
-            <div><label className="form-label">Driver Name *</label><input className="form-input" value={form.driverName} onChange={e=>s('driverName',e.target.value)}/></div>
-            <div><label className="form-label">Driver Phone *</label><input className="form-input" value={form.driverPhone} onChange={e=>s('driverPhone',e.target.value)}/></div>
+            <div><label className="form-label">Driver Name *</label><input className="form-input" value={form.driverName} onChange={e=>s('driverName',e.target.value)} onKeyDown={onlyLetters} placeholder="Full name"/></div>
+            <div><label className="form-label">Driver Phone *</label><input className="form-input" value={form.driverPhone} onChange={e=>s('driverPhone',e.target.value)} onKeyDown={onlyNumbers} placeholder="e.g. 0788000000"/></div>
           </div>
 
           <div style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.08em',margin:'18px 0 12px',paddingBottom:8,borderBottom:'1px solid var(--border)'}}>Insurance & Documents</div>
@@ -2125,8 +2262,9 @@ function FleetModal({ vehicle, onSave, onClose }) {
                     />
                   </label>
                   {form[doc.fileKey] ? (
-                    <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0,flexWrap:'wrap'}}>
                       <span style={{fontSize:12,color:'var(--green)',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{form[doc.fileKey+'Name']||'document'}</span>
+                      <button onClick={()=>viewFile(form[doc.fileKey],form[doc.fileKey+'Name']||doc.label)} style={{fontSize:12,color:'var(--blue)',background:'none',border:'none',cursor:'pointer',fontWeight:700,flexShrink:0,textDecoration:'underline'}}>View</button>
                       <button onClick={()=>{s(doc.fileKey,'');s(doc.fileKey+'Name','')}} style={{fontSize:12,color:'var(--red)',background:'none',border:'none',cursor:'pointer',fontWeight:700,flexShrink:0}}>✕</button>
                     </div>
                   ) : (
@@ -2137,50 +2275,48 @@ function FleetModal({ vehicle, onSave, onClose }) {
             </div>
           ))}
 
-          {/* Driver License and Yellow Card — upload only, no dates */}
-          {[
-            {label:'Driver License', fileKey:'driverLicenseFile'},
-            {label:'Yellow Card',    fileKey:'yellowCardFile'},
-          ].map(doc=>(
-            <div key={doc.label} style={{marginBottom:16,padding:'12px 14px',background:'var(--surface2)',borderRadius:10,border:'1px solid var(--border)'}}>
-              <div style={{fontSize:11,fontWeight:800,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:10}}>{doc.label}</div>
-              <div>
+          {/* Driver License — with expiry date */}
+          <div style={{marginBottom:16,padding:'12px 14px',background:'var(--surface2)',borderRadius:10,border:'1px solid var(--border)'}}>
+            <div style={{fontSize:11,fontWeight:800,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:10}}>Driver License</div>
+            <div className="form-row" style={{marginBottom:10}}>
+              <div><label className="form-label">Expiry Date *</label><input className="form-input" type="date" value={form.driverLicenseExpiry||''} onChange={e=>s('driverLicenseExpiry',e.target.value)}/></div>
+              <div style={{display:'flex',flexDirection:'column',justifyContent:'flex-end'}}>
                 <label className="form-label">Document File (PDF / JPG / PNG)</label>
                 <div style={{display:'flex',alignItems:'center',gap:10}}>
-                  <label style={{
-                    display:'inline-flex',alignItems:'center',gap:8,
-                    padding:'9px 16px',
-                    background: form[doc.fileKey] ? '#f0fdf4' : 'var(--blue)',
-                    color: form[doc.fileKey] ? 'var(--green)' : '#fff',
-                    border: form[doc.fileKey] ? '1px solid #86efac' : 'none',
-                    borderRadius:8,cursor:'pointer',fontSize:13,fontWeight:700,
-                    whiteSpace:'nowrap',flexShrink:0
-                  }}>
-                    {form[doc.fileKey] ? '✓ Uploaded' : '+ Upload File'}
-                    <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{display:'none'}}
-                      onChange={e=>{
-                        const file=e.target.files[0]; if(!file) return
-                        const reader=new FileReader()
-                        reader.onload=()=>{
-                          s(doc.fileKey, reader.result)
-                          s(doc.fileKey+'Name', file.name)
-                        }
-                        reader.readAsDataURL(file)
-                      }}
-                    />
+                  <label style={{display:'inline-flex',alignItems:'center',gap:8,padding:'9px 16px',background:form.driverLicenseFile?'#f0fdf4':'var(--blue)',color:form.driverLicenseFile?'var(--green)':'#fff',border:form.driverLicenseFile?'1px solid #86efac':'none',borderRadius:8,cursor:'pointer',fontSize:13,fontWeight:700,whiteSpace:'nowrap',flexShrink:0}}>
+                    {form.driverLicenseFile?'✓ Uploaded':'+ Upload File'}
+                    <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{display:'none'}} onChange={e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{s('driverLicenseFile',reader.result);s('driverLicenseFileName',file.name)};reader.readAsDataURL(file)}}/>
                   </label>
-                  {form[doc.fileKey] ? (
-                    <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0}}>
-                      <span style={{fontSize:12,color:'var(--green)',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{form[doc.fileKey+'Name']||'document'}</span>
-                      <button onClick={()=>{s(doc.fileKey,'');s(doc.fileKey+'Name','')}} style={{fontSize:12,color:'var(--red)',background:'none',border:'none',cursor:'pointer',fontWeight:700,flexShrink:0}}>✕</button>
+                  {form.driverLicenseFile?(
+                    <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0,flexWrap:'wrap'}}>
+                      <span style={{fontSize:12,color:'var(--green)',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{form.driverLicenseFileName||'document'}</span>
+                      <button onClick={()=>viewFile(form.driverLicenseFile,form.driverLicenseFileName||'Driver License')} style={{fontSize:12,color:'var(--blue)',background:'none',border:'none',cursor:'pointer',fontWeight:700,flexShrink:0,textDecoration:'underline'}}>View</button>
+                      <button onClick={()=>{s('driverLicenseFile','');s('driverLicenseFileName','')}} style={{fontSize:12,color:'var(--red)',background:'none',border:'none',cursor:'pointer',fontWeight:700,flexShrink:0}}>✕</button>
                     </div>
-                  ) : (
-                    <span style={{fontSize:12,color:'var(--text3)'}}>No file chosen</span>
-                  )}
+                  ):<span style={{fontSize:12,color:'var(--text3)'}}>No file chosen</span>}
                 </div>
               </div>
             </div>
-          ))}
+          </div>
+
+          {/* Yellow Card — upload only, no expiry */}
+          <div style={{marginBottom:16,padding:'12px 14px',background:'var(--surface2)',borderRadius:10,border:'1px solid var(--border)'}}>
+            <div style={{fontSize:11,fontWeight:800,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:10}}>Yellow Card</div>
+            <label className="form-label">Document File (PDF / JPG / PNG)</label>
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <label style={{display:'inline-flex',alignItems:'center',gap:8,padding:'9px 16px',background:form.yellowCardFile?'#f0fdf4':'var(--blue)',color:form.yellowCardFile?'var(--green)':'#fff',border:form.yellowCardFile?'1px solid #86efac':'none',borderRadius:8,cursor:'pointer',fontSize:13,fontWeight:700,whiteSpace:'nowrap',flexShrink:0}}>
+                {form.yellowCardFile?'✓ Uploaded':'+ Upload File'}
+                <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{display:'none'}} onChange={e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{s('yellowCardFile',reader.result);s('yellowCardFileName',file.name)};reader.readAsDataURL(file)}}/>
+              </label>
+              {form.yellowCardFile?(
+                <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0,flexWrap:'wrap'}}>
+                  <span style={{fontSize:12,color:'var(--green)',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{form.yellowCardFileName||'document'}</span>
+                  <button onClick={()=>viewFile(form.yellowCardFile,form.yellowCardFileName||'Yellow Card')} style={{fontSize:12,color:'var(--blue)',background:'none',border:'none',cursor:'pointer',fontWeight:700,flexShrink:0,textDecoration:'underline'}}>View</button>
+                  <button onClick={()=>{s('yellowCardFile','');s('yellowCardFileName','')}} style={{fontSize:12,color:'var(--red)',background:'none',border:'none',cursor:'pointer',fontWeight:700,flexShrink:0}}>✕</button>
+                </div>
+              ):<span style={{fontSize:12,color:'var(--text3)'}}>No file chosen</span>}
+            </div>
+          </div>
         </div>
         <div className="modal-footer">
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
@@ -2201,6 +2337,7 @@ function FleetModal({ vehicle, onSave, onClose }) {
             if(!form.insuranceExpiry)missing.push('Insurance Expiry')
             if(!form.inspectionExpiry)missing.push('Inspection Expiry')
             if(!form.speedGovernorExpiry)missing.push('Speed Governor Expiry')
+            if(!form.driverLicenseExpiry)missing.push('Driver License Expiry')
 
             if(missing.length>0){alert('Required fields missing:\n• '+missing.join('\n• '));return}
             onSave(form)
@@ -2300,7 +2437,7 @@ function VehicleDetail({ vehicle, user, onBack, onUpdate }) {
 }
 
 //  VEHICLES PAGE 
-function VehiclesPage({ user }) {
+function VehiclesPage({ user, initialEditVehicle, onInitialEditDone, initialSelectedVehicle, onInitialSelectedDone }) {
   const [tab, setTab] = useState('garage')
   const [vehicles, setVehicles] = useState([])
   const [fleet, setFleet] = useState([])
@@ -2321,10 +2458,27 @@ function VehiclesPage({ user }) {
   const [showDriverModal, setShowDriverModal] = useState(false)
   const [driverVehicle, setDriverVehicle] = useState(null)
   const [driverForm, setDriverForm] = useState({driverName:'',driverPhone:'',driverLicense:''})
+  const [docsVehicle, setDocsVehicle] = useState(null)
+  const [returnToDocsVehicle, setReturnToDocsVehicle] = useState(null)
   const canAdd=user.role==='manager'||user.role==='supervisor'
   const canDelete=user.role==='manager'
 
   useEffect(()=>{fetchVehicles();fetchFleet()},[])
+  useEffect(()=>{
+    if(initialEditVehicle && fleet.length > 0){
+      setTab('fleet')
+      setEditFleet(initialEditVehicle)
+      setShowAddFleet(true)
+      if(onInitialEditDone) onInitialEditDone()
+    }
+  },[initialEditVehicle, fleet])
+  useEffect(()=>{
+    if(initialSelectedVehicle && vehicles.length > 0){
+      setTab('garage')
+      setSelected(initialSelectedVehicle)
+      if(onInitialSelectedDone) onInitialSelectedDone()
+    }
+  },[initialSelectedVehicle, vehicles])
   const fetchVehicles=async()=>{try{const r=await api.get('/vehicles');setVehicles(Array.isArray(r.data)?r.data:r.data?.content||[])}catch{alert('Failed to load vehicles')}setLoading(false)}
   const fetchFleet=async()=>{try{const r=await api.get('/fleet');setFleet(Array.isArray(r.data)?r.data:r.data?.content||[])}catch(e){console.error(e)}}
   const addVehicle=async(data)=>{try{await api.post('/vehicles',data);await logAudit(user,'ADD','Garage Vehicles',`Registered vehicle: ${data.plate}`);fetchVehicles();setShowAdd(false)}catch{alert('Failed')}}
@@ -2436,6 +2590,7 @@ function VehiclesPage({ user }) {
                             <button className="btn btn-ghost btn-sm" style={{color:'var(--blue)',borderColor:'var(--blue)'}} onClick={e=>{e.stopPropagation();openInsuranceModal(v)}}>Insurance</button>
                             <button className="btn btn-ghost btn-sm" style={{color:'var(--green)',borderColor:'var(--green)'}} onClick={e=>{e.stopPropagation();openInspModal(v)}}>Inspection</button>
                             <button className="btn btn-ghost btn-sm" style={{color:'#7c3aed',borderColor:'#7c3aed'}} onClick={e=>{e.stopPropagation();openDriverModal(v)}}>Driver</button>
+                            <button className="btn btn-ghost btn-sm" style={{color:'#0891b2',borderColor:'#0891b2'}} onClick={e=>{e.stopPropagation();setDocsVehicle(v)}}>Docs</button>
                             <button className="btn btn-ghost btn-sm" onClick={e=>{e.stopPropagation();setEditFleet(v);setShowAddFleet(true)}}>Edit</button>
                             {user.role==='manager' && (
                               <button className="btn btn-danger btn-sm" onClick={async e=>{
@@ -2544,7 +2699,61 @@ function VehiclesPage({ user }) {
       </div>
 
       {showAdd&&<VehicleModal onSave={addVehicle} onClose={()=>setShowAdd(false)}/>}
-      {showAddFleet&&<FleetModal vehicle={editFleet} onSave={addFleetVehicle} onClose={()=>{setShowAddFleet(false);setEditFleet(null)}}/>}
+      {showAddFleet&&<FleetModal vehicle={editFleet} onSave={addFleetVehicle} onClose={()=>{
+        setShowAddFleet(false)
+        if(returnToDocsVehicle){setDocsVehicle(returnToDocsVehicle);setReturnToDocsVehicle(null)}
+        setEditFleet(null)
+      }} backLabel={returnToDocsVehicle?'← Back to Docs':null}/>}
+
+      {/* Docs Viewer Modal */}
+      {docsVehicle&&(
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setDocsVehicle(null)}>
+          <div className="modal" style={{maxWidth:500}}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-title">Documents — {docsVehicle.plate}</div>
+                <div style={{fontSize:12,color:'var(--text2)',marginTop:2}}>{docsVehicle.make} {docsVehicle.model} · {docsVehicle.driverName||'No driver'}</div>
+              </div>
+              <X onClick={()=>setDocsVehicle(null)}/>
+            </div>
+            <div className="modal-body">
+              {[
+                {label:'Insurance',      file:docsVehicle.insuranceFile,      expiry:docsVehicle.insuranceExpiry,      extra:`${docsVehicle.insuranceCompany||''} ${docsVehicle.insuranceNumber||''}`.trim()},
+                {label:'Inspection',     file:docsVehicle.inspectionFile,     expiry:docsVehicle.inspectionExpiry},
+                {label:'Speed Governor', file:docsVehicle.speedGovernorFile,  expiry:docsVehicle.speedGovernorExpiry},
+                {label:'Driver License', file:docsVehicle.driverLicenseFile,  expiry:docsVehicle.driverLicenseExpiry},
+                {label:'Yellow Card',    file:docsVehicle.yellowCardFile,      expiry:null},
+              ].map(doc=>{
+                const days = doc.expiry ? getDaysUntil(doc.expiry) : null
+                const isExpired = days !== null && days < 0
+                const isWarning = days !== null && days <= 7 && days >= 0
+                return(
+                  <div key={doc.label} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 0',borderBottom:'1px solid var(--border)',gap:12,flexWrap:'wrap'}}>
+                    <div style={{minWidth:0}}>
+                      <div style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>{doc.label}</div>
+                      {doc.extra&&<div style={{fontSize:11,color:'var(--text2)',marginTop:1}}>{doc.extra}</div>}
+                      {doc.expiry&&<div style={{fontSize:11,color:isExpired?'var(--red)':isWarning?'#92400e':'var(--text3)',marginTop:2,fontWeight:isExpired||isWarning?700:400}}>
+                        Expires: {doc.expiry} {isExpired?`(Expired ${Math.abs(days)}d ago)`:isWarning?`(${days}d left)`:''}
+                      </div>}
+                    </div>
+                    <div style={{flexShrink:0}}>
+                      {doc.file ? (
+                        <button className="btn btn-blue btn-sm" onClick={()=>viewFile(doc.file, doc.label)}>View / Download</button>
+                      ) : (
+                        <span style={{fontSize:12,color:'var(--text3)',fontStyle:'italic'}}>No file uploaded</span>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={()=>setDocsVehicle(null)}>Close</button>
+              <button className="btn btn-blue" onClick={()=>{setReturnToDocsVehicle(docsVehicle);setDocsVehicle(null);setEditFleet(docsVehicle);setShowAddFleet(true)}}>Edit Vehicle</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showInspModal&&inspVehicle&&(
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowInspModal(false)}>
@@ -2575,8 +2784,9 @@ function VehiclesPage({ user }) {
                     />
                   </label>
                   {inspForm.inspectionFile?(
-                    <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0,flexWrap:'wrap'}}>
                       <span style={{fontSize:12,color:'var(--green)',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{inspForm.inspectionFileName||'document'}</span>
+                      <button onClick={()=>viewFile(inspForm.inspectionFile,inspForm.inspectionFileName||'Inspection')} style={{fontSize:12,color:'var(--blue)',background:'none',border:'none',cursor:'pointer',fontWeight:700,flexShrink:0,textDecoration:'underline'}}>View</button>
                       <button onClick={()=>setInspForm(f=>({...f,inspectionFile:'',inspectionFileName:''}))} style={{fontSize:12,color:'var(--red)',background:'none',border:'none',cursor:'pointer',fontWeight:700,flexShrink:0}}>✕</button>
                     </div>
                   ):(
@@ -2624,8 +2834,9 @@ function VehiclesPage({ user }) {
                     />
                   </label>
                   {insuranceForm.insuranceFile?(
-                    <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0,flexWrap:'wrap'}}>
                       <span style={{fontSize:12,color:'var(--green)',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{insuranceForm.insuranceFileName||'document'}</span>
+                      <button onClick={()=>viewFile(insuranceForm.insuranceFile,insuranceForm.insuranceFileName||'Insurance')} style={{fontSize:12,color:'var(--blue)',background:'none',border:'none',cursor:'pointer',fontWeight:700,flexShrink:0,textDecoration:'underline'}}>View</button>
                       <button onClick={()=>setInsuranceForm(f=>({...f,insuranceFile:'',insuranceFileName:''}))} style={{fontSize:12,color:'var(--red)',background:'none',border:'none',cursor:'pointer',fontWeight:700,flexShrink:0}}>✕</button>
                     </div>
                   ):(
@@ -2660,8 +2871,8 @@ function VehiclesPage({ user }) {
                 <label className="form-label">Current Driver</label>
                 <div style={{fontSize:13,fontWeight:700,color:'var(--text2)',padding:'8px 0'}}>{driverVehicle.driverName||'Not assigned'} {driverVehicle.driverPhone?`— ${driverVehicle.driverPhone}`:''}</div>
               </div>
-              <div className="form-group"><label className="form-label">New Driver Name *</label><input className="form-input" value={driverForm.driverName} onChange={e=>setDriverForm(f=>({...f,driverName:e.target.value}))} placeholder="Full name"/></div>
-              <div className="form-group"><label className="form-label">Driver Phone *</label><input className="form-input" value={driverForm.driverPhone} onChange={e=>setDriverForm(f=>({...f,driverPhone:e.target.value}))} placeholder="+250 788 000 000"/></div>
+              <div className="form-group"><label className="form-label">New Driver Name *</label><input className="form-input" value={driverForm.driverName} onChange={e=>setDriverForm(f=>({...f,driverName:e.target.value}))} onKeyDown={onlyLetters} placeholder="Full name"/></div>
+              <div className="form-group"><label className="form-label">Driver Phone *</label><input className="form-input" value={driverForm.driverPhone} onChange={e=>setDriverForm(f=>({...f,driverPhone:e.target.value}))} onKeyDown={onlyNumbers} placeholder="0788000000"/></div>
               <div className="form-group">
                 <label className="form-label">Driver License Document (PDF / JPG / PNG)</label>
                 <div style={{display:'flex',alignItems:'center',gap:10}}>
@@ -2677,8 +2888,9 @@ function VehiclesPage({ user }) {
                     />
                   </label>
                   {driverForm.driverLicenseFile?(
-                    <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0,flexWrap:'wrap'}}>
                       <span style={{fontSize:12,color:'var(--green)',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{driverForm.driverLicenseFileName||'document'}</span>
+                      <button onClick={()=>viewFile(driverForm.driverLicenseFile,driverForm.driverLicenseFileName||'Driver License')} style={{fontSize:12,color:'var(--blue)',background:'none',border:'none',cursor:'pointer',fontWeight:700,flexShrink:0,textDecoration:'underline'}}>View</button>
                       <button onClick={()=>setDriverForm(f=>({...f,driverLicenseFile:'',driverLicenseFileName:''}))} style={{fontSize:12,color:'var(--red)',background:'none',border:'none',cursor:'pointer',fontWeight:700,flexShrink:0}}>✕</button>
                     </div>
                   ):(
@@ -2704,6 +2916,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [alertCount, setAlertCount] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [alertEditVehicle, setAlertEditVehicle] = useState(null)
+  const [selectedGarageVehicle, setSelectedGarageVehicle] = useState(null)
   useEffect(()=>{
     const s=localStorage.getItem('user')
     if(s){const u=JSON.parse(s);setUser(u);if(u.role!=='manager')setActiveTab('alerts')}
@@ -2718,9 +2932,16 @@ export default function App() {
         <div className="app">
           <Sidebar user={user} activeTab={activeTab} setActiveTab={handleTabChange} onLogout={handleLogout} alertCount={alertCount} menuOpen={menuOpen} setMenuOpen={setMenuOpen}/>
           <div className="main">
-            {activeTab==='dashboard'&&user.role==='manager'&&<DashboardPage onAlertsChange={setAlertCount}/>}
-            {activeTab==='alerts'&&(user.role==='supervisor'||user.role==='mechanic'||user.role==='viewer')&&<AlertsDashboard onAlertsChange={setAlertCount}/>}
-            {activeTab==='vehicles'&&<VehiclesPage user={user}/>}
+            {activeTab!=='dashboard'&&user.role==='manager'&&(
+              <div style={{padding:'12px 32px 0',display:'flex',alignItems:'center'}}>
+                <button onClick={()=>handleTabChange('dashboard')} style={{background:'none',border:'none',color:'var(--blue)',cursor:'pointer',fontFamily:'Nunito,sans-serif',fontSize:13,fontWeight:700,padding:0,display:'flex',alignItems:'center',gap:6}}>
+                  ← Dashboard
+                </button>
+              </div>
+            )}
+            {activeTab==='dashboard'&&user.role==='manager'&&<DashboardPage onAlertsChange={setAlertCount} onNavigate={handleTabChange} onSelectGarageVehicle={v=>{setSelectedGarageVehicle(v);handleTabChange('vehicles')}}/>}
+            {activeTab==='alerts'&&<AlertsDashboard onAlertsChange={setAlertCount} onNavigate={handleTabChange} onEditVehicle={v=>{setAlertEditVehicle(v);handleTabChange('vehicles')}}/>}
+            {activeTab==='vehicles'&&<VehiclesPage user={user} initialEditVehicle={alertEditVehicle} onInitialEditDone={()=>setAlertEditVehicle(null)} initialSelectedVehicle={selectedGarageVehicle} onInitialSelectedDone={()=>setSelectedGarageVehicle(null)}/>}
             {activeTab==='fuel'&&(user.role==='manager'||user.role==='supervisor'||user.role==='viewer')&&<FuelLogsPage user={user}/>}
             {activeTab==='inventory'&&user.role!=='viewer'&&<InventoryPage user={user}/>}
             {activeTab==='staff'&&user.role==='manager'&&<StaffPage/>}
