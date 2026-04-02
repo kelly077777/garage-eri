@@ -1622,38 +1622,38 @@ function FuelLogsPage({ user }) {
           </div>
         )}
 
-        {/* Stats — Row 1: Liters | Row 2: Costs */}
-        <div className="stat-grid-3" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:12}}>
+        {/* Stats — 2 rows x 3 cols */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}}>
+          {/* Row 1 — Diesel */}
           <div className="stat-card" style={{borderLeft:'3px solid #f59e0b'}}>
             <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Diesel Liters</div>
             <div style={{fontSize:22,fontWeight:800,color:'#92400e'}}>{totalDieselL.toFixed(1)} L</div>
             <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>{dieselLogs.length} fills</div>
           </div>
+          <div className="stat-card" style={{borderLeft:'3px solid #f59e0b'}}>
+            <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Price per Liter (Diesel)</div>
+            <div style={{fontSize:22,fontWeight:800,color:'#92400e'}}>{totalDieselL>0?Math.round(totalDieselC/totalDieselL).toLocaleString():0}</div>
+            <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>RWF / L</div>
+          </div>
+          <div className="stat-card" style={{borderLeft:'3px solid #f59e0b'}}>
+            <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Total Cost Diesel</div>
+            <div style={{fontSize:22,fontWeight:800,color:'#92400e'}}>{totalDieselC.toLocaleString()}</div>
+            <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>RWF</div>
+          </div>
+          {/* Row 2 — Petrol */}
           <div className="stat-card" style={{borderLeft:'3px solid #2563eb'}}>
             <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Petrol Liters</div>
             <div style={{fontSize:22,fontWeight:800,color:'#1e40af'}}>{totalPetrolL.toFixed(1)} L</div>
             <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>{petrolLogs.length} fills</div>
           </div>
-          <div className="stat-card" style={{borderLeft:'3px solid #059669'}}>
-            <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Total Liters</div>
-            <div style={{fontSize:22,fontWeight:800,color:'var(--green)'}}>{totalL.toFixed(1)} L</div>
-            <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>All fuel</div>
-          </div>
-        </div>
-        <div className="stat-grid-3" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}}>
-          <div className="stat-card" style={{borderLeft:'3px solid #f59e0b'}}>
-            <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Diesel Cost</div>
-            <div style={{fontSize:22,fontWeight:800,color:'#92400e'}}>{totalDieselC.toLocaleString()}</div>
-            <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>RWF</div>
+          <div className="stat-card" style={{borderLeft:'3px solid #2563eb'}}>
+            <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Price per Liter (Petrol)</div>
+            <div style={{fontSize:22,fontWeight:800,color:'#1e40af'}}>{totalPetrolL>0?Math.round(totalPetrolC/totalPetrolL).toLocaleString():0}</div>
+            <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>RWF / L</div>
           </div>
           <div className="stat-card" style={{borderLeft:'3px solid #2563eb'}}>
-            <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Petrol Cost</div>
+            <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Total Cost Petrol</div>
             <div style={{fontSize:22,fontWeight:800,color:'#1e40af'}}>{totalPetrolC.toLocaleString()}</div>
-            <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>RWF</div>
-          </div>
-          <div className="stat-card" style={{borderLeft:'3px solid #059669'}}>
-            <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Total Cost</div>
-            <div style={{fontSize:22,fontWeight:800,color:'var(--green)'}}>{totalC.toLocaleString()}</div>
             <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>RWF</div>
           </div>
         </div>
