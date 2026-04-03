@@ -256,6 +256,24 @@ const X = ({ onClick }) => (
 )
 
 //  LOGIN 
+// Permissions helpers
+const PAGES = ['Vehicles','Fuel Logs','Expenses','Inventory','Alerts']
+const ACTIONS = ['view','add','edit','delete']
+const defaultPerms = () => {
+  const p = {}
+  PAGES.forEach(pg => { p[pg] = {view:false,add:false,edit:false,delete:false} })
+  return p
+}
+const parsePerms = (permStr) => {
+  try { return permStr ? JSON.parse(permStr) : defaultPerms() } catch { return defaultPerms() }
+}
+const hasPerm = (user, page, action) => {
+  if(!user) return false
+  if(user.role === 'manager') return true
+  const perms = parsePerms(user.permissions)
+  return perms[page]?.[action] === true
+}
+
 function LoginPage({ onLogin }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
