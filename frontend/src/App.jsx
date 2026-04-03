@@ -2172,16 +2172,16 @@ function StaffPage() {
         <div style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase'}}>Page</div>
         {ACTIONS.map(a=><div key={a} style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',textAlign:'center'}}>{a}</div>)}
         {PAGES.map(pg=>(
-          <React.Fragment key={pg}>
-            <div style={{fontSize:13,fontWeight:600,color:'var(--text)',padding:'6px 0',borderTop:'1px solid var(--border)'}}>{pg}</div>
+          <>{/* page row */}
+            <div key={pg} style={{fontSize:13,fontWeight:600,color:'var(--text)',padding:'6px 0',borderTop:'1px solid var(--border)'}}>{pg}</div>
             {ACTIONS.map(action=>(
-              <div key={action} style={{display:'flex',justifyContent:'center',borderTop:'1px solid var(--border)',padding:'6px 0'}}>
+              <div key={pg+action} style={{display:'flex',justifyContent:'center',borderTop:'1px solid var(--border)',padding:'6px 0'}}>
                 <input type="checkbox" checked={perms[pg]?.[action]||false}
                   onChange={()=>togglePerm(perms,setPerms,pg,action)}
                   style={{width:16,height:16,cursor:'pointer',accentColor:'var(--blue)'}}/>
               </div>
             ))}
-          </React.Fragment>
+          </>
         ))}
       </div>
     </div>
@@ -3147,12 +3147,18 @@ export default function App() {
     const stored = localStorage.getItem('user')
     const token = localStorage.getItem('token')
     if(stored && token){
-      setUser(JSON.parse(stored))
-      // Fetch fresh permissions from backend
+      const parsedUser = JSON.parse(stored)
+      setUser(parsedUser)
+      // Fetch fresh permissions from backend — silently fail if endpoint not available
       api.get('/auth/me').then(r=>{
-        setUser(r.data)
-        localStorage.setItem('user', JSON.stringify(r.data))
-      }).catch(()=>{})
+        if(r.data && r.data.id){
+          setUser(r.data)
+          localStorage.setItem('user', JSON.stringify(r.data))
+        }
+      }).catch(()=>{
+        // /me endpoint failed — use stored user data, still works
+        console.log('Using cached user data')
+      })
     }
   },[])
   useEffect(()=>{
