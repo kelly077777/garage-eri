@@ -2,18 +2,20 @@ package com.garageos.backend.controller;
 
 import com.garageos.backend.model.InventoryItem;
 import com.garageos.backend.repository.InventoryItemRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/inventory")
-@RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:5174", "https://inquisitive-kataifi-41bdfe.netlify.app"})
+@CrossOrigin(origins = {"http://localhost:5173", "https://inquisitive-kataifi-41bdfe.netlify.app"})
 public class InventoryController {
 
     private final InventoryItemRepository inventoryRepo;
+
+    public InventoryController(InventoryItemRepository inventoryRepo) {
+        this.inventoryRepo = inventoryRepo;
+    }
 
     @GetMapping
     public List<InventoryItem> getAll() { return inventoryRepo.findAll(); }
@@ -27,13 +29,20 @@ public class InventoryController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<InventoryItem> update(@PathVariable Long id, @RequestBody InventoryItem updated) {
-        return inventoryRepo.findById(id).map(item -> {
-            updated.setId(id);
-            if (updated.getQuantity() <= 0) updated.setStatus(InventoryItem.ItemStatus.Out_of_Stock);
-            else if (updated.getMinQuantity() != null && updated.getQuantity() <= updated.getMinQuantity()) updated.setStatus(InventoryItem.ItemStatus.Low_Stock);
-            else updated.setStatus(InventoryItem.ItemStatus.In_Stock);
-            return ResponseEntity.ok(inventoryRepo.save(updated));
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody InventoryItem item) {
+        return inventoryRepo.findById(id).map(i -> {
+            i.setName(item.getName());
+            i.setCategory(item.getCategory());
+            i.setQuantity(item.getQuantity());
+            i.setMinQuantity(item.getMinQuantity());
+            i.setUnitPrice(item.getUnitPrice());
+            i.setUnit(item.getUnit());
+            i.setSupplier(item.getSupplier());
+            i.setLocation(item.getLocation());
+            if (i.getQuantity() <= 0) i.setStatus(InventoryItem.ItemStatus.Out_of_Stock);
+            else if (i.getMinQuantity() != null && i.getQuantity() <= i.getMinQuantity()) i.setStatus(InventoryItem.ItemStatus.Low_Stock);
+            else i.setStatus(InventoryItem.ItemStatus.In_Stock);
+            return ResponseEntity.ok(inventoryRepo.save(i));
         }).orElse(ResponseEntity.notFound().build());
     }
 

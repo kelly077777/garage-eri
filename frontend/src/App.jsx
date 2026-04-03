@@ -400,19 +400,21 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout, alertCount, menuOpen
       <div className={`sidebar${menuOpen?' open':''}`}>
         {/*  MOBILE TOP BAR  */}
         <div className="mobile-topbar" style={{alignItems:'center',justifyContent:'space-between',padding:'0 16px',height:56,flexShrink:0,width:'100%',borderBottom:menuOpen?'1px solid var(--border)':'none'}}>
-          <div style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer'}} onClick={()=>{setActiveTab(user.role==='manager'?'dashboard':'alerts');setMenuOpen(false)}}>
-            <div style={{width:34,height:34,borderRadius:10,overflow:'hidden',border:'1px solid var(--border)',flexShrink:0}}>
-              <img src="/canvas.png" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-            </div>
-            <div style={{fontFamily:'Nunito,sans-serif',fontSize:14,fontWeight:800,color:'var(--text)'}}>ERI-RWANDA</div>
-          </div>
+          {/* Left — hamburger menu */}
           <div style={{display:'flex',alignItems:'center',gap:10}}>
-            {alertCount>0&&!menuOpen&&(
-              <span style={{background:'#dc2626',color:'#fff',borderRadius:20,fontSize:11,fontWeight:800,padding:'3px 9px'}}>{alertCount}</span>
-            )}
             <button onClick={()=>setMenuOpen(o=>!o)} style={{background:'none',border:'none',cursor:'pointer',fontSize:26,color:'var(--text2)',padding:4,lineHeight:1}}>
               {menuOpen ? '✕' : '☰'}
             </button>
+            {alertCount>0&&!menuOpen&&(
+              <span style={{background:'#dc2626',color:'#fff',borderRadius:20,fontSize:11,fontWeight:800,padding:'3px 9px'}}>{alertCount}</span>
+            )}
+          </div>
+          {/* Right — logo */}
+          <div style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer'}} onClick={()=>{setActiveTab(user.role==='manager'?'dashboard':'alerts');setMenuOpen(false)}}>
+            <div style={{fontFamily:'Nunito,sans-serif',fontSize:14,fontWeight:800,color:'var(--text)'}}>ERI-RWANDA</div>
+            <div style={{width:34,height:34,borderRadius:10,overflow:'hidden',border:'1px solid var(--border)',flexShrink:0}}>
+              <img src="/canvas.png" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+            </div>
           </div>
         </div>
 
@@ -431,13 +433,12 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout, alertCount, menuOpen
         <nav style={{flex:1,padding:'16px 10px',display:'flex',flexDirection:'column',gap:2}}>
           <div style={{padding:'8px 12px 6px',fontSize:10,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.1em'}}>Main</div>
           {user.role==='manager'&&N('dashboard','Dashboard',alertCount)}
-          {user.role==='manager'&&N('alerts','Alerts',alertCount)}
-          {user.role!=='manager'&&N('alerts','Alerts',alertCount)}
-          {N('vehicles','Vehicles')}
-          {(user.role==='manager'||user.role==='supervisor'||user.role==='viewer')&&N('fuel','Fuel Logs')}
-          {user.role!=='viewer'&&N('inventory','Inventory')}
+          {(user.role==='manager'||hasPerm(user,'Alerts','view'))&&N('alerts','Alerts',alertCount)}
+          {(user.role==='manager'||hasPerm(user,'Vehicles','view'))&&N('vehicles','Vehicles')}
+          {(user.role==='manager'||hasPerm(user,'Fuel Logs','view'))&&N('fuel','Fuel Logs')}
+          {(user.role==='manager'||hasPerm(user,'Inventory','view'))&&N('inventory','Inventory')}
           {user.role==='manager'&&N('staff','Staff')}
-          {(user.role==='manager'||user.role==='supervisor')&&N('expenses','Expenses')}
+          {(user.role==='manager'||hasPerm(user,'Expenses','view'))&&N('expenses','Expenses')}
           {user.role==='manager'&&N('audit','Audit Log')}
           {user.role==='manager'&&N('reports','Reports')}
         </nav>
@@ -1354,6 +1355,53 @@ function FuelLogsPage({ user }) {
   const [deleting, setDeleting] = useState(false)
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
   const emptyForm = { fleetVehicleId:'', date:'', liters:'', totalCost:'', station:'', filledBy:'', fuelType:'DIESEL' }
+  const [showPriceModal, setShowPriceModal] = useState(false)
+  const [showPriceHistory, setShowPriceHistory] = useState(false)
+  const [dieselPrice, setDieselPrice] = useState(0)
+  const [petrolPrice, setPetrolPrice] = useState(0)
+  const [dieselFrom, setDieselFrom] = useState('')
+  const [petrolFrom, setPetrolFrom] = useState('')
+  const [priceHistory, setPriceHistory] = useState({diesel:[],petrol:[]})
+  const [priceForm, setPriceForm] = useState({diesel:'',petrol:'',effectiveFrom:new Date().toISOString().split('T')[0]})
+
+  useEffect(()=>{ fetchPrices() },[])
+
+  const fetchPrices = async () => {
+    try {
+      const r = await api.get('/fuel-prices/current')
+      setDieselPrice(r.data.diesel||0)
+      setPetrolPrice(r.data.petrol||0)
+      setDieselFrom(r.data.dieselFrom||'')
+      setPetrolFrom(r.data.petrolFrom||'')
+    } catch(e){ console.error('Price fetch failed',e) }
+  }
+
+  const fetchPriceHistory = async () => {
+    try {
+      const r = await api.get('/fuel-prices/history')
+      setPriceHistory(r.data)
+    } catch(e){ console.error(e) }
+  }
+
+  const savePrices = async () => {
+    try {
+      if(priceForm.diesel && parseInt(priceForm.diesel) !== dieselPrice){
+        await api.post('/fuel-prices', { fuelType:'DIESEL', pricePerLiter:parseInt(priceForm.diesel), effectiveFrom:priceForm.effectiveFrom })
+      }
+      if(priceForm.petrol && parseInt(priceForm.petrol) !== petrolPrice){
+        await api.post('/fuel-prices', { fuelType:'PETROL', pricePerLiter:parseInt(priceForm.petrol), effectiveFrom:priceForm.effectiveFrom })
+      }
+      await fetchPrices()
+      setShowPriceModal(false)
+    } catch(e){ alert('Failed to save prices') }
+  }
+
+  const getPriceForDate = async (fuelType, date) => {
+    try {
+      const r = await api.get(`/fuel-prices/on-date?fuelType=${fuelType}&date=${date}`)
+      return r.data.price || 0
+    } catch { return 0 }
+  }
   const [form, setForm] = useState(emptyForm)
   const sf = (k,v) => setForm(f=>({...f,[k]:v}))
 
@@ -1520,11 +1568,14 @@ function FuelLogsPage({ user }) {
           ? vehicle.companyDepartment : ''
 
         try {
+          const pricePerL = await getPriceForDate(resolvedType, dateStr)
+          const computedCost = pricePerL > 0 ? Math.round(quantity * pricePerL) : Math.round(value)
+          const computedCPL = pricePerL > 0 ? pricePerL : (quantity > 0 ? Math.round(value / quantity) : 0)
           await api.post(`/fleet/${vehicle.id}/fuel`, {
             date: dateStr,
             liters: quantity,
-            costPerLiter: quantity > 0 ? Math.round(value / quantity) : 0,
-            totalCost: Math.round(value),
+            costPerLiter: computedCPL,
+            totalCost: computedCost,
             mileageAtFill: 0,
             station: vchNo,
             filledBy: `${resolvedType}:${dept}`,
@@ -1573,6 +1624,11 @@ function FuelLogsPage({ user }) {
       <div className="page-header">
         <div><div className="page-title">Fuel Logs</div><div className="page-sub">Diesel &amp; Petrol consumption tracking</div></div>
         <div className="page-actions">
+          {user.role==='manager'&&(
+            <button className="btn btn-ghost btn-sm" style={{borderColor:'#f59e0b',color:'#92400e'}} onClick={()=>{setPriceForm({diesel:dieselPrice||'',petrol:petrolPrice||''});setShowPriceModal(true)}}>
+              ⚙ Set Prices
+            </button>
+          )}
           {user.role==='manager'&&<>
           <button className="btn btn-danger btn-sm" onClick={()=>{ setShowDeleteModal(true); setDeleteMonth('') }}>Delete Month</button>
           <button className="btn btn-ghost btn-sm" style={{borderColor:'#f59e0b',color:'#92400e'}}
@@ -1630,10 +1686,11 @@ function FuelLogsPage({ user }) {
             <div style={{fontSize:22,fontWeight:800,color:'#92400e'}}>{totalDieselL.toFixed(1)} L</div>
             <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>{dieselLogs.length} fills</div>
           </div>
-          <div className="stat-card" style={{borderLeft:'3px solid #f59e0b'}}>
-            <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Price per Liter (Diesel)</div>
-            <div style={{fontSize:22,fontWeight:800,color:'#92400e'}}>{totalDieselL>0?Math.round(totalDieselC/totalDieselL).toLocaleString():0}</div>
-            <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>RWF / L</div>
+          <div className="stat-card" style={{borderLeft:'3px solid #f59e0b',cursor:user.role==='manager'?'pointer':'default'}}
+            onClick={()=>user.role==='manager'&&(setPriceForm({diesel:dieselPrice||'',petrol:petrolPrice||''}),setShowPriceModal(true))}>
+            <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Price / Liter — Diesel</div>
+            <div style={{fontSize:22,fontWeight:800,color:'#92400e'}}>{dieselPrice>0?dieselPrice.toLocaleString():'—'}</div>
+            <div style={{fontSize:11,color:dieselPrice>0?'var(--text3)':'var(--blue)',marginTop:2,fontWeight:dieselPrice>0?400:700}}>{dieselPrice>0?'RWF / L (RURA)':(user.role==='manager'||user.role==='supervisor')?'Click to set price':'Not set'}</div>
           </div>
           <div className="stat-card" style={{borderLeft:'3px solid #f59e0b'}}>
             <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Total Cost Diesel</div>
@@ -1646,10 +1703,11 @@ function FuelLogsPage({ user }) {
             <div style={{fontSize:22,fontWeight:800,color:'#1e40af'}}>{totalPetrolL.toFixed(1)} L</div>
             <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>{petrolLogs.length} fills</div>
           </div>
-          <div className="stat-card" style={{borderLeft:'3px solid #2563eb'}}>
-            <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Price per Liter (Petrol)</div>
-            <div style={{fontSize:22,fontWeight:800,color:'#1e40af'}}>{totalPetrolL>0?Math.round(totalPetrolC/totalPetrolL).toLocaleString():0}</div>
-            <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>RWF / L</div>
+          <div className="stat-card" style={{borderLeft:'3px solid #2563eb',cursor:user.role==='manager'?'pointer':'default'}}
+            onClick={()=>user.role==='manager'&&(setPriceForm({diesel:dieselPrice||'',petrol:petrolPrice||''}),setShowPriceModal(true))}>
+            <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Price / Liter — Petrol</div>
+            <div style={{fontSize:22,fontWeight:800,color:'#1e40af'}}>{petrolPrice>0?petrolPrice.toLocaleString():'—'}</div>
+            <div style={{fontSize:11,color:petrolPrice>0?'var(--text3)':'var(--blue)',marginTop:2,fontWeight:petrolPrice>0?400:700}}>{petrolPrice>0?'RWF / L (RURA)':(user.role==='manager'||user.role==='supervisor')?'Click to set price':'Not set'}</div>
           </div>
           <div className="stat-card" style={{borderLeft:'3px solid #2563eb'}}>
             <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Total Cost Petrol</div>
@@ -1876,6 +1934,75 @@ function FuelLogsPage({ user }) {
           </div>
         </div>
       )}
+
+      {/* Price per Liter Settings Modal */}
+      {showPriceModal&&(
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowPriceModal(false)}>
+          <div className="modal" style={{maxWidth:420}}>
+            <div className="modal-header">
+              <div className="modal-title">Set RURA Price per Liter</div>
+              <X onClick={()=>setShowPriceModal(false)}/>
+            </div>
+            <div className="modal-body">
+              <div style={{background:'#fffbeb',border:'1px solid #fcd34d',borderRadius:10,padding:'12px 14px',marginBottom:16,fontSize:13,color:'#92400e'}}>
+                Set the new RURA price. Previous prices are kept in history so old imports stay accurate.
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:14,padding:'12px 14px',background:'var(--surface2)',borderRadius:10}}>
+                <div><div style={{fontSize:11,color:'var(--text3)',fontWeight:600}}>Current Diesel</div><div style={{fontSize:16,fontWeight:800,color:'#92400e'}}>{dieselPrice>0?`${dieselPrice.toLocaleString()} RWF/L`:'Not set'}</div>{dieselFrom&&<div style={{fontSize:11,color:'var(--text3)'}}>Since {dieselFrom}</div>}</div>
+                <div><div style={{fontSize:11,color:'var(--text3)',fontWeight:600}}>Current Petrol</div><div style={{fontSize:16,fontWeight:800,color:'#1e40af'}}>{petrolPrice>0?`${petrolPrice.toLocaleString()} RWF/L`:'Not set'}</div>{petrolFrom&&<div style={{fontSize:11,color:'var(--text3)'}}>Since {petrolFrom}</div>}</div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Effective From *</label>
+                <input className="form-input" type="date" value={priceForm.effectiveFrom} onChange={e=>setPriceForm(f=>({...f,effectiveFrom:e.target.value}))}/>
+              </div>
+              <div className="form-row">
+                <div><label className="form-label">New Diesel Price (RWF/L)</label>
+                  <input className="form-input" type="number" placeholder="Leave blank if unchanged"
+                    value={priceForm.diesel} onChange={e=>setPriceForm(f=>({...f,diesel:e.target.value}))} onKeyDown={onlyNumbers}/></div>
+                <div><label className="form-label">New Petrol Price (RWF/L)</label>
+                  <input className="form-input" type="number" placeholder="Leave blank if unchanged"
+                    value={priceForm.petrol} onChange={e=>setPriceForm(f=>({...f,petrol:e.target.value}))} onKeyDown={onlyNumbers}/></div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={()=>{setShowPriceModal(false);fetchPriceHistory();setShowPriceHistory(true)}}>View History</button>
+              <button className="btn btn-ghost" onClick={()=>setShowPriceModal(false)}>Cancel</button>
+              <button className="btn btn-success" onClick={savePrices}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Price History Modal */}
+      {showPriceHistory&&(
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowPriceHistory(false)}>
+          <div className="modal" style={{maxWidth:500}}>
+            <div className="modal-header"><div className="modal-title">Price History</div><X onClick={()=>setShowPriceHistory(false)}/></div>
+            <div className="modal-body" style={{padding:0}}>
+              {['DIESEL','PETROL'].map(ft=>(
+                <div key={ft}>
+                  <div style={{padding:'10px 20px',background:'var(--surface2)',fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.08em',borderBottom:'1px solid var(--border)'}}>{ft}</div>
+                  {(priceHistory[ft.toLowerCase()]||[]).length===0?(
+                    <div style={{padding:'16px 20px',color:'var(--text3)',fontSize:13}}>No history yet</div>
+                  ):(priceHistory[ft.toLowerCase()]||[]).map((p,i)=>(
+                    <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'12px 20px',borderBottom:'1px solid var(--border)',alignItems:'center'}}>
+                      <div>
+                        <div style={{fontSize:14,fontWeight:800,color:ft==='DIESEL'?'#92400e':'#1e40af'}}>{(p.pricePerLiter||0).toLocaleString()} RWF/L</div>
+                        <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>From: {p.effectiveFrom}{p.effectiveTo?` → ${p.effectiveTo}`:' → Present'}</div>
+                      </div>
+                      {!p.effectiveTo&&<span style={{fontSize:11,fontWeight:700,background:'#d1fae5',color:'#065f46',borderRadius:20,padding:'3px 10px'}}>Current</span>}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={()=>setShowPriceHistory(false)}>Close</button>
+              <button className="btn btn-blue" onClick={()=>{setShowPriceHistory(false);setPriceForm({diesel:'',petrol:'',effectiveFrom:new Date().toISOString().split('T')[0]});setShowPriceModal(true)}}>Update Price</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
@@ -1999,77 +2126,129 @@ function StaffPage() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingStaff, setEditingStaff] = useState(null)
-  const [addForm, setAddForm] = useState({name:'',email:'',password:'',role:'mechanic'})
-  const [editForm, setEditForm] = useState({name:'',email:'',newPassword:'',role:'mechanic'})
+  const emptyPerms = defaultPerms()
+  const [addForm, setAddForm] = useState({name:'',email:'',password:'',role:'staff',permissions:JSON.stringify(emptyPerms)})
+  const [addPerms, setAddPerms] = useState(emptyPerms)
+  const [editForm, setEditForm] = useState({name:'',email:'',newPassword:''})
+  const [editPerms, setEditPerms] = useState(emptyPerms)
   const [addError, setAddError] = useState('')
   const [editError, setEditError] = useState('')
   const [loading, setLoading] = useState(false)
+
   useEffect(()=>{fetchStaff()},[])
   const fetchStaff=async()=>{try{const r=await api.get('/auth/users');setStaff(r.data)}catch{setStaff([])}}
+
+  const togglePerm=(perms,setPerms,page,action)=>{
+    const updated={...perms,[page]:{...perms[page],[action]:!perms[page][action]}}
+    // If adding any action, auto-enable view
+    if(action!=='view'&&updated[page][action]) updated[page].view=true
+    // If removing view, remove all actions for that page
+    if(action==='view'&&!updated[page].view) updated[page]={view:false,add:false,edit:false,delete:false}
+    setPerms(updated)
+    return updated
+  }
+
+  const PermTable = ({perms,setPerms}) => (
+    <div style={{marginTop:12}}>
+      <div style={{display:'grid',gridTemplateColumns:'1fr repeat(4,auto)',gap:'4px 12px',alignItems:'center'}}>
+        <div style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase'}}>Page</div>
+        {ACTIONS.map(a=><div key={a} style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',textAlign:'center'}}>{a}</div>)}
+        {PAGES.map(pg=>(
+          <React.Fragment key={pg}>
+            <div style={{fontSize:13,fontWeight:600,color:'var(--text)',padding:'6px 0',borderTop:'1px solid var(--border)'}}>{pg}</div>
+            {ACTIONS.map(action=>(
+              <div key={action} style={{display:'flex',justifyContent:'center',borderTop:'1px solid var(--border)',padding:'6px 0'}}>
+                <input type="checkbox" checked={perms[pg]?.[action]||false}
+                  onChange={()=>togglePerm(perms,setPerms,pg,action)}
+                  style={{width:16,height:16,cursor:'pointer',accentColor:'var(--blue)'}}/>
+              </div>
+            ))}
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
+  )
+
   const handleCreate=async()=>{
     if(!addForm.name||!addForm.email||!addForm.password){setAddError('All fields required');return}
     setLoading(true);setAddError('')
-    try{await api.post('/auth/register',addForm);setAddForm({name:'',email:'',password:'',role:'mechanic'});setShowAddModal(false);fetchStaff()}
-    catch{setAddError('Failed. Email may already exist.')}
+    try{
+      await api.post('/auth/register',{...addForm,role:'staff',permissions:JSON.stringify(addPerms)})
+      setAddForm({name:'',email:'',password:'',role:'staff',permissions:'{}'})
+      setAddPerms(defaultPerms())
+      setShowAddModal(false);fetchStaff()
+    }catch{setAddError('Failed. Email may already exist.')}
     setLoading(false)
   }
-  const openEdit=(s)=>{setEditingStaff(s);setEditForm({name:s.name,email:s.email,newPassword:'',role:s.role});setEditError('');setShowEditModal(true)}
+
+  const openEdit=(s)=>{
+    setEditingStaff(s)
+    setEditForm({name:s.name,email:s.email,newPassword:''})
+    setEditPerms(parsePerms(s.permissions))
+    setEditError('');setShowEditModal(true)
+  }
+
   const handleEdit=async()=>{
     if(!editForm.name||!editForm.email){setEditError('Name and email required');return}
     setLoading(true);setEditError('')
     try{
-      const payload={name:editForm.name,email:editForm.email,role:editForm.role}
+      const payload={name:editForm.name,email:editForm.email,role:'staff',permissions:JSON.stringify(editPerms)}
       if(editForm.newPassword.trim())payload.password=editForm.newPassword.trim()
-      await api.put(`/auth/users/${editingStaff.id}`,payload);setShowEditModal(false);fetchStaff()
+      await api.put(`/auth/users/${editingStaff.id}`,payload)
+      setShowEditModal(false);fetchStaff()
     }catch{setEditError('Failed to update. Try again.')}
     setLoading(false)
   }
+
   const handleDelete=async(id)=>{if(!window.confirm('Remove this staff member?'))return;try{await api.delete(`/auth/users/${id}`);fetchStaff()}catch{alert('Failed')}}
+
+  const getPermSummary=(s)=>{
+    if(s.role==='manager') return 'Full Access'
+    const perms=parsePerms(s.permissions)
+    const pages=PAGES.filter(pg=>perms[pg]?.view)
+    return pages.length>0?pages.join(', '):'No access'
+  }
+
   return (
     <>
       <div className="page-header">
-        <div><div className="page-title">Staff Management</div><div className="page-sub">Manage team accounts</div></div>
-        <div className="page-actions"><button className="btn btn-success btn-sm" onClick={()=>setShowAddModal(true)}>+ Add Staff</button></div>
+        <div><div className="page-title">Staff Management</div><div className="page-sub">Manage team accounts and permissions</div></div>
+        <div className="page-actions"><button className="btn btn-success btn-sm" onClick={()=>{setAddForm({name:'',email:'',password:'',role:'staff'});setAddPerms(defaultPerms());setShowAddModal(true)}}>+ Add Staff</button></div>
       </div>
       <div className="page-content">
         <div className="card">
           <div className="card-header"><div className="card-title">Team Members</div><span style={{fontSize:12,color:'var(--text2)',fontWeight:600}}>{staff.length} members</span></div>
           <div className="table-wrap">
             <table className="table">
-              <thead><tr><th>Name</th><th className="hide-mobile">Email</th><th>Role</th><th>Actions</th></tr></thead>
-              <tbody>{staff.map(s=>{const rc=ROLE_CONFIG[s.role];return(
+              <thead><tr><th>Name</th><th className="hide-mobile">Email</th><th>Access</th><th>Actions</th></tr></thead>
+              <tbody>{staff.map(s=>(
                 <tr key={s.id}>
                   <td style={{fontWeight:600}}>{s.name}</td>
                   <td className="hide-mobile" style={{color:'var(--text2)',fontFamily:'DM Mono,monospace',fontSize:13}}>{s.email}</td>
-                  <td><span style={{display:'inline-flex',alignItems:'center',padding:'3px 10px',borderRadius:20,fontSize:12,fontWeight:700,background:rc?.bg,color:rc?.color}}>{rc?.label||s.role}</span></td>
+                  <td><span style={{fontSize:12,color:s.role==='manager'?'var(--green)':'var(--blue)',fontWeight:600}}>{getPermSummary(s)}</span></td>
                   <td><div style={{display:'flex',gap:4}}>
-                    <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(s)}>Edit</button>
-                    <button className="btn btn-danger btn-sm" onClick={()=>handleDelete(s.id)}>Remove</button>
+                    {s.role!=='manager'&&<button className="btn btn-ghost btn-sm" onClick={()=>openEdit(s)}>Edit</button>}
+                    {s.role!=='manager'&&<button className="btn btn-danger btn-sm" onClick={()=>handleDelete(s.id)}>Remove</button>}
                   </div></td>
                 </tr>
-              )})}</tbody>
+              ))}</tbody>
             </table>
           </div>
         </div>
       </div>
+
+      {/* Add Staff Modal */}
       {showAddModal&&(
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowAddModal(false)}>
-          <div className="modal">
+          <div className="modal" style={{maxWidth:520}}>
             <div className="modal-header"><div className="modal-title">Add Staff Member</div><X onClick={()=>setShowAddModal(false)}/></div>
             <div className="modal-body">
               {addError&&<div className="error-msg">{addError}</div>}
-              <div className="form-row" style={{marginBottom:14}}>
-                <div><label className="form-label">Full Name</label><input className="form-input" value={addForm.name} onChange={e=>setAddForm(f=>({...f,name:e.target.value}))} onKeyDown={onlyLetters}/></div>
-                <div><label className="form-label">Role</label>
-                  <select className="form-input" style={{appearance:'auto'}} value={addForm.role} onChange={e=>setAddForm(f=>({...f,role:e.target.value}))}>
-                    <option value="mechanic">Mechanic</option>
-                    <option value="supervisor">Supervisor</option>
-                    <option value="viewer">Viewer</option>
-                  </select>
-                </div>
-              </div>
-              <div className="form-group"><label className="form-label">Email</label><input className="form-input" type="email" value={addForm.email} onChange={e=>setAddForm(f=>({...f,email:e.target.value}))}/></div>
-              <div className="form-group"><label className="form-label">Password</label><input className="form-input" type="password" value={addForm.password} onChange={e=>setAddForm(f=>({...f,password:e.target.value}))}/></div>
+              <div className="form-group"><label className="form-label">Full Name *</label><input className="form-input" value={addForm.name} onChange={e=>setAddForm(f=>({...f,name:e.target.value}))} onKeyDown={onlyLetters}/></div>
+              <div className="form-group"><label className="form-label">Email *</label><input className="form-input" type="email" value={addForm.email} onChange={e=>setAddForm(f=>({...f,email:e.target.value}))}/></div>
+              <div className="form-group"><label className="form-label">Password *</label><input className="form-input" type="password" value={addForm.password} onChange={e=>setAddForm(f=>({...f,password:e.target.value}))}/></div>
+              <div style={{fontSize:12,fontWeight:800,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.06em',marginTop:16,marginBottom:4}}>Page Permissions</div>
+              <PermTable perms={addPerms} setPerms={setAddPerms}/>
             </div>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={()=>setShowAddModal(false)}>Cancel</button>
@@ -2078,31 +2257,19 @@ function StaffPage() {
           </div>
         </div>
       )}
+
+      {/* Edit Staff Modal */}
       {showEditModal&&editingStaff&&(
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowEditModal(false)}>
-          <div className="modal">
-            <div className="modal-header"><div className="modal-title">Edit Staff Member</div><X onClick={()=>setShowEditModal(false)}/></div>
+          <div className="modal" style={{maxWidth:520}}>
+            <div className="modal-header"><div className="modal-title">Edit — {editingStaff.name}</div><X onClick={()=>setShowEditModal(false)}/></div>
             <div className="modal-body">
               {editError&&<div className="error-msg">{editError}</div>}
-              <div style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'12px 16px',marginBottom:20,display:'flex',alignItems:'center',gap:12}}>
-                <div style={{width:40,height:40,borderRadius:'50%',background:ROLE_CONFIG[editingStaff.role]?.color||'var(--blue)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:800,fontSize:16,flexShrink:0}}>{editingStaff.name?.split(' ').map(n=>n[0]).join('')}</div>
-                <div><div style={{fontSize:14,fontWeight:700}}>{editingStaff.name}</div><div style={{fontSize:12,color:'var(--text2)'}}>Editing account details</div></div>
-              </div>
-              <div className="form-row" style={{marginBottom:14}}>
-                <div><label className="form-label">Full Name</label><input className="form-input" value={editForm.name} onChange={e=>setEditForm(f=>({...f,name:e.target.value}))}/></div>
-                <div><label className="form-label">Role</label>
-                  <select className="form-input" style={{appearance:'auto'}} value={editForm.role} onChange={e=>setEditForm(f=>({...f,role:e.target.value}))}>
-                    <option value="mechanic">Mechanic</option>
-                    <option value="supervisor">Supervisor</option>
-                    <option value="viewer">Viewer</option>
-                  </select>
-                </div>
-              </div>
-              <div className="form-group"><label className="form-label">Email</label><input className="form-input" type="email" value={editForm.email} onChange={e=>setEditForm(f=>({...f,email:e.target.value}))}/></div>
-              <div className="form-group">
-                <label className="form-label">New Password</label>
-                <input className="form-input" type="password" placeholder="Leave blank to keep current" value={editForm.newPassword} onChange={e=>setEditForm(f=>({...f,newPassword:e.target.value}))}/>
-              </div>
+              <div className="form-group"><label className="form-label">Full Name *</label><input className="form-input" value={editForm.name} onChange={e=>setEditForm(f=>({...f,name:e.target.value}))}/></div>
+              <div className="form-group"><label className="form-label">Email *</label><input className="form-input" type="email" value={editForm.email} onChange={e=>setEditForm(f=>({...f,email:e.target.value}))}/></div>
+              <div className="form-group"><label className="form-label">New Password</label><input className="form-input" type="password" placeholder="Leave blank to keep current" value={editForm.newPassword} onChange={e=>setEditForm(f=>({...f,newPassword:e.target.value}))}/></div>
+              <div style={{fontSize:12,fontWeight:800,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.06em',marginTop:16,marginBottom:4}}>Page Permissions</div>
+              <PermTable perms={editPerms} setPerms={setEditPerms}/>
             </div>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={()=>setShowEditModal(false)}>Cancel</button>
@@ -2956,6 +3123,20 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [alertEditVehicle, setAlertEditVehicle] = useState(null)
   const [selectedGarageVehicle, setSelectedGarageVehicle] = useState(null)
+
+  // Always fetch fresh user data on mount to get latest permissions
+  useEffect(()=>{
+    const stored = localStorage.getItem('user')
+    const token = localStorage.getItem('token')
+    if(stored && token){
+      setUser(JSON.parse(stored))
+      // Fetch fresh permissions from backend
+      api.get('/auth/me').then(r=>{
+        setUser(r.data)
+        localStorage.setItem('user', JSON.stringify(r.data))
+      }).catch(()=>{})
+    }
+  },[])
   useEffect(()=>{
     const s=localStorage.getItem('user')
     if(s){const u=JSON.parse(s);setUser(u);if(u.role!=='manager')setActiveTab('alerts')}
@@ -2980,7 +3161,7 @@ export default function App() {
             {activeTab==='dashboard'&&user.role==='manager'&&<DashboardPage onAlertsChange={setAlertCount} onNavigate={handleTabChange} onSelectGarageVehicle={v=>{setSelectedGarageVehicle(v);handleTabChange('vehicles')}}/>}
             {activeTab==='alerts'&&<AlertsDashboard onAlertsChange={setAlertCount} onNavigate={handleTabChange} onEditVehicle={v=>{setAlertEditVehicle(v);handleTabChange('vehicles')}}/>}
             {activeTab==='vehicles'&&<VehiclesPage user={user} initialEditVehicle={alertEditVehicle} onInitialEditDone={()=>setAlertEditVehicle(null)} initialSelectedVehicle={selectedGarageVehicle} onInitialSelectedDone={()=>setSelectedGarageVehicle(null)}/>}
-            {activeTab==='fuel'&&(user.role==='manager'||user.role==='supervisor'||user.role==='viewer')&&<FuelLogsPage user={user}/>}
+            {activeTab==='fuel'&&(user.role==='manager'||user.role==='viewer')&&<FuelLogsPage user={user}/>}
             {activeTab==='inventory'&&user.role!=='viewer'&&<InventoryPage user={user}/>}
             {activeTab==='staff'&&user.role==='manager'&&<StaffPage/>}
             {activeTab==='expenses'&&(user.role==='manager'||user.role==='supervisor')&&<ExpensesPage user={user}/>}

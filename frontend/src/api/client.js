@@ -1,8 +1,8 @@
 import axios from 'axios'
 
 const api = axios.create({
- baseURL: 'https://garage-eri-production.up.railway.app/api'
-// baseURL: 'http://localhost:8080/api'
+baseURL: 'https://garage-eri-production.up.railway.app/api'
+ //baseURL: 'http://localhost:8080/api'
 
 })
 
