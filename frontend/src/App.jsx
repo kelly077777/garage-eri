@@ -2139,13 +2139,14 @@ function InventoryPage({ user }) {
 }
 
 //  STAFF 
+//  STAFF 
 function StaffPage() {
   const [staff, setStaff] = useState([])
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingStaff, setEditingStaff] = useState(null)
   const emptyPerms = defaultPerms()
-  const [addForm, setAddForm] = useState({name:'',email:'',password:'',role:'staff',permissions:JSON.stringify(emptyPerms)})
+  const [addForm, setAddForm] = useState({name:'',email:'',password:'',role:'viewer',permissions:JSON.stringify(emptyPerms)})
   const [addPerms, setAddPerms] = useState(emptyPerms)
   const [editForm, setEditForm] = useState({name:'',email:'',newPassword:''})
   const [editPerms, setEditPerms] = useState(emptyPerms)
@@ -2158,9 +2159,7 @@ function StaffPage() {
 
   const togglePerm=(perms,setPerms,page,action)=>{
     const updated={...perms,[page]:{...perms[page],[action]:!perms[page][action]}}
-    // If adding any action, auto-enable view
     if(action!=='view'&&updated[page][action]) updated[page].view=true
-    // If removing view, remove all actions for that page
     if(action==='view'&&!updated[page].view) updated[page]={view:false,add:false,edit:false,delete:false}
     setPerms(updated)
     return updated
@@ -2191,11 +2190,21 @@ function StaffPage() {
     if(!addForm.name||!addForm.email||!addForm.password){setAddError('All fields required');return}
     setLoading(true);setAddError('')
     try{
-      await api.post('/auth/register',{...addForm,role:'staff',permissions:JSON.stringify(addPerms)})
-      setAddForm({name:'',email:'',password:'',role:'staff',permissions:'{}'})
+      await api.post('/auth/register',{
+        name: addForm.name,
+        email: addForm.email,
+        password: addForm.password,
+        role: 'viewer',
+        permissions: JSON.stringify(addPerms)
+      })
+      setAddForm({name:'',email:'',password:'',role:'viewer',permissions:'{}'})
       setAddPerms(defaultPerms())
       setShowAddModal(false);fetchStaff()
-    }catch{setAddError('Failed. Email may already exist.')}
+    }catch(e){
+      const msg = e?.response?.data?.error || e?.response?.data?.message || ''
+      if(msg.toLowerCase().includes('email')) setAddError('Failed. Email may already exist.')
+      else setAddError('Failed to create staff member. Try again.')
+    }
     setLoading(false)
   }
 
@@ -2210,7 +2219,7 @@ function StaffPage() {
     if(!editForm.name||!editForm.email){setEditError('Name and email required');return}
     setLoading(true);setEditError('')
     try{
-      const payload={name:editForm.name,email:editForm.email,role:'staff',permissions:JSON.stringify(editPerms)}
+      const payload={name:editForm.name,email:editForm.email,role:'viewer',permissions:JSON.stringify(editPerms)}
       if(editForm.newPassword.trim())payload.password=editForm.newPassword.trim()
       await api.put(`/auth/users/${editingStaff.id}`,payload)
       setShowEditModal(false);fetchStaff()
@@ -2231,7 +2240,7 @@ function StaffPage() {
     <>
       <div className="page-header">
         <div><div className="page-title">Staff Management</div><div className="page-sub">Manage team accounts and permissions</div></div>
-        <div className="page-actions"><button className="btn btn-success btn-sm" onClick={()=>{setAddForm({name:'',email:'',password:'',role:'staff'});setAddPerms(defaultPerms());setShowAddModal(true)}}>+ Add Staff</button></div>
+        <div className="page-actions"><button className="btn btn-success btn-sm" onClick={()=>{setAddForm({name:'',email:'',password:'',role:'viewer'});setAddPerms(defaultPerms());setShowAddModal(true)}}>+ Add Staff</button></div>
       </div>
       <div className="page-content">
         <div className="card">
@@ -2299,7 +2308,6 @@ function StaffPage() {
     </>
   )
 }
-
 
 //  VEHICLE MODAL 
 function VehicleModal({ vehicle, onSave, onClose }) {
