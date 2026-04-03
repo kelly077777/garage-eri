@@ -2285,7 +2285,7 @@ function StaffPage() {
         </div>
       )}
 
-      {/* Edit Staff Modal */}
+      {/* Edit Staff Modall */}
       {showEditModal&&editingStaff&&(
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowEditModal(false)}>
           <div className="modal" style={{maxWidth:520}}>

@@ -90,12 +90,19 @@ public ResponseEntity<?> register(@RequestBody User user) {
         return userRepo.findById(id).map(user -> {
             if (payload.containsKey("name")) user.setName(payload.get("name"));
             if (payload.containsKey("email")) user.setEmail(payload.get("email"));
-            if (payload.containsKey("role")) user.setRole(User.Role.valueOf(payload.get("role").toLowerCase()));
+         if (payload.containsKey("role")) {
+                try {
+                    user.setRole(User.Role.valueOf(payload.get("role").toLowerCase()));
+                } catch (IllegalArgumentException e) {
+                    user.setRole(User.Role.viewer);
+                }
+            }
             if (payload.containsKey("password") && payload.get("password") != null && !payload.get("password").isEmpty()) {
                 user.setPassword(passwordEncoder.encode(payload.get("password")));
             }
             if (payload.containsKey("permissions")) user.setPermissions(payload.get("permissions"));
-            return ResponseEntity.ok(userToMap(user.equals(userRepo.save(user)) ? user : userRepo.save(user)));
+            User saved = userRepo.save(user);
+return ResponseEntity.ok(userToMap(saved));
         }).orElse(ResponseEntity.notFound().build());
     }
 }
