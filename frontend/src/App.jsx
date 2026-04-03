@@ -1963,7 +1963,7 @@ function FuelLogsPage({ user }) {
             </div>
             <div className="modal-body">
               <div style={{background:'#fffbeb',border:'1px solid #fcd34d',borderRadius:10,padding:'12px 14px',marginBottom:16,fontSize:13,color:'#92400e'}}>
-                Set the new RURA price. Previous prices are kept in history so old imports stay accurate.
+                Set the new RURA price.
               </div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:14,padding:'12px 14px',background:'var(--surface2)',borderRadius:10}}>
                 <div><div style={{fontSize:11,color:'var(--text3)',fontWeight:600}}>Current Diesel</div><div style={{fontSize:16,fontWeight:800,color:'#92400e'}}>{dieselPrice>0?`${dieselPrice.toLocaleString()} RWF/L`:'Not set'}</div>{dieselFrom&&<div style={{fontSize:11,color:'var(--text3)'}}>Since {dieselFrom}</div>}</div>

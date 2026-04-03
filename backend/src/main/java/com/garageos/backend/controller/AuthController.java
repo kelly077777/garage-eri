@@ -48,10 +48,17 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return ResponseEntity.ok(userRepo.save(user));
+    
+public ResponseEntity<?> register(@RequestBody User user) {
+    if (userRepo.findByEmail(user.getEmail()).isPresent()) {
+        return ResponseEntity.badRequest().body(Map.of("error", "Email already exists"));
     }
+    user.setPassword(passwordEncoder.encode(user.getPassword()));
+    if (user.getRole() == null) {
+        user.setRole(User.Role.viewer);
+    }
+    return ResponseEntity.ok(userRepo.save(user));
+}
 
     @GetMapping("/users")
     public ResponseEntity<?> getAllUsers() {
