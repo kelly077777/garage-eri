@@ -3,6 +3,7 @@ package com.garageos.backend.model;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "fuel_logs")
@@ -16,8 +17,9 @@ public class FuelLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "fleet_vehicle_id")
+    @JsonIgnoreProperties({"serviceHistory", "hibernateLazyInitializer", "handler"})
     private FleetVehicle fleetVehicle;
 
     private LocalDate date;
