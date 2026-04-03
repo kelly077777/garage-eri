@@ -3142,23 +3142,30 @@ export default function App() {
   const [alertEditVehicle, setAlertEditVehicle] = useState(null)
   const [selectedGarageVehicle, setSelectedGarageVehicle] = useState(null)
 
-  // Always fetch fresh user data on mount to get latest permissions
+  // On mount — load user from localStorage immediately, then refresh from backend
   useEffect(()=>{
     const stored = localStorage.getItem('user')
     const token = localStorage.getItem('token')
     if(stored && token){
-      const parsedUser = JSON.parse(stored)
-      setUser(parsedUser)
-      // Fetch fresh permissions from backend — silently fail if endpoint not available
-      api.get('/auth/me').then(r=>{
-        if(r.data && r.data.id){
-          setUser(r.data)
-          localStorage.setItem('user', JSON.stringify(r.data))
-        }
-      }).catch(()=>{
-        // /me endpoint failed — use stored user data, still works
-        console.log('Using cached user data')
-      })
+      try {
+        const parsedUser = JSON.parse(stored)
+        setUser(parsedUser)
+        // Try to get fresh permissions silently in background
+        fetch('https://garage-eri-production.up.railway.app/api/auth/me', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        }).then(r => {
+          if(r.ok) return r.json()
+          throw new Error('me failed')
+        }).then(data => {
+          if(data && data.id){
+            setUser(data)
+            localStorage.setItem('user', JSON.stringify(data))
+          }
+        }).catch(()=>{}) // silently ignore errors
+      } catch(e) {
+        localStorage.removeItem('user')
+        localStorage.removeItem('token')
+      }
     }
   },[])
   useEffect(()=>{
