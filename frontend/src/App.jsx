@@ -482,9 +482,11 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout, alertCount, menuOpen
 //  DASHBOARD 
 function DashboardPage({ onAlertsChange, onNavigate, onSelectGarageVehicle }) {
   const [d, setD] = useState({ vehicles:[], fleet:[], fuel:[], inventory:[], staff:[] })
-  useEffect(() => {
-    Promise.all([api.get('/vehicles'),api.get('/fleet'),api.get('/fleet/fuel/all'),api.get('/inventory'),api.get('/auth/users')])
-      .then(([v,f,fuel,inv,s]) => {
+ useEffect(() => {
+  let cancelled = false
+  Promise.all([api.get('/vehicles'),api.get('/fleet'),api.get('/fleet/fuel/all'),api.get('/inventory'),api.get('/auth/users')])
+    .then(([v,f,fuel,inv,s]) => {
+      if(cancelled) return
         const fleetData = Array.isArray(f.data)?f.data:f.data?.content||[]
         setD({
           vehicles:Array.isArray(v.data)?v.data:v.data?.content||[],
@@ -495,7 +497,8 @@ function DashboardPage({ onAlertsChange, onNavigate, onSelectGarageVehicle }) {
         })
         if (onAlertsChange) onAlertsChange(getExpiryAlerts(fleetData).length)
       }).catch(e=>console.error(e))
-  },[])
+ return () => { cancelled = true }
+},[])
   const totalFuelCost = (d.fuel||[]).reduce((s,f)=>s+(f.totalCost||0),0)
   const lowStock = (d.inventory||[]).filter(i=>i.status==='Low_Stock'||i.status==='Out_of_Stock')
   const expiryAlerts = getExpiryAlerts(d.fleet)
