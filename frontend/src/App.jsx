@@ -3156,35 +3156,25 @@ export default function App() {
   const [selectedGarageVehicle, setSelectedGarageVehicle] = useState(null)
 
   // On mount — load user from localStorage immediately, then refresh from backend
-  useEffect(()=>{
-    const stored = localStorage.getItem('user')
-    const token = localStorage.getItem('token')
-    if(stored && token){
-      try {
-        const parsedUser = JSON.parse(stored)
-        setUser(parsedUser)
-        // Try to get fresh permissions silently in background
-        fetch('https://garage-eri-production.up.railway.app/api/auth/me', {
-          headers: { 'Authorization': 'Bearer ' + token }
-        }).then(r => {
-          if(r.ok) return r.json()
-          throw new Error('me failed')
-        }).then(data => {
-          if(data && data.id){
-            setUser(data)
-            localStorage.setItem('user', JSON.stringify(data))
-          }
-        }).catch(()=>{}) // silently ignore errors
-      } catch(e) {
-        localStorage.removeItem('user')
-        localStorage.removeItem('token')
-      }
+ useEffect(()=>{
+  const stored = localStorage.getItem('user')
+  const token = localStorage.getItem('token')
+  if(stored && token){
+    try {
+      const u = JSON.parse(stored)
+      setUser(u)
+      if(u.role !== 'manager') setActiveTab('alerts')
+      fetch('https://garage-eri-production.up.railway.app/api/auth/me', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      }).then(r => r.ok ? r.json() : null)
+        .then(data => { if(data?.id){ setUser(data); localStorage.setItem('user', JSON.stringify(data)) } })
+        .catch(()=>{})
+    } catch(e) {
+      localStorage.removeItem('user')
+      localStorage.removeItem('token')
     }
-  },[])
-  useEffect(()=>{
-    const s=localStorage.getItem('user')
-    if(s){const u=JSON.parse(s);setUser(u);if(u.role!=='manager')setActiveTab('alerts')}
-  },[])
+  }
+},[])
   const handleLogin=(u)=>{setUser(u);setActiveTab(u.role==='manager'?'dashboard':'alerts')}
   const handleLogout=()=>{localStorage.removeItem('token');localStorage.removeItem('user');setUser(null);setActiveTab('dashboard')}
   const handleTabChange=(tab)=>{setActiveTab(tab);setMenuOpen(false)}
