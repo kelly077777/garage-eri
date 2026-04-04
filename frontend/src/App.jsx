@@ -2736,14 +2736,14 @@ function VehiclesPage({ user, initialEditVehicle, onInitialEditDone, initialSele
   }
   const updateVehicle=(u)=>{setVehicles(p=>p.map(v=>v.id===u.id?u:v));setSelected(u)}
 
-  const openInsuranceModal=(v)=>{setInsuranceVehicle(v);setInsuranceForm({insuranceCompany:v.insuranceCompany||'',insuranceNumber:v.insuranceNumber||'',insuranceExpiry:v.insuranceExpiry||''});setShowInsuranceModal(true)}
+ const openInsuranceModal=async(v)=>{try{const r=await api.get(`/fleet/${v.id}`);setInsuranceVehicle(r.data)}catch{setInsuranceVehicle(v)}setInsuranceForm({insuranceCompany:v.insuranceCompany||'',insuranceNumber:v.insuranceNumber||'',insuranceExpiry:v.insuranceExpiry||''});setShowInsuranceModal(true)}
   const handleUpdateInsurance=async()=>{
     if(!insuranceVehicle||!insuranceForm.insuranceExpiry){alert('Insurance Expiry is required');return}
     try{await api.put(`/fleet/${insuranceVehicle.id}`,{...insuranceVehicle,...insuranceForm});await logAudit(user,'EDIT','Fleet Vehicles',`Updated insurance for: ${insuranceVehicle.plate}`);fetchFleet();setShowInsuranceModal(false);setInsuranceVehicle(null)}
     catch{alert('Failed to update insurance')}
   }
-  const openInspModal=(v)=>{setInspVehicle(v);setInspForm({inspectionIssuedDate:v.inspectionIssuedDate||'',inspectionExpiry:v.inspectionExpiry||''});setShowInspModal(true)}
-  const openDriverModal=(v)=>{setDriverVehicle(v);setDriverForm({driverName:v.driverName||'',driverPhone:v.driverPhone||'',driverLicense:v.driverLicense||''});setShowDriverModal(true)}
+ const openInspModal=(v)=>{setInspVehicle(v);setInspForm({inspectionIssuedDate:v.inspectionIssuedDate||'',inspectionExpiry:v.inspectionExpiry||''});setShowInspModal(true)}
+ const openDriverModal=async(v)=>{try{const r=await api.get(`/fleet/${v.id}`);setDriverVehicle(r.data)}catch{setDriverVehicle(v)}setDriverForm({driverName:v.driverName||'',driverPhone:v.driverPhone||''});setShowDriverModal(true)}
   const handleUpdateDriver=async()=>{
     if(!driverVehicle||!driverForm.driverName||!driverForm.driverPhone){alert('Driver Name and Phone are required');return}
     try{
@@ -2832,7 +2832,15 @@ function VehiclesPage({ user, initialEditVehicle, onInitialEditDone, initialSele
                             <button className="btn btn-ghost btn-sm" style={{color:'var(--blue)',borderColor:'var(--blue)'}} onClick={e=>{e.stopPropagation();openInsuranceModal(v)}}>Insurance</button>
                             <button className="btn btn-ghost btn-sm" style={{color:'var(--green)',borderColor:'var(--green)'}} onClick={e=>{e.stopPropagation();openInspModal(v)}}>Inspection</button>
                             <button className="btn btn-ghost btn-sm" style={{color:'#7c3aed',borderColor:'#7c3aed'}} onClick={e=>{e.stopPropagation();openDriverModal(v)}}>Driver</button>
-                            <button className="btn btn-ghost btn-sm" style={{color:'#0891b2',borderColor:'#0891b2'}} onClick={e=>{e.stopPropagation();setDocsVehicle(v)}}>Docs</button>
+                          <button className="btn btn-ghost btn-sm" style={{color:'#0891b2',borderColor:'#0891b2'}} onClick={async e=>{
+  e.stopPropagation()
+  try {
+    const r = await api.get(`/fleet/${v.id}`)
+    setDocsVehicle(r.data)
+  } catch {
+    setDocsVehicle(v)
+  }
+}}>Docs</button>
                             <button className="btn btn-ghost btn-sm" onClick={async e=>{
   e.stopPropagation()
   try {
