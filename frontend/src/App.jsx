@@ -824,8 +824,13 @@ function ExpensesPage({ user }) {
   const handleSave = async () => {
     if(!form.date||!form.reason||!form.amount){alert('Date, Reason and Amount are required');return}
     try{
-      if(editing){await api.put(`/expenses/${editing.id}`,{...form,amount:parseInt(form.amount)||0});await logAudit(user,'EDIT','Expenses',`Edited expense: ${form.reason}`)}
-      else{await api.post('/expenses',{...form,amount:parseInt(form.amount)||0});await logAudit(user,'ADD','Expenses',`Added expense: ${form.reason}`)}
+     if(editing){
+  await api.put(`/expenses/${editing.id}`,{...form, assignment:form.receivedBy, amount:parseInt(form.amount)||0});
+  await logAudit(user,'EDIT','Expenses',`Edited expense: ${form.reason}`)
+} else {
+  await api.post('/expenses',{...form, assignment:form.receivedBy, amount:parseInt(form.amount)||0});
+  await logAudit(user,'ADD','Expenses',`Added expense: ${form.reason}`)
+}
       fetchExpenses();setShowAdd(false);setEditing(null);setForm(empty)
     }catch{alert('Failed to save expense')}
   }
