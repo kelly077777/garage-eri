@@ -962,8 +962,8 @@ function ExpensesPage({ user }) {
                     <td style={{fontFamily:'DM Mono,monospace',fontWeight:700,color:'var(--red)',whiteSpace:'nowrap'}}>{(e.amount||0).toLocaleString()}</td>
                     <td>
                       <div style={{display:'flex',gap:4}}>
-                        <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(e)}>Edit</button>
-                        {user?.role==='manager'&&<button className="btn btn-danger btn-sm" onClick={()=>handleDelete(e.id)}>Del</button>}
+                       {(user?.role==='manager'||hasPerm(user,'Expenses','edit'))&&<button className="btn btn-ghost btn-sm" onClick={()=>openEdit(e)}>Edit</button>}
+{(user?.role==='manager'||hasPerm(user,'Expenses','delete'))&&<button className="btn btn-danger btn-sm" onClick={()=>handleDelete(e.id)}>Del</button>}
                       </div>
                     </td>
                   </tr>
@@ -1806,10 +1806,11 @@ function FuelLogsPage({ user }) {
                         <td style={{fontWeight:700}}>{l.liters}L</td>
                         <td style={{fontFamily:'DM Mono,monospace',color:'var(--green)',fontWeight:700}}>{(l.totalCost||0).toLocaleString()}</td>
                         <td>
-                          {user.role!=='viewer'&&<div style={{display:'flex',gap:4}}>
-                            <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(l)}>Edit</button>
-                            <button className="btn btn-danger btn-sm" onClick={()=>handleDelete(l)}>Del</button>
-                          </div>}
+                        {(user.role==='manager'||hasPerm(user,'Fuel Logs','edit')||hasPerm(user,'Fuel Logs','delete'))&&<div style={{display:'flex',gap:4}}>
+  {(user.role==='manager'||hasPerm(user,'Fuel Logs','edit'))&&<button className="btn btn-ghost btn-sm" onClick={()=>openEdit(l)}>Edit</button>}
+  {(user.role==='manager'||hasPerm(user,'Fuel Logs','delete'))&&<button className="btn btn-danger btn-sm" onClick={()=>handleDelete(l)}>Del</button>}
+</div>}
+                 
                         </td>
                       </tr>
                     )
@@ -2041,7 +2042,9 @@ function InventoryPage({ user }) {
   const [editing, setEditing] = useState(null)
   const [search, setSearch] = useState('')
   const [catFilter, setCatFilter] = useState('ALL')
-  const canEdit=user.role==='manager'||user.role==='supervisor'
+ const canAdd=user.role==='manager'||hasPerm(user,'Inventory','add')
+const canEdit=user.role==='manager'||hasPerm(user,'Inventory','edit')
+const canDelete=user.role==='manager'||hasPerm(user,'Inventory','delete')
   const empty={name:'',category:'PART',description:'',quantity:0,minQuantity:5,unitPrice:0,unit:'pcs',supplier:'',location:''}
   const [form, setForm] = useState(empty)
   const sf=(k,v)=>setForm(f=>({...f,[k]:v}))
