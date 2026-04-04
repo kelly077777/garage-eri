@@ -1655,16 +1655,16 @@ function FuelLogsPage({ user }) {
               ⚙ Set Prices
             </button>
           )}
-          {user.role==='manager'&&<>
-          <button className="btn btn-danger btn-sm" onClick={()=>{ setShowDeleteModal(true); setDeleteMonth('') }}>Delete Month</button>
-          <button className="btn btn-ghost btn-sm" style={{borderColor:'#f59e0b',color:'#92400e'}}
-            onClick={()=>{ setPendingFuelType('DIESEL'); setSelectedMonth(''); setShowImportModal(true); setImportResult(null) }}
-            disabled={importing}>Import Diesel</button>
-          <button className="btn btn-ghost btn-sm" style={{borderColor:'#2563eb',color:'#1e40af'}}
-            onClick={()=>{ setPendingFuelType('PETROL'); setSelectedMonth(''); setShowImportModal(true); setImportResult(null) }}
-            disabled={importing}>Import Petrol</button>
-          <button className="btn btn-blue btn-sm" onClick={()=>{ setEditing(null); setForm(emptyForm); setShowAdd(true) }}>+ Log Fill</button>
-          </>}
+          {user.role==='manager'&&<button className="btn btn-danger btn-sm" onClick={()=>{ setShowDeleteModal(true); setDeleteMonth('') }}>Delete Month</button>}
+{(user.role==='manager'||hasPerm(user,'Fuel Logs','add'))&&<>
+<button className="btn btn-ghost btn-sm" style={{borderColor:'#f59e0b',color:'#92400e'}}
+  onClick={()=>{ setPendingFuelType('DIESEL'); setSelectedMonth(''); setShowImportModal(true); setImportResult(null) }}
+  disabled={importing}>Import Diesel</button>
+<button className="btn btn-ghost btn-sm" style={{borderColor:'#2563eb',color:'#1e40af'}}
+  onClick={()=>{ setPendingFuelType('PETROL'); setSelectedMonth(''); setShowImportModal(true); setImportResult(null) }}
+  disabled={importing}>Import Petrol</button>
+<button className="btn btn-blue btn-sm" onClick={()=>{ setEditing(null); setForm(emptyForm); setShowAdd(true) }}>+ Log Fill</button>
+</>}
         </div>
       </div>
 
