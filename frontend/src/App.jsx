@@ -487,17 +487,17 @@ function DashboardPage({ onAlertsChange, onNavigate, onSelectGarageVehicle }) {
   Promise.all([api.get('/vehicles'),api.get('/fleet'),api.get('/fleet/fuel/all'),api.get('/inventory'),api.get('/auth/users')])
     .then(([v,f,fuel,inv,s]) => {
       if(cancelled) return
-        const fleetData = Array.isArray(f.data)?f.data:f.data?.content||[]
-        setD({
-          vehicles:Array.isArray(v.data)?v.data:v.data?.content||[],
-          fleet:fleetData,
-          fuel:Array.isArray(fuel.data)?fuel.data:fuel.data?.content||[],
-          inventory:Array.isArray(inv.data)?inv.data:inv.data?.content||[],
-          staff:Array.isArray(s.data)?s.data:s.data?.content||[]
-        })
-        if (onAlertsChange) onAlertsChange(getExpiryAlerts(fleetData).length)
-      }).catch(e=>console.error(e))
- return () => { cancelled = true }
+      const fleetData = Array.isArray(f.data)?f.data:f.data?.content||[]
+      setD({
+        vehicles:Array.isArray(v.data)?v.data:v.data?.content||[],
+        fleet:fleetData,
+        fuel:Array.isArray(fuel.data)?fuel.data:fuel.data?.content||[],
+        inventory:Array.isArray(inv.data)?inv.data:inv.data?.content||[],
+        staff:Array.isArray(s.data)?s.data:s.data?.content||[]
+      })
+      if(onAlertsChange) onAlertsChange(getExpiryAlerts(fleetData).length)
+    }).catch(e=>console.error(e))
+  return () => { cancelled = true }
 },[])
   const totalFuelCost = (d.fuel||[]).reduce((s,f)=>s+(f.totalCost||0),0)
   const lowStock = (d.inventory||[]).filter(i=>i.status==='Low_Stock'||i.status==='Out_of_Stock')
