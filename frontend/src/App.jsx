@@ -1518,7 +1518,7 @@ function FleetModal({ vehicle, onSave, onClose }) {
           </div>
           <div className="form-row" style={{marginBottom:14}}>
             <div><label className="form-label">Card Number *</label><input className="form-input" value={form.cardNumber} onChange={e=>s('cardNumber',e.target.value.toUpperCase())} style={{fontFamily:'DM Mono,monospace'}}/></div>
-            <div><label className="form-label">Department *</label><select className="form-input" style={{appearance:'auto'}} value={form.companyDepartment} onChange={e=>s('companyDepartment',e.target.value)}>{['--Please Select--','Blue_Band','Colgate','OXI','Nestle','Indomie','Delivery','Kenafrica','Hardware','Phantom','Evy_baby','Wine & Spirit','Private'].map(x=><option key={x}>{x}</option>)}</select></div>
+            <div><label className="form-label">Department *</label><select className="form-input" style={{appearance:'auto'}} value={form.companyDepartment} onChange={e=>s('companyDepartment',e.target.value)}>{['--Please Select--','Blue_Band','Colgate','OXI','Nestle','Indomie','Delivery','Kenafrica','Hardware','Phantom','Evy_baby','Wine & Spirit','Masoro','Freezone','Office','Factory'].map(x=><option key={x}>{x}</option>)}</select></div>
           </div>
           <div className="form-row" style={{marginBottom:14}}>
             <div><label className="form-label">Year</label><input className="form-input" type="number" value={form.year} onChange={e=>s('year',e.target.value)}/></div>
