@@ -16,11 +16,11 @@ public class FuelLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "fleet_vehicle_id")
-    @JsonIgnoreProperties({"serviceHistory", "hibernateLazyInitializer", "handler"})
-    private FleetVehicle fleetVehicle;
+@ManyToOne(fetch = FetchType.EAGER)
+@JsonIgnoreProperties({"insuranceFile","inspectionFile","speedGovernorFile",
+    "driverLicenseFile","yellowCardFile","serviceHistory",
+    "hibernateLazyInitializer","handler"})
+private FleetVehicle fleetVehicle;
 
     private LocalDate date;
     private Double liters;
