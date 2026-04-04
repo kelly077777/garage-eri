@@ -2833,7 +2833,16 @@ function VehiclesPage({ user, initialEditVehicle, onInitialEditDone, initialSele
                             <button className="btn btn-ghost btn-sm" style={{color:'var(--green)',borderColor:'var(--green)'}} onClick={e=>{e.stopPropagation();openInspModal(v)}}>Inspection</button>
                             <button className="btn btn-ghost btn-sm" style={{color:'#7c3aed',borderColor:'#7c3aed'}} onClick={e=>{e.stopPropagation();openDriverModal(v)}}>Driver</button>
                             <button className="btn btn-ghost btn-sm" style={{color:'#0891b2',borderColor:'#0891b2'}} onClick={e=>{e.stopPropagation();setDocsVehicle(v)}}>Docs</button>
-                            <button className="btn btn-ghost btn-sm" onClick={e=>{e.stopPropagation();setEditFleet(v);setShowAddFleet(true)}}>Edit</button>
+                            <button className="btn btn-ghost btn-sm" onClick={async e=>{
+  e.stopPropagation()
+  try {
+    const r = await api.get(`/fleet/${v.id}`)
+    setEditFleet(r.data)
+  } catch {
+    setEditFleet(v)
+  }
+  setShowAddFleet(true)
+}}>Edit</button>
                             {user.role==='manager' && (
                               <button className="btn btn-danger btn-sm" onClick={async e=>{
                                 e.stopPropagation()
