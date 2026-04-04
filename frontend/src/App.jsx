@@ -3205,10 +3205,10 @@ export default function App() {
             {activeTab==='dashboard'&&user.role==='manager'&&<DashboardPage onAlertsChange={setAlertCount} onNavigate={handleTabChange} onSelectGarageVehicle={v=>{setSelectedGarageVehicle(v);handleTabChange('vehicles')}}/>}
             {activeTab==='alerts'&&<AlertsDashboard onAlertsChange={setAlertCount} onNavigate={handleTabChange} onEditVehicle={v=>{setAlertEditVehicle(v);handleTabChange('vehicles')}}/>}
             {activeTab==='vehicles'&&<VehiclesPage user={user} initialEditVehicle={alertEditVehicle} onInitialEditDone={()=>setAlertEditVehicle(null)} initialSelectedVehicle={selectedGarageVehicle} onInitialSelectedDone={()=>setSelectedGarageVehicle(null)}/>}
-            {activeTab==='fuel'&&(user.role==='manager'||user.role==='viewer')&&<FuelLogsPage user={user}/>}
-            {activeTab==='inventory'&&user.role!=='viewer'&&<InventoryPage user={user}/>}
+            {activeTab==='fuel'&&(user.role==='manager'||hasPerm(user,'Fuel Logs','view'))&&<FuelLogsPage user={user}/>}
+            {activeTab==='inventory'&&(user.role==='manager'||hasPerm(user,'Inventory','view'))&&<InventoryPage user={user}/>}
             {activeTab==='staff'&&user.role==='manager'&&<StaffPage/>}
-            {activeTab==='expenses'&&(user.role==='manager'||user.role==='supervisor')&&<ExpensesPage user={user}/>}
+            {activeTab==='expenses'&&(user.role==='manager'||hasPerm(user,'Expenses','view'))&&<ExpensesPage user={user}/>}
             {activeTab==='audit'&&user.role==='manager'&&<AuditLogPage/>}
             {activeTab==='reports'&&user.role==='manager'&&<ReportsPage/>}
           </div>
