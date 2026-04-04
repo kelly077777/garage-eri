@@ -2696,8 +2696,9 @@ function VehiclesPage({ user, initialEditVehicle, onInitialEditDone, initialSele
   const [driverForm, setDriverForm] = useState({driverName:'',driverPhone:'',driverLicense:''})
   const [docsVehicle, setDocsVehicle] = useState(null)
   const [returnToDocsVehicle, setReturnToDocsVehicle] = useState(null)
-  const canAdd=user.role==='manager'||user.role==='supervisor'
-  const canDelete=user.role==='manager'
+  const canAdd=user.role==='manager'||hasPerm(user,'Vehicles','add')
+const canEdit=user.role==='manager'||hasPerm(user,'Vehicles','edit')
+const canDelete=user.role==='manager'||hasPerm(user,'Vehicles','delete')
 
   useEffect(()=>{fetchVehicles();fetchFleet()},[])
   useEffect(()=>{
@@ -2832,36 +2833,18 @@ function VehiclesPage({ user, initialEditVehicle, onInitialEditDone, initialSele
                         <td className="hide-mobile" style={{color:insExpired?'var(--red)':'var(--text2)',fontWeight:insExpired?700:400,fontSize:13}}>{v.insuranceExpiry||'—'}</td>
                         <td>
                           <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
-                            <button className="btn btn-ghost btn-sm" style={{color:'var(--blue)',borderColor:'var(--blue)'}} onClick={e=>{e.stopPropagation();openInsuranceModal(v)}}>Insurance</button>
-                            <button className="btn btn-ghost btn-sm" style={{color:'var(--green)',borderColor:'var(--green)'}} onClick={e=>{e.stopPropagation();openInspModal(v)}}>Inspection</button>
-                            <button className="btn btn-ghost btn-sm" style={{color:'#7c3aed',borderColor:'#7c3aed'}} onClick={e=>{e.stopPropagation();openDriverModal(v)}}>Driver</button>
-                          <button className="btn btn-ghost btn-sm" style={{color:'#0891b2',borderColor:'#0891b2'}} onClick={async e=>{
+   {canEdit&&<button className="btn btn-ghost btn-sm" style={{color:'var(--blue)',borderColor:'var(--blue)'}} onClick={e=>{e.stopPropagation();openInsuranceModal(v)}}>Insurance</button>}
+{canEdit&&<button className="btn btn-ghost btn-sm" style={{color:'var(--green)',borderColor:'var(--green)'}} onClick={e=>{e.stopPropagation();openInspModal(v)}}>Inspection</button>}
+{canEdit&&<button className="btn btn-ghost btn-sm" style={{color:'#7c3aed',borderColor:'#7c3aed'}} onClick={e=>{e.stopPropagation();openDriverModal(v)}}>Driver</button>}
+<button className="btn btn-ghost btn-sm" style={{color:'#0891b2',borderColor:'#0891b2'}} onClick={async e=>{e.stopPropagation();try{const r=await api.get(`/fleet/${v.id}`);setDocsVehicle(r.data)}catch{setDocsVehicle(v)}}}>Docs</button>
+{canEdit&&<button className="btn btn-ghost btn-sm" onClick={async e=>{e.stopPropagation();try{const r=await api.get(`/fleet/${v.id}`);setEditFleet(r.data)}catch{setEditFleet(v)}setShowAddFleet(true)}}>Edit</button>}
+{canDelete&&<button className="btn btn-danger btn-sm" onClick={async e=>{
   e.stopPropagation()
-  try {
-    const r = await api.get(`/fleet/${v.id}`)
-    setDocsVehicle(r.data)
-  } catch {
-    setDocsVehicle(v)
-  }
-}}>Docs</button>
-                            <button className="btn btn-ghost btn-sm" onClick={async e=>{
-  e.stopPropagation()
-  try {
-    const r = await api.get(`/fleet/${v.id}`)
-    setEditFleet(r.data)
-  } catch {
-    setEditFleet(v)
-  }
-  setShowAddFleet(true)
-}}>Edit</button>
-                            {user.role==='manager' && (
-                              <button className="btn btn-danger btn-sm" onClick={async e=>{
-                                e.stopPropagation()
-                                if(!window.confirm('Delete this fleet vehicle?')) return
-                                try { await api.delete(`/fleet/${v.id}`); await logAudit(user,'DELETE','Fleet Vehicles',`Deleted fleet vehicle: ${v.plate}`); fetchFleet() }
-                                catch { alert('Failed to delete') }
-                              }}>Del</button>
-                            )}
+  if(!window.confirm('Delete this fleet vehicle?')) return
+  try { await api.delete(`/fleet/${v.id}`); await logAudit(user,'DELETE','Fleet Vehicles',`Deleted fleet vehicle: ${v.plate}`); fetchFleet() }
+  catch { alert('Failed to delete') }
+}}>Del</button>}
+                           
                           </div>
                         </td>
                       </tr>
