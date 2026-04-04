@@ -18,14 +18,61 @@ public class FleetController {
     private final FuelLogRepository fuelRepo;
 
     // ── Fleet Vehicles ──
+  
     @GetMapping
-    public List<FleetVehicle> getAll() { return fleetRepo.findAll(); }
+public List<Map<String, Object>> getAll() {
+    return fleetRepo.findAll().stream().map(v -> {
+        Map<String, Object> m = new java.util.HashMap<>();
+        m.put("id", v.getId());
+        m.put("plate", v.getPlate());
+        m.put("make", v.getMake());
+        m.put("model", v.getModel());
+        m.put("year", v.getYear());
+        m.put("color", v.getColor());
+        m.put("type", v.getType());
+        m.put("status", v.getStatus());
+        m.put("mileage", v.getMileage());
+        m.put("driverName", v.getDriverName());
+        m.put("driverPhone", v.getDriverPhone());
+        m.put("cardNumber", v.getCardNumber());
+        m.put("companyDepartment", v.getCompanyDepartment());
+        m.put("insuranceExpiry", v.getInsuranceExpiry());
+        m.put("inspectionExpiry", v.getInspectionExpiry());
+        m.put("speedGovernorExpiry", v.getSpeedGovernorExpiry());
+        m.put("driverLicenseExpiry", v.getDriverLicenseExpiry());
+        m.put("insuranceCompany", v.getInsuranceCompany());
+        m.put("insuranceNumber", v.getInsuranceNumber());
+        return m;
+    }).collect(java.util.stream.Collectors.toList());
+}
 
+   
     @GetMapping("/{id}")
-    public ResponseEntity<FleetVehicle> getOne(@PathVariable Long id) {
-        return fleetRepo.findById(id).map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
-    }
+public ResponseEntity<Map<String, Object>> getOne(@PathVariable Long id) {
+    return fleetRepo.findById(id).map(v -> {
+        Map<String, Object> m = new java.util.HashMap<>();
+        m.put("id", v.getId());
+        m.put("plate", v.getPlate());
+        m.put("make", v.getMake());
+        m.put("model", v.getModel());
+        m.put("insuranceFile", v.getInsuranceFile());
+        m.put("inspectionFile", v.getInspectionFile());
+        m.put("speedGovernorFile", v.getSpeedGovernorFile());
+        m.put("driverLicenseFile", v.getDriverLicenseFile());
+        m.put("yellowCardFile", v.getYellowCardFile());
+        m.put("insuranceExpiry", v.getInsuranceExpiry());
+        m.put("inspectionExpiry", v.getInspectionExpiry());
+        m.put("speedGovernorExpiry", v.getSpeedGovernorExpiry());
+        m.put("driverLicenseExpiry", v.getDriverLicenseExpiry());
+        m.put("insuranceCompany", v.getInsuranceCompany());
+        m.put("insuranceNumber", v.getInsuranceNumber());
+        m.put("driverName", v.getDriverName());
+        m.put("driverPhone", v.getDriverPhone());
+        return ResponseEntity.ok(m);
+    }).orElse(ResponseEntity.notFound().build());
+}
+      
+    
 
     @PostMapping
     public FleetVehicle create(@RequestBody FleetVehicle vehicle) {
@@ -103,6 +150,10 @@ public ResponseEntity<?> deleteFuel(
         @PathVariable Long id,
         @PathVariable Long fuelId) {
     fuelRepo.deleteById(fuelId);
-    return ResponseEntity.ok().build();
-}
-}
+    return ResponseEntity.ok().build(); 
+
+} 
+
+
+} 
+
