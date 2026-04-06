@@ -1715,7 +1715,14 @@ function FuelLogsPage({ user }) {
           <div className="stat-card" style={{borderLeft:'3px solid #f59e0b',cursor:user.role==='manager'?'pointer':'default'}}
             onClick={()=>user.role==='manager'&&(setPriceForm({diesel:dieselPrice||'',petrol:petrolPrice||''}),setShowPriceModal(true))}>
             <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Price / Liter — Diesel</div>
-            <div style={{fontSize:22,fontWeight:800,color:'#92400e'}}>{dieselPrice>0?dieselPrice.toLocaleString():'—'}</div>
+          <div style={{fontSize:22,fontWeight:800,color:'#92400e'}}>
+  {filterMonth==='ALL' 
+    ? (dieselPrice>0?dieselPrice.toLocaleString():'—')
+    : dieselLogs.length>0 
+      ? Math.round(dieselLogs.reduce((s,l)=>s+(l.totalCost||0),0)/dieselLogs.reduce((s,l)=>s+(l.liters||0),0)).toLocaleString()
+      : '—'
+  }
+</div>
             <div style={{fontSize:11,color:dieselPrice>0?'var(--text3)':'var(--blue)',marginTop:2,fontWeight:dieselPrice>0?400:700}}>{dieselPrice>0?'RWF / L (RURA)':(user.role==='manager'||user.role==='supervisor')?'Click to set price':'Not set'}</div>
           </div>
           <div className="stat-card" style={{borderLeft:'3px solid #f59e0b'}}>
@@ -1732,7 +1739,14 @@ function FuelLogsPage({ user }) {
           <div className="stat-card" style={{borderLeft:'3px solid #2563eb',cursor:user.role==='manager'?'pointer':'default'}}
             onClick={()=>user.role==='manager'&&(setPriceForm({diesel:dieselPrice||'',petrol:petrolPrice||''}),setShowPriceModal(true))}>
             <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Price / Liter — Petrol</div>
-            <div style={{fontSize:22,fontWeight:800,color:'#1e40af'}}>{petrolPrice>0?petrolPrice.toLocaleString():'—'}</div>
+           <div style={{fontSize:22,fontWeight:800,color:'#1e40af'}}>
+  {filterMonth==='ALL'
+    ? (petrolPrice>0?petrolPrice.toLocaleString():'—')
+    : petrolLogs.length>0
+      ? Math.round(petrolLogs.reduce((s,l)=>s+(l.totalCost||0),0)/petrolLogs.reduce((s,l)=>s+(l.liters||0),0)).toLocaleString()
+      : '—'
+  }
+</div>
             <div style={{fontSize:11,color:petrolPrice>0?'var(--text3)':'var(--blue)',marginTop:2,fontWeight:petrolPrice>0?400:700}}>{petrolPrice>0?'RWF / L (RURA)':(user.role==='manager'||user.role==='supervisor')?'Click to set price':'Not set'}</div>
           </div>
           <div className="stat-card" style={{borderLeft:'3px solid #2563eb'}}>
