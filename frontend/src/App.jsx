@@ -2456,7 +2456,7 @@ function FleetModal({ vehicle, onSave, onClose, backLabel }) {
           </div>
           <div className="form-row" style={{marginBottom:14}}>
             <div><label className="form-label">Card Number *</label><input className="form-input" value={form.cardNumber} onChange={e=>s('cardNumber',e.target.value.toUpperCase())} style={{fontFamily:'DM Mono,monospace'}}/></div>
-            <div><label className="form-label">Department *</label><select className="form-input" style={{appearance:'auto'}} value={form.companyDepartment} onChange={e=>s('companyDepartment',e.target.value)}>{['--Please Select--','Blue_Band','Colgate','OXI','Nestle','Indomie'].map(x=><option key={x}>{x}</option>)}</select></div>
+            <div><label className="form-label">Department *</label><select className="form-input" style={{appearance:'auto'}} value={form.companyDepartment} onChange={e=>s('companyDepartment',e.target.value)}>{['--Please Select--','Blue_Band','Colgate','OXI','Nestle','Indomie', 'Office', 'Free_zone','Masoro','Factory','Hard_ware','Jambo','Wine','Delivery','KenAfrica'].map(x=><option key={x}>{x}</option>)}</select></div>
           </div>
           <div className="form-row" style={{marginBottom:14}}>
             <div><label className="form-label">Year *</label><input className="form-input" type="number" value={form.year} onChange={e=>s('year',e.target.value)} onKeyDown={onlyNumbers}/></div>
@@ -2472,7 +2472,19 @@ function FleetModal({ vehicle, onSave, onClose, backLabel }) {
             <div><label className="form-label">Driver Phone *</label><input className="form-input" value={form.driverPhone} onChange={e=>s('driverPhone',e.target.value)} onKeyDown={onlyNumbers} placeholder="e.g. 0788000000"/></div>
           </div>
 
+          <div style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.08em',margin:'18px 0 12px',paddingBottom:8,borderBottom:'1px solid var(--border)'}}>Driver License</div>
+<div className="form-row" style={{marginBottom:14}}>
+  <div>
+    <label className="form-label">License ID Number</label>
+    <input className="form-input" value={form.driverLicenseId||''} onChange={e=>s('driverLicenseId',e.target.value)} placeholder="e.g. DL-2024-001"/>
+  </div>
+</div>
+
+
+
+
           <div style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.08em',margin:'18px 0 12px',paddingBottom:8,borderBottom:'1px solid var(--border)'}}>Insurance & Documents</div>
+
           <div className="form-row" style={{marginBottom:14}}>
             <div><label className="form-label">Insurance Company *</label><input className="form-input" value={form.insuranceCompany} onChange={e=>s('insuranceCompany',e.target.value)}/></div>
             <div><label className="form-label">Insurance Number *</label><input className="form-input" value={form.insuranceNumber} onChange={e=>s('insuranceNumber',e.target.value)}/></div>
