@@ -2475,7 +2475,7 @@ function FleetModal({ vehicle, onSave, onClose, backLabel }) {
           <div style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.08em',margin:'18px 0 12px',paddingBottom:8,borderBottom:'1px solid var(--border)'}}>Driver License</div>
 <div className="form-row" style={{marginBottom:14}}>
   <div>
-    <label className="form-label">License ID Number</label>
+    <label className="form-label">License ID Number *</label>
     <input className="form-input" value={form.driverLicenseId||''} onChange={e=>s('driverLicenseId',e.target.value)} placeholder="e.g. DL-2024-001"/>
   </div>
 </div>
