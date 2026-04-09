@@ -980,7 +980,13 @@ function ExpensesPage({ user }) {
             <div className="modal-header"><div className="modal-title">{editing?'Edit Expense':'Add Expense'}</div><X onClick={()=>{setShowAdd(false);setEditing(null)}}/></div>
             <div className="modal-body">
               <div className="form-row" style={{marginBottom:14}}>
-                <div><label className="form-label">Date *</label><input className="form-input" type="date" value={form.date} onChange={e=>sf('date',e.target.value)}/></div>
+                <div><label className="form-label">Date *</label>
+  <input className="form-input" type="date" value={form.date} 
+    onChange={e=>sf('date',e.target.value)}
+    readOnly={!!editing}
+    style={{background: editing?'var(--surface3)':'var(--surface2)', cursor: editing?'not-allowed':'text'}}
+  />
+</div>
                 <div><label className="form-label">Plate</label><input className="form-input" value={form.plate} onChange={e=>sf('plate',e.target.value.toUpperCase())} placeholder="RAG510W"/></div>
               </div>
               <div className="form-group"><label className="form-label">Reason *</label><input className="form-input" value={form.reason} onChange={e=>sf('reason',e.target.value)} placeholder="e.g. REPAIR TIRES"/></div>
