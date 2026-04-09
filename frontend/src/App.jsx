@@ -2599,7 +2599,7 @@ function FleetModal({ vehicle, onSave, onClose, backLabel }) {
             if(!form.insuranceExpiry)missing.push('Insurance Expiry')
             if(!form.inspectionExpiry)missing.push('Inspection Expiry')
             if(!form.speedGovernorExpiry)missing.push('Speed Governor Expiry')
-            if(!form.driverLicenseExpiry)missing.push('Driver License Expiry')
+          {/*  if(!form.driverLicenseExpiry)missing.push('Driver License Expiry')    */}
 
             if(missing.length>0){alert('Required fields missing:\n• '+missing.join('\n• '));return}
             onSave(form)
