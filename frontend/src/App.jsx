@@ -482,40 +482,43 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout, alertCount, menuOpen
 
 //  DASHBOARD 
 function DashboardPage({ onAlertsChange, onNavigate, onSelectGarageVehicle }) {
-  const [d, setD] = useState({ vehicles:[], fleet:[], fuel:[], inventory:[], staff:[] })
+ const [d, setD] = useState({ vehicles:[], fleet:[], fuel:[], inventory:[], staff:[], spareParts:[], tyres:[] })
  useEffect(() => {
   let cancelled = false
-  Promise.all([api.get('/vehicles'),api.get('/fleet'),api.get('/fleet/fuel/all'),api.get('/inventory'),api.get('/auth/users')])
-    .then(([v,f,fuel,inv,s]) => {
-      if(cancelled) return
-      const fleetData = Array.isArray(f.data)?f.data:f.data?.content||[]
-      setD({
-        vehicles:Array.isArray(v.data)?v.data:v.data?.content||[],
-        fleet:fleetData,
-        fuel:Array.isArray(fuel.data)?fuel.data:fuel.data?.content||[],
-        inventory:Array.isArray(inv.data)?inv.data:inv.data?.content||[],
-        staff:Array.isArray(s.data)?s.data:s.data?.content||[]
-      })
+ Promise.all([api.get('/vehicles'),api.get('/fleet'),api.get('/fleet/fuel/all'),api.get('/inventory'),api.get('/auth/users'),api.get('/tyres')])
+  .then(([v,f,fuel,inv,s,t]) => {
+    const fleetData = Array.isArray(f.data)?f.data:f.data?.content||[]
+    const invData = Array.isArray(inv.data)?inv.data:inv.data?.content||[]
+    setD({
+      vehicles:Array.isArray(v.data)?v.data:v.data?.content||[],
+      fleet:fleetData,
+      fuel:Array.isArray(fuel.data)?fuel.data:fuel.data?.content||[],
+      inventory:invData,
+      spareParts:invData,
+      staff:Array.isArray(s.data)?s.data:s.data?.content||[],
+      tyres:Array.isArray(t.data)?t.data:t.data?.content||[]
+    })
       if(onAlertsChange) onAlertsChange(getExpiryAlerts(fleetData).length)
     }).catch(e=>console.error(e))
   return () => { cancelled = true }
 },[])
   const totalFuelCost = (d.fuel||[]).reduce((s,f)=>s+(f.totalCost||0),0)
-  const lowStock = (d.inventory||[]).filter(i=>i.status==='Low_Stock'||i.status==='Out_of_Stock')
+ const lowStock = (d.spareParts||[]).filter(i=>i.status==='Low_Stock'||i.status==='Out_of_Stock')
   const expiryAlerts = getExpiryAlerts(d.fleet)
-  const [statusPopup, setStatusPopup] = useState(null)
+  const [statusPopup, setStatusPopup] = useState(null)  
   const [dashMonth, setDashMonth] = useState('ALL')
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
   const nav = (tab) => onNavigate && onNavigate(tab)
   const clickStyle = { cursor:'pointer', transition:'box-shadow 0.15s,transform 0.15s' }
   const hoverProps = { onMouseEnter:e=>{e.currentTarget.style.boxShadow='0 4px 16px rgba(37,99,235,0.13)';e.currentTarget.style.transform='translateY(-2px)'}, onMouseLeave:e=>{e.currentTarget.style.boxShadow='';e.currentTarget.style.transform=''} }
-  const stats = [
-    {label:'Garage Vehicles',value:d.vehicles.length,sub:`${d.vehicles.filter(v=>v.status==='In_Service').length} in service`,color:'var(--blue)',tab:'vehicles'},
-    {label:'Fleet Vehicles',value:d.fleet.length,sub:`${d.fleet.filter(f=>f.status==='Active').length} active`,color:'var(--blue)',tab:'vehicles'},
-    {label:'Fuel Cost',value:totalFuelCost.toLocaleString()+'RWF',sub:'All time',color:'var(--green)',tab:'fuel'},
-    {label:'Staff',value:d.staff.length,sub:`${d.staff.filter(s=>s.role==='mechanic').length} mechanics`,color:'var(--text)',tab:'staff'},
-    {label:'Inventory',value:d.inventory.length,sub:`${lowStock.length} low/out`,color:lowStock.length>0?'var(--red)':'var(--text)',tab:'inventory'},
-  ]
+ const stats = [
+  {label:'Garage Vehicles',value:d.vehicles.length,sub:`${d.vehicles.filter(v=>v.status==='In_Service').length} in service`,color:'var(--blue)',tab:'vehicles'},
+  {label:'Fleet Vehicles',value:d.fleet.length,sub:`${d.fleet.filter(f=>f.status==='Active').length} active`,color:'var(--blue)',tab:'vehicles'},
+  {label:'Fuel Cost',value:totalFuelCost.toLocaleString()+'RWF',sub:'All time',color:'var(--green)',tab:'fuel'},
+  {label:'Staff',value:d.staff.length,sub:`${d.staff.filter(s=>s.role==='mechanic').length} mechanics`,color:'var(--text)',tab:'staff'},
+  {label:'Spare Parts',value:d.spareParts.length,sub:`${lowStock.length} low/out`,color:lowStock.length>0?'var(--red)':'var(--text)',tab:'spareParts'},
+  {label:'Tyres',value:d.tyres.length,sub:`${d.tyres.filter(t=>t.status==='In_Use').length} in use`,color:'var(--blue)',tab:'tyres'},
+]
   return (
     <>
       <div className="page-header"><div><div className="page-title">Dashboard</div><div className="page-sub">Overview of garage operations</div></div></div>
