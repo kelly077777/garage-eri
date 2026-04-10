@@ -3213,17 +3213,27 @@ function TyresPage({ user }) {
   const [showAdd, setShowAdd] = useState(false)
   const [editing, setEditing] = useState(null)
   const [showHistory, setShowHistory] = useState(false)
+  const [showAssign, setShowAssign] = useState(false)
+  const [showRemove, setShowRemove] = useState(false)
+  const [showMove, setShowMove] = useState(false)
+  const [showDispose, setShowDispose] = useState(false)
   const [selectedTyre, setSelectedTyre] = useState(null)
   const [history, setHistory] = useState([])
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('ALL')
+
   const canAdd=user.role==='manager'||hasPerm(user,'Tyres','add')
   const canEdit=user.role==='manager'||hasPerm(user,'Tyres','edit')
   const canDelete=user.role==='manager'||hasPerm(user,'Tyres','delete')
 
-  const empty={serialNumber:'',brand:'',size:'',type:'',status:'New',condition:'Good',purchaseDate:'',purchasePrice:'',position:'',mileageAtFitting:'',currentMileage:'',notes:'',fleetVehicleId:''}
+  const empty={serialNumber:'',brand:'',size:'',type:'',condition:'Good',purchaseDate:'',purchasePrice:'',notes:''}
   const [form, setForm] = useState(empty)
   const sf=(k,v)=>setForm(f=>({...f,[k]:v}))
+
+  const [assignForm, setAssignForm] = useState({vehicleId:'',position:'',doneBy:'',notes:''})
+  const [removeForm, setRemoveForm] = useState({reason:'',status:'Worn',doneBy:'',notes:''})
+  const [moveForm, setMoveForm] = useState({vehicleId:'',position:'',doneBy:'',notes:''})
+  const [disposeForm, setDisposeForm] = useState({reason:'',doneBy:''})
 
   const STATUSES=['New','In_Use','Worn','Damaged','Disposed']
   const CONDITIONS=['Good','Fair','Poor']
@@ -3240,6 +3250,12 @@ function TyresPage({ user }) {
     'Fair':{bg:'#fef3c7',color:'#92400e'},
     'Poor':{bg:'#fee2e2',color:'#991b1b'},
   }
+  const ACTION_COLORS={
+    'ASSIGNED':{bg:'#d1fae5',color:'#065f46'},
+    'REMOVED':{bg:'#fee2e2',color:'#991b1b'},
+    'MOVED':{bg:'#dbeafe',color:'#1e40af'},
+    'DISPOSED':{bg:'#f3f4f6',color:'#6b7280'},
+  }
 
   useEffect(()=>{fetchTyres();fetchFleet()},[])
 
@@ -3254,31 +3270,23 @@ function TyresPage({ user }) {
   }
 
   const handleSave=async()=>{
-  const missing=[]
-  if(!form.serialNumber) missing.push('Serial Number')
-  if(!form.brand) missing.push('Brand')
-  if(!form.size) missing.push('Size')
-  if(!form.type) missing.push('Type')
-  if(!form.status) missing.push('Status')
-  if(!form.condition) missing.push('Condition')
-  if(!form.purchaseDate) missing.push('Purchase Date')
-  if(!form.purchasePrice) missing.push('Purchase Price')
-  if(!form.position) missing.push('Position')
-  if(missing.length>0){alert('Required fields missing:\n• '+missing.join('\n• '));return}
+    const missing=[]
+    if(!form.serialNumber) missing.push('Serial Number')
+    if(!form.brand) missing.push('Brand')
+    if(!form.size) missing.push('Size')
+    if(!form.type) missing.push('Type')
+    if(!form.condition) missing.push('Condition')
+    if(!form.purchaseDate) missing.push('Purchase Date')
+    if(!form.purchasePrice) missing.push('Purchase Price')
+    if(missing.length>0){alert('Required fields missing:\n• '+missing.join('\n• '));return}
     try{
-      const payload={
-        ...form,
-        purchasePrice:parseFloat(form.purchasePrice)||0,
-        mileageAtFitting:parseFloat(form.mileageAtFitting)||0,
-        currentMileage:parseFloat(form.currentMileage)||0,
-        fleetVehicle:form.fleetVehicleId?{id:parseInt(form.fleetVehicleId)}:null
-      }
+      const payload={...form,purchasePrice:parseFloat(form.purchasePrice)||0}
       if(editing){
         await api.put(`/tyres/${editing.id}`,payload)
-        await logAudit(user,'EDIT','Tyres',`Edited tyre: ${form.serialNumber||form.brand}`)
+        await logAudit(user,'EDIT','Tyres',`Edited tyre: ${form.serialNumber}`)
       }else{
         await api.post('/tyres',payload)
-        await logAudit(user,'ADD','Tyres',`Added tyre: ${form.brand} ${form.size}`)
+        await logAudit(user,'ADD','Tyres',`Registered tyre: ${form.brand} ${form.size}`)
       }
       fetchTyres();setShowAdd(false);setEditing(null);setForm(empty)
     }catch{alert('Failed to save tyre')}
@@ -3301,15 +3309,10 @@ function TyresPage({ user }) {
       brand:tyre.brand||'',
       size:tyre.size||'',
       type:tyre.type||'',
-      status:tyre.status||'New',
       condition:tyre.condition||'Good',
       purchaseDate:tyre.purchaseDate||'',
       purchasePrice:tyre.purchasePrice||'',
-      position:tyre.position||'',
-      mileageAtFitting:tyre.mileageAtFitting||'',
-      currentMileage:tyre.currentMileage||'',
-      notes:tyre.notes||'',
-      fleetVehicleId:tyre.fleetVehicle?.id||''
+      notes:tyre.notes||''
     })
     setShowAdd(true)
   }
@@ -3318,6 +3321,54 @@ function TyresPage({ user }) {
     setSelectedTyre(tyre)
     await fetchHistory(tyre.id)
     setShowHistory(true)
+  }
+
+  const handleAssign=async()=>{
+    if(!assignForm.vehicleId||!assignForm.position||!assignForm.doneBy){
+      alert('Vehicle, Position and Done By are required')
+      return
+    }
+    try{
+      await api.post(`/tyres/${selectedTyre.id}/assign`,assignForm)
+      await logAudit(user,'EDIT','Tyres',`Assigned tyre ${selectedTyre.serialNumber} to vehicle`)
+      fetchTyres();setShowAssign(false);setAssignForm({vehicleId:'',position:'',doneBy:'',notes:''})
+    }catch{alert('Failed to assign tyre')}
+  }
+
+  const handleRemove=async()=>{
+    if(!removeForm.reason||!removeForm.doneBy){
+      alert('Reason and Done By are required')
+      return
+    }
+    try{
+      await api.post(`/tyres/${selectedTyre.id}/remove`,removeForm)
+      await logAudit(user,'EDIT','Tyres',`Removed tyre ${selectedTyre.serialNumber} from vehicle`)
+      fetchTyres();setShowRemove(false);setRemoveForm({reason:'',status:'Worn',doneBy:'',notes:''})
+    }catch{alert('Failed to remove tyre')}
+  }
+
+  const handleMove=async()=>{
+    if(!moveForm.vehicleId||!moveForm.position||!moveForm.doneBy){
+      alert('Vehicle, Position and Done By are required')
+      return
+    }
+    try{
+      await api.post(`/tyres/${selectedTyre.id}/move`,moveForm)
+      await logAudit(user,'EDIT','Tyres',`Moved tyre ${selectedTyre.serialNumber} to another vehicle`)
+      fetchTyres();setShowMove(false);setMoveForm({vehicleId:'',position:'',doneBy:'',notes:''})
+    }catch{alert('Failed to move tyre')}
+  }
+
+  const handleDispose=async()=>{
+    if(!disposeForm.reason||!disposeForm.doneBy){
+      alert('Reason and Done By are required')
+      return
+    }
+    try{
+      await api.post(`/tyres/${selectedTyre.id}/dispose`,disposeForm)
+      await logAudit(user,'EDIT','Tyres',`Disposed tyre ${selectedTyre.serialNumber}`)
+      fetchTyres();setShowDispose(false);setDisposeForm({reason:'',doneBy:''})
+    }catch{alert('Failed to dispose tyre')}
   }
 
   const filtered=tyres.filter(t=>{
@@ -3329,15 +3380,15 @@ function TyresPage({ user }) {
   const stats=[
     {label:'Total Tyres',value:tyres.length,color:'var(--blue)'},
     {label:'In Use',value:tyres.filter(t=>t.status==='In_Use').length,color:'#1e40af'},
-    {label:'New/Stock',value:tyres.filter(t=>t.status==='New').length,color:'var(--green)'},
+    {label:'In Stock',value:tyres.filter(t=>t.status==='New').length,color:'var(--green)'},
     {label:'Worn/Damaged',value:tyres.filter(t=>t.status==='Worn'||t.status==='Damaged').length,color:'var(--red)'},
   ]
 
   return (
     <>
       <div className="page-header">
-        <div><div className="page-title">Tyre Management</div><div className="page-sub">Track and manage fleet tyres</div></div>
-        {canAdd&&<div className="page-actions"><button className="btn btn-success btn-sm" onClick={()=>{setForm(empty);setEditing(null);setShowAdd(true)}}>+ Add Tyre</button></div>}
+        <div><div className="page-title">Tyre Management</div><div className="page-sub">Register and track fleet tyres</div></div>
+        {canAdd&&<div className="page-actions"><button className="btn btn-success btn-sm" onClick={()=>{setForm(empty);setEditing(null);setShowAdd(true)}}>+ Register Tyre</button></div>}
       </div>
       <div className="page-content">
         <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
@@ -3375,7 +3426,7 @@ function TyresPage({ user }) {
                     <th>Condition</th>
                     <th>Vehicle</th>
                     <th>Position</th>
-                    <th className="hide-mobile">Mileage</th>
+                    <th className="hide-mobile">Purchase Date</th>
                     <th className="hide-mobile">Price (RWF)</th>
                     <th>Actions</th>
                   </tr>
@@ -3392,14 +3443,18 @@ function TyresPage({ user }) {
                         <td><span style={{fontSize:11,fontWeight:700,borderRadius:20,padding:'3px 8px',background:sc.bg,color:sc.color}}>{t.status?.replace('_',' ')}</span></td>
                         <td><span style={{fontSize:11,fontWeight:700,borderRadius:20,padding:'3px 8px',background:cc.bg,color:cc.color}}>{t.condition}</span></td>
                         <td style={{fontFamily:'DM Mono,monospace',color:'var(--blue)',fontWeight:700}}>{t.fleetVehicle?.plate||'—'}</td>
-                        <td style={{fontSize:13,color:'var(--text2)'}}>{t.position?.replace('_',' ')||'—'}</td>
-  
-                        <td className="hide-mobile" style={{fontFamily:'DM Mono,monospace',color:'var(--green)'}}>{t.purchasePrice?(t.purchasePrice).toLocaleString():'—'}</td>
+                        <td style={{fontSize:13,color:'var(--text2)'}}>{t.position?.replace(/_/g,' ')||'—'}</td>
+                        <td className="hide-mobile" style={{color:'var(--text2)'}}>{t.purchaseDate||'—'}</td>
+                        <td className="hide-mobile" style={{fontFamily:'DM Mono,monospace',color:'var(--green)'}}>{t.purchasePrice?Number(t.purchasePrice).toLocaleString():'—'}</td>
                         <td>
                           <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
                             <button className="btn btn-ghost btn-sm" onClick={()=>openHistory(t)}>History</button>
-                            {canEdit&&<button className="btn btn-ghost btn-sm" onClick={()=>openEdit(t)}>Edit</button>}
-                            {canDelete&&<button className="btn btn-danger btn-sm" onClick={()=>handleDelete(t.id)}>Del</button>}
+                            {canEdit&&t.status==='New'&&<button className="btn btn-blue btn-sm" onClick={()=>{setSelectedTyre(t);setAssignForm({vehicleId:'',position:'',doneBy:'',notes:''});setShowAssign(true)}}>Assign</button>}
+                            {canEdit&&t.status==='In_Use'&&<button className="btn btn-ghost btn-sm" style={{color:'#7c3aed',borderColor:'#7c3aed'}} onClick={()=>{setSelectedTyre(t);setMoveForm({vehicleId:'',position:'',doneBy:'',notes:''});setShowMove(true)}}>Move</button>}
+                            {canEdit&&t.status==='In_Use'&&<button className="btn btn-danger btn-sm" onClick={()=>{setSelectedTyre(t);setRemoveForm({reason:'',status:'Worn',doneBy:'',notes:''});setShowRemove(true)}}>Remove</button>}
+                            {canEdit&&(t.status==='Worn'||t.status==='Damaged')&&<button className="btn btn-sm" style={{background:'#6b7280',color:'#fff'}} onClick={()=>{setSelectedTyre(t);setDisposeForm({reason:'',doneBy:''});setShowDispose(true)}}>Dispose</button>}
+                            {canEdit&&t.status==='New'&&<button className="btn btn-ghost btn-sm" onClick={()=>openEdit(t)}>Edit</button>}
+                            {canDelete&&t.status==='New'&&<button className="btn btn-danger btn-sm" onClick={()=>handleDelete(t.id)}>Del</button>}
                           </div>
                         </td>
                       </tr>
@@ -3412,62 +3467,187 @@ function TyresPage({ user }) {
         </div>
       </div>
 
-      {/* Add/Edit Modal */}
+      {/* Register/Edit Tyre Modal */}
       {showAdd&&(
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowAdd(false)}>
           <div className="modal" style={{maxWidth:560}}>
             <div className="modal-header">
-              <div className="modal-title">{editing?'Edit Tyre':'Add Tyre'}</div>
+              <div className="modal-title">{editing?'Edit Tyre':'Register New Tyre'}</div>
               <X onClick={()=>{setShowAdd(false);setEditing(null)}}/>
             </div>
             <div className="modal-body">
               <div className="form-row" style={{marginBottom:14}}>
-                <div><label className="form-label">Serial Number</label><input className="form-input" value={form.serialNumber} onChange={e=>sf('serialNumber',e.target.value)} placeholder="e.g. BR-2024-001"/></div>
+                <div><label className="form-label">Serial Number *</label><input className="form-input" value={form.serialNumber} onChange={e=>sf('serialNumber',e.target.value)} placeholder="e.g. BR-2024-001"/></div>
                 <div><label className="form-label">Brand *</label><input className="form-input" value={form.brand} onChange={e=>sf('brand',e.target.value)} placeholder="e.g. Bridgestone"/></div>
               </div>
               <div className="form-row" style={{marginBottom:14}}>
                 <div><label className="form-label">Size *</label><input className="form-input" value={form.size} onChange={e=>sf('size',e.target.value)} placeholder="e.g. 11R22.5"/></div>
-                <div><label className="form-label">Type</label><input className="form-input" value={form.type} onChange={e=>sf('type',e.target.value)} placeholder="e.g. Radial"/></div>
+                <div><label className="form-label">Type *</label><input className="form-input" value={form.type} onChange={e=>sf('type',e.target.value)} placeholder="e.g. Radial"/></div>
               </div>
               <div className="form-row" style={{marginBottom:14}}>
-                <div><label className="form-label">Status *</label>
-                  <select className="form-input" style={{appearance:'auto'}} value={form.status} onChange={e=>sf('status',e.target.value)}>
-                    {STATUSES.map(s=><option key={s} value={s}>{s.replace('_',' ')}</option>)}
-                  </select>
-                </div>
-                <div><label className="form-label">Condition</label>
+                <div><label className="form-label">Condition *</label>
                   <select className="form-input" style={{appearance:'auto'}} value={form.condition} onChange={e=>sf('condition',e.target.value)}>
                     {CONDITIONS.map(c=><option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
+                <div><label className="form-label">Purchase Date *</label><input className="form-input" type="date" value={form.purchaseDate} onChange={e=>sf('purchaseDate',e.target.value)}/></div>
               </div>
               <div className="form-row" style={{marginBottom:14}}>
-                <div><label className="form-label">Purchase Date</label><input className="form-input" type="date" value={form.purchaseDate} onChange={e=>sf('purchaseDate',e.target.value)}/></div>
-                <div><label className="form-label">Purchase Price (RWF)</label><input className="form-input" type="text" value={form.purchasePrice} onChange={e=>sf('purchasePrice',e.target.value)} placeholder="0"/></div>
+                <div><label className="form-label">Purchase Price (RWF) *</label><input className="form-input" type="number" value={form.purchasePrice} onChange={e=>sf('purchasePrice',e.target.value)} placeholder="0"/></div>
               </div>
-              <div className="form-row" style={{marginBottom:14}}>
-                <div><label className="form-label">Fleet Vehicle</label>
-                  <select className="form-input" style={{appearance:'auto'}} value={form.fleetVehicleId} onChange={e=>sf('fleetVehicleId',e.target.value)}>
-                    <option value="">— Not assigned —</option>
-                    {fleet.map(v=><option key={v.id} value={v.id}>{v.plate} — {v.make} {v.model}</option>)}
-                  </select>
-                </div>
-                <div><label className="form-label">Position</label>
-                  <select className="form-input" style={{appearance:'auto'}} value={form.position} onChange={e=>sf('position',e.target.value)}>
-                    <option value="">— Select position —</option>
-                    {POSITIONS.map(p=><option key={p} value={p}>{p.replace('_',' ')}</option>)}
-                  </select>
-                </div>
-              </div>
-              
               <div className="form-group">
                 <label className="form-label">Notes</label>
-                <textarea className="form-input" rows={2} value={form.notes} onChange={e=>sf('notes',e.target.value)} placeholder="Any additional notes..." style={{resize:'vertical'}}/>
+                <textarea className="form-input" rows={2} value={form.notes||''} onChange={e=>sf('notes',e.target.value)} placeholder="Any additional notes..." style={{resize:'vertical'}}/>
               </div>
             </div>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={()=>{setShowAdd(false);setEditing(null)}}>Cancel</button>
-              <button className="btn btn-success" onClick={handleSave}>{editing?'Save Changes':'Add Tyre'}</button>
+              <button className="btn btn-success" onClick={handleSave}>{editing?'Save Changes':'Register Tyre'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Modal */}
+      {showAssign&&selectedTyre&&(
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowAssign(false)}>
+          <div className="modal" style={{maxWidth:460}}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-title">Assign Tyre to Vehicle</div>
+                <div style={{fontSize:12,color:'var(--text2)',marginTop:2}}>{selectedTyre.brand} {selectedTyre.size} — {selectedTyre.serialNumber}</div>
+              </div>
+              <X onClick={()=>setShowAssign(false)}/>
+            </div>
+            <div className="modal-body">
+              <div className="form-group"><label className="form-label">Fleet Vehicle *</label>
+                <select className="form-input" style={{appearance:'auto'}} value={assignForm.vehicleId} onChange={e=>setAssignForm(f=>({...f,vehicleId:e.target.value}))}>
+                  <option value="">— Select vehicle —</option>
+                  {fleet.map(v=><option key={v.id} value={v.id}>{v.plate} — {v.make} {v.model}</option>)}
+                </select>
+              </div>
+              <div className="form-group"><label className="form-label">Position *</label>
+                <select className="form-input" style={{appearance:'auto'}} value={assignForm.position} onChange={e=>setAssignForm(f=>({...f,position:e.target.value}))}>
+                  <option value="">— Select position —</option>
+                  {POSITIONS.map(p=><option key={p} value={p}>{p.replace(/_/g,' ')}</option>)}
+                </select>
+              </div>
+              <div className="form-group"><label className="form-label">Done By *</label>
+                <input className="form-input" value={assignForm.doneBy} onChange={e=>setAssignForm(f=>({...f,doneBy:e.target.value}))} placeholder="Name of person"/>
+              </div>
+              <div className="form-group"><label className="form-label">Notes</label>
+                <textarea className="form-input" rows={2} value={assignForm.notes} onChange={e=>setAssignForm(f=>({...f,notes:e.target.value}))} style={{resize:'vertical'}}/>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={()=>setShowAssign(false)}>Cancel</button>
+              <button className="btn btn-blue" onClick={handleAssign}>Assign Tyre</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remove Modal */}
+      {showRemove&&selectedTyre&&(
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowRemove(false)}>
+          <div className="modal" style={{maxWidth:460}}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-title">Remove Tyre from Vehicle</div>
+                <div style={{fontSize:12,color:'var(--text2)',marginTop:2}}>{selectedTyre.brand} {selectedTyre.size} — {selectedTyre.fleetVehicle?.plate}</div>
+              </div>
+              <X onClick={()=>setShowRemove(false)}/>
+            </div>
+            <div className="modal-body">
+              <div className="form-group"><label className="form-label">Reason *</label>
+                <input className="form-input" value={removeForm.reason} onChange={e=>setRemoveForm(f=>({...f,reason:e.target.value}))} placeholder="e.g. Worn out, Puncture, Rotation"/>
+              </div>
+              <div className="form-group"><label className="form-label">New Status *</label>
+                <select className="form-input" style={{appearance:'auto'}} value={removeForm.status} onChange={e=>setRemoveForm(f=>({...f,status:e.target.value}))}>
+                  <option value="Worn">Worn</option>
+                  <option value="Damaged">Damaged</option>
+                  <option value="New">New (for rotation/storage)</option>
+                </select>
+              </div>
+              <div className="form-group"><label className="form-label">Done By *</label>
+                <input className="form-input" value={removeForm.doneBy} onChange={e=>setRemoveForm(f=>({...f,doneBy:e.target.value}))} placeholder="Name of person"/>
+              </div>
+              <div className="form-group"><label className="form-label">Notes</label>
+                <textarea className="form-input" rows={2} value={removeForm.notes} onChange={e=>setRemoveForm(f=>({...f,notes:e.target.value}))} style={{resize:'vertical'}}/>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={()=>setShowRemove(false)}>Cancel</button>
+              <button className="btn btn-danger" onClick={handleRemove}>Remove Tyre</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Move Modal */}
+      {showMove&&selectedTyre&&(
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowMove(false)}>
+          <div className="modal" style={{maxWidth:460}}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-title">Move Tyre to Another Vehicle</div>
+                <div style={{fontSize:12,color:'var(--text2)',marginTop:2}}>{selectedTyre.brand} {selectedTyre.size} — Currently on {selectedTyre.fleetVehicle?.plate}</div>
+              </div>
+              <X onClick={()=>setShowMove(false)}/>
+            </div>
+            <div className="modal-body">
+              <div className="form-group"><label className="form-label">Move to Vehicle *</label>
+                <select className="form-input" style={{appearance:'auto'}} value={moveForm.vehicleId} onChange={e=>setMoveForm(f=>({...f,vehicleId:e.target.value}))}>
+                  <option value="">— Select vehicle —</option>
+                  {fleet.filter(v=>v.id!==selectedTyre.fleetVehicle?.id).map(v=><option key={v.id} value={v.id}>{v.plate} — {v.make} {v.model}</option>)}
+                </select>
+              </div>
+              <div className="form-group"><label className="form-label">New Position *</label>
+                <select className="form-input" style={{appearance:'auto'}} value={moveForm.position} onChange={e=>setMoveForm(f=>({...f,position:e.target.value}))}>
+                  <option value="">— Select position —</option>
+                  {POSITIONS.map(p=><option key={p} value={p}>{p.replace(/_/g,' ')}</option>)}
+                </select>
+              </div>
+              <div className="form-group"><label className="form-label">Done By *</label>
+                <input className="form-input" value={moveForm.doneBy} onChange={e=>setMoveForm(f=>({...f,doneBy:e.target.value}))} placeholder="Name of person"/>
+              </div>
+              <div className="form-group"><label className="form-label">Notes</label>
+                <textarea className="form-input" rows={2} value={moveForm.notes} onChange={e=>setMoveForm(f=>({...f,notes:e.target.value}))} style={{resize:'vertical'}}/>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={()=>setShowMove(false)}>Cancel</button>
+              <button className="btn" style={{background:'#7c3aed',color:'#fff'}} onClick={handleMove}>Move Tyre</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dispose Modal */}
+      {showDispose&&selectedTyre&&(
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowDispose(false)}>
+          <div className="modal" style={{maxWidth:420}}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-title" style={{color:'var(--red)'}}>Dispose Tyre</div>
+                <div style={{fontSize:12,color:'var(--text2)',marginTop:2}}>{selectedTyre.brand} {selectedTyre.size} — {selectedTyre.serialNumber}</div>
+              </div>
+              <X onClick={()=>setShowDispose(false)}/>
+            </div>
+            <div className="modal-body">
+              <div style={{background:'#fff5f5',border:'1px solid #fca5a5',borderRadius:10,padding:'12px 14px',marginBottom:16,fontSize:13,color:'#dc2626'}}>
+                This tyre will be permanently marked as disposed and cannot be used again.
+              </div>
+              <div className="form-group"><label className="form-label">Reason *</label>
+                <input className="form-input" value={disposeForm.reason} onChange={e=>setDisposeForm(f=>({...f,reason:e.target.value}))} placeholder="e.g. End of life, Beyond repair"/>
+              </div>
+              <div className="form-group"><label className="form-label">Done By *</label>
+                <input className="form-input" value={disposeForm.doneBy} onChange={e=>setDisposeForm(f=>({...f,doneBy:e.target.value}))} placeholder="Name of person"/>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={()=>setShowDispose(false)}>Cancel</button>
+              <button className="btn" style={{background:'var(--red)',color:'#fff'}} onClick={handleDispose}>Dispose Tyre</button>
             </div>
           </div>
         </div>
@@ -3476,7 +3656,7 @@ function TyresPage({ user }) {
       {/* History Modal */}
       {showHistory&&selectedTyre&&(
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowHistory(false)}>
-          <div className="modal" style={{maxWidth:500}}>
+          <div className="modal" style={{maxWidth:520}}>
             <div className="modal-header">
               <div>
                 <div className="modal-title">Tyre History</div>
@@ -3488,40 +3668,28 @@ function TyresPage({ user }) {
               {history.length===0?(
                 <div style={{padding:48,textAlign:'center',color:'var(--text3)'}}>No movement history yet</div>
               ):(
-                history.map((h,i)=>(
-                  <div key={h.id} style={{padding:'14px 20px',borderBottom:'1px solid var(--border)'}}>
-                    <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
-                      <span style={{fontWeight:700,fontSize:13}}>{h.reason}</span>
-                      <span style={{fontSize:12,color:'var(--text2)'}}>{h.movedDate}</span>
+                [...history].reverse().map((h)=>{
+                  const ac=ACTION_COLORS[h.action]||ACTION_COLORS['ASSIGNED']
+                  return(
+                    <div key={h.id} style={{padding:'14px 20px',borderBottom:'1px solid var(--border)'}}>
+                      <div style={{display:'flex',justifyContent:'space-between',marginBottom:6,alignItems:'center'}}>
+                        <span style={{fontSize:12,fontWeight:800,borderRadius:20,padding:'3px 10px',background:ac.bg,color:ac.color}}>{h.action}</span>
+                        <span style={{fontSize:12,color:'var(--text2)'}}>{h.actionDate}</span>
+                      </div>
+                      <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>{h.reason}</div>
+                      <div style={{fontSize:12,color:'var(--text2)'}}>
+                        {h.fromVehicle&&<span>From: <strong>{h.fromVehicle}</strong> {h.fromPosition&&`(${h.fromPosition.replace(/_/g,' ')})`} </span>}
+                        {h.toVehicle&&<span>→ To: <strong>{h.toVehicle}</strong> {h.toPosition&&`(${h.toPosition.replace(/_/g,' ')})`}</span>}
+                      </div>
+                      {h.doneBy&&<div style={{fontSize:11,color:'var(--text3)',marginTop:4}}>By: {h.doneBy}</div>}
+                      {h.notes&&<div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>{h.notes}</div>}
                     </div>
-                    <div style={{fontSize:12,color:'var(--text2)'}}>
-                      {h.fromVehicle&&<span>From: <strong>{h.fromVehicle}</strong> </span>}
-                      {h.toVehicle&&<span>To: <strong>{h.toVehicle}</strong></span>}
-                    </div>
-                    {h.movedBy&&<div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>By: {h.movedBy}</div>}
-                    {h.notes&&<div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>{h.notes}</div>}
-                  </div>
-                ))
+                  )
+                })
               )}
             </div>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={()=>setShowHistory(false)}>Close</button>
-              {canAdd&&<button className="btn btn-blue" onClick={()=>{
-                const reason=prompt('Reason for movement?')
-                const fromVehicle=selectedTyre.fleetVehicle?.plate||''
-                const toVehicle=prompt('Move to vehicle plate?')||''
-                const movedBy=prompt('Moved by?')||''
-                if(reason){
-                  api.post('/tyres/movements',{
-                    tyreId:selectedTyre.id,
-                    fromVehicle,
-                    toVehicle,
-                    movedDate:new Date().toISOString().split('T')[0],
-                    reason,
-                    movedBy,
-                  }).then(()=>fetchHistory(selectedTyre.id))
-                }
-              }}>+ Log Movement</button>}
             </div>
           </div>
         </div>
@@ -3529,8 +3697,6 @@ function TyresPage({ user }) {
     </>
   )
 }
-
-
 
 
 
