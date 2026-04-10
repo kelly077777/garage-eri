@@ -2059,52 +2059,96 @@ function FuelLogsPage({ user }) {
 
 
 //  SPARE PARTS PAGE 
-  function SparePartsPage({ user }) {
+ function SparePartsPage({ user }) {
   const [items, setItems] = useState([])
   const [showAdd, setShowAdd] = useState(false)
   const [editing, setEditing] = useState(null)
   const [search, setSearch] = useState('')
   const [catFilter, setCatFilter] = useState('ALL')
+  const [showIssue, setShowIssue] = useState(false)
+  const [showUsage, setShowUsage] = useState(false)
+  const [selectedPart, setSelectedPart] = useState(null)
+  const [usage, setUsage] = useState([])
+  const [fleet, setFleet] = useState([])
+  const [issueForm, setIssueForm] = useState({vehicleId:'',quantity:1,reason:'',doneBy:'',notes:''})
   const canAdd=user.role==='manager'||hasPerm(user,'Spare Parts','add')
   const canEdit=user.role==='manager'||hasPerm(user,'Spare Parts','edit')
   const canDelete=user.role==='manager'||hasPerm(user,'Spare Parts','delete')
-
- const empty={name:'',category:'PART',description:'',quantity:0,minQuantity:5,unitPrice:0,unit:'pcs',supplier:'',location:'',notes:''}
+  const empty={name:'',category:'PART',description:'',quantity:0,minQuantity:5,unitPrice:0,unit:'pcs',supplier:'',location:'',notes:''}
   const [form, setForm] = useState(empty)
   const sf=(k,v)=>setForm(f=>({...f,[k]:v}))
-  useEffect(()=>{fetchItems()},[])
-  const fetchItems=async()=>{try{const r=await api.get('/inventory');setItems(r.data)}catch(e){console.error(e)}}
+
+  useEffect(()=>{fetchItems();fetchFleet()},[])
+
+  const fetchItems=async()=>{
+    try{const r=await api.get('/inventory');setItems(r.data)}catch(e){console.error(e)}
+  }
+  const fetchFleet=async()=>{
+    try{const r=await api.get('/fleet');setFleet(Array.isArray(r.data)?r.data:r.data?.content||[])}catch(e){console.error(e)}
+  }
+  const fetchUsage=async(partId)=>{
+    try{const r=await api.get(`/inventory/usage/${partId}`);setUsage(Array.isArray(r.data)?r.data:[])}catch(e){console.error(e)}
+  }
+
+  const handleIssue=async()=>{
+    if(!issueForm.vehicleId||!issueForm.quantity||!issueForm.reason||!issueForm.doneBy){
+      alert('Vehicle, Quantity, Reason and Done By are required')
+      return
+    }
+    try{
+      const r=await api.post(`/inventory/${selectedPart.id}/issue`,issueForm)
+      if(r.status===200){
+        await logAudit(user,'EDIT','Spare Parts',`Issued ${issueForm.quantity} ${selectedPart.name} to vehicle`)
+        fetchItems()
+        setShowIssue(false)
+        setIssueForm({vehicleId:'',quantity:1,reason:'',doneBy:'',notes:''})
+      }
+    }catch(e){
+      alert(e.response?.data||'Failed to issue part')
+    }
+  }
+
   const handleSave=async()=>{
-  const missing=[]
-  if(!form.name) missing.push('Item Name')
-  if(!form.category) missing.push('Category')
-  if(!form.quantity) missing.push('Quantity')
-  if(!form.unit) missing.push('Unit')
-  if(!form.minQuantity) missing.push('Min Quantity')
-  if(!form.unitPrice) missing.push('Price')
-  if(!form.supplier) missing.push('Supplier')
-  if(!form.location) missing.push('Location')
-  if(missing.length>0){alert('Required fields missing:\n• '+missing.join('\n• '));return}
+    const missing=[]
+    if(!form.name) missing.push('Item Name')
+    if(!form.category) missing.push('Category')
+    if(!form.quantity) missing.push('Quantity')
+    if(!form.unit) missing.push('Unit')
+    if(!form.minQuantity) missing.push('Min Quantity')
+    if(!form.unitPrice) missing.push('Price')
+    if(!form.supplier) missing.push('Supplier')
+    if(!form.location) missing.push('Location')
+    if(missing.length>0){alert('Required fields missing:\n• '+missing.join('\n• '));return}
     try{
       if(editing){await api.put(`/inventory/${editing.id}`,form);await logAudit(user,'EDIT','Spare Parts',`Edited item: ${form.name}`)}
       else{await api.post('/inventory',form);await logAudit(user,'ADD','Spare Parts',`Added item: ${form.name}`)}
       fetchItems();setShowAdd(false);setEditing(null);setForm(empty)
     }catch{alert('Failed to save item')}
   }
+
   const handleDelete=async(id)=>{
     if(!window.confirm('Delete this item?'))return
-    try{const item=items.find(i=>i.id===id);await api.delete(`/inventory/${id}`);await logAudit(user,'DELETE','Spare Parts',`Deleted item: ${item?.name||id}`);fetchItems()}catch{alert('Failed to delete')}
+    try{
+      const item=items.find(i=>i.id===id)
+      await api.delete(`/inventory/${id}`)
+      await logAudit(user,'DELETE','Spare Parts',`Deleted item: ${item?.name||id}`)
+      fetchItems()
+    }catch{alert('Failed to delete')}
   }
-  const filtered=items.filter(i=>{const q=search.toLowerCase();return(catFilter==='ALL'||i.category===catFilter)&&(!q||i.name?.toLowerCase().includes(q)||i.supplier?.toLowerCase().includes(q))})
+
+  const filtered=items.filter(i=>{
+    const q=search.toLowerCase()
+    return(catFilter==='ALL'||i.category===catFilter)&&(!q||i.name?.toLowerCase().includes(q)||i.supplier?.toLowerCase().includes(q))
+  })
+
   return (
     <>
       <div className="page-header">
-        <div className="page-title">Spare Parts</div>
-        <div className="page-sub">Parts, tools and consumables</div>
-        {canEdit&&<div className="page-actions"><button className="btn btn-success btn-sm" onClick={()=>{setForm(empty);setEditing(null);setShowAdd(true)}}>+ Add Item</button></div>}
+        <div><div className="page-title">Spare Parts</div><div className="page-sub">Parts, tools and consumables</div></div>
+        {canAdd&&<div className="page-actions"><button className="btn btn-success btn-sm" onClick={()=>{setForm(empty);setEditing(null);setShowAdd(true)}}>+ Add Item</button></div>}
       </div>
       <div className="page-content">
-        <div className="stat-grid-4" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
           {[['Total',items.length,'var(--blue)'],['In Stock',items.filter(i=>i.status==='In_Stock').length,'var(--green)'],['Low Stock',items.filter(i=>i.status==='Low_Stock').length,'#f59e0b'],['Out of Stock',items.filter(i=>i.status==='Out_of_Stock').length,'var(--red)']].map(([l,v,c])=>(
             <div key={l} className="stat-card" style={{padding:'14px 16px'}}><div style={{fontSize:11,color:'var(--text2)',marginBottom:4,fontWeight:600}}>{l}</div><div style={{fontSize:22,fontWeight:800,color:c}}>{v}</div></div>
           ))}
@@ -2122,41 +2166,65 @@ function FuelLogsPage({ user }) {
           {filtered.length===0?<div style={{padding:48,textAlign:'center',color:'var(--text3)'}}>No spare parts found</div>:(
             <div className="table-wrap">
               <table className="table">
-                <thead><tr><th>Item</th><th className="hide-mobile">Category</th><th>Qty</th><th className="hide-mobile">Unit Price</th><th>Status</th>{canEdit&&<th>Actions</th>}</tr></thead>
-                <tbody>{filtered.map(item=>{const st=INV_STATUS[item.status]||INV_STATUS['In_Stock'];return(
-                  <tr key={item.id}>
-                    <td><div style={{fontWeight:600}}>{item.name}</div>{item.supplier&&<div style={{fontSize:11,color:'var(--text3)'}}>{item.supplier}</div>}</td>
-                    <td className="hide-mobile"><span style={{fontSize:11,background:'var(--surface2)',color:'var(--text2)',borderRadius:6,padding:'3px 8px',fontWeight:600}}>{item.category}</span></td>
-                    <td style={{fontFamily:'DM Mono,monospace',fontWeight:600,whiteSpace:'nowrap'}}>{item.quantity} {item.unit}</td>
-                    <td className="hide-mobile" style={{fontFamily:'DM Mono,monospace',color:'var(--green)'}}>{(item.unitPrice||0).toLocaleString()} RWF</td>
-                    <td><span style={{fontSize:11,fontWeight:700,borderRadius:20,padding:'3px 8px',background:st.bg,color:st.color,whiteSpace:'nowrap'}}>{item.status?.replace('_',' ')}</span></td>
-                    {canEdit&&<td><div style={{display:'flex',gap:4}}>
-                      <button className="btn btn-ghost btn-sm" onClick={()=>{setForm({...item});setEditing(item);setShowAdd(true)}}>Edit</button>
-                      <button className="btn btn-danger btn-sm" onClick={()=>handleDelete(item.id)}>Del</button>
-                    </div></td>}
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th className="hide-mobile">Category</th>
+                    <th>Qty</th>
+                    <th className="hide-mobile">Unit Price</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                   </tr>
-                )})}
+                </thead>
+                <tbody>
+                  {filtered.map(item=>{
+                    const st=INV_STATUS[item.status]||INV_STATUS['In_Stock']
+                    return(
+                      <tr key={item.id}>
+                        <td><div style={{fontWeight:600}}>{item.name}</div>{item.supplier&&<div style={{fontSize:11,color:'var(--text3)'}}>{item.supplier}</div>}</td>
+                        <td className="hide-mobile"><span style={{fontSize:11,background:'var(--surface2)',color:'var(--text2)',borderRadius:6,padding:'3px 8px',fontWeight:600}}>{item.category}</span></td>
+                        <td style={{fontFamily:'DM Mono,monospace',fontWeight:600,whiteSpace:'nowrap'}}>{item.quantity} {item.unit}</td>
+                        <td className="hide-mobile" style={{fontFamily:'DM Mono,monospace',color:'var(--green)'}}>{(item.unitPrice||0).toLocaleString()} RWF</td>
+                        <td><span style={{fontSize:11,fontWeight:700,borderRadius:20,padding:'3px 8px',background:st.bg,color:st.color,whiteSpace:'nowrap'}}>{item.status?.replace('_',' ')}</span></td>
+                        <td>
+                          <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                            <button className="btn btn-ghost btn-sm" onClick={async()=>{setSelectedPart(item);await fetchUsage(item.id);setShowUsage(true)}}>History</button>
+                            {canAdd&&<button className="btn btn-blue btn-sm" onClick={()=>{setSelectedPart(item);setIssueForm({vehicleId:'',quantity:1,reason:'',doneBy:'',notes:''});setShowIssue(true)}}>Issue</button>}
+                            {canEdit&&<button className="btn btn-ghost btn-sm" onClick={()=>{setForm({...item});setEditing(item);setShowAdd(true)}}>Edit</button>}
+                            {canDelete&&<button className="btn btn-danger btn-sm" onClick={()=>handleDelete(item.id)}>Del</button>}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
           )}
         </div>
       </div>
+
+      {/* Add/Edit Modal */}
       {showAdd&&(
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowAdd(false)}>
           <div className="modal" style={{maxWidth:540}}>
-            <div className="modal-header"><div className="modal-title">{editing?'Edit Spare Part':'Add Spare Part'}</div><X onClick={()=>{setShowAdd(false);setEditing(null)}}/></div>
+            <div className="modal-header">
+              <div className="modal-title">{editing?'Edit Spare Part':'Add Spare Part'}</div>
+              <X onClick={()=>{setShowAdd(false);setEditing(null)}}/>
+            </div>
             <div className="modal-body">
               <div className="form-row" style={{marginBottom:14}}>
                 <div><label className="form-label">Item Name *</label><input className="form-input" value={form.name} onChange={e=>sf('name',e.target.value)} placeholder="Oil Filter"/></div>
                 <div><label className="form-label">Category *</label>
                   <select className="form-input" style={{appearance:'auto'}} value={form.category} onChange={e=>sf('category',e.target.value)}>
-                    <option value="PART">Part</option><option value="TOOL">Tool</option><option value="CONSUMABLE">Consumable</option>
+                    <option value="PART">Part</option>
+                    <option value="TOOL">Tool</option>
+                    <option value="CONSUMABLE">Consumable</option>
                   </select>
                 </div>
               </div>
               <div className="form-row" style={{marginBottom:14}}>
-                <div><label className="form-label">Quantity *</label><input className="form-input" type="text" value={form.quantity} onChange={e=>sf('quantity',parseInt(e.target.value)||0)}/></div>
+                <div><label className="form-label">Quantity *</label><input className="form-input" type="number" value={form.quantity} onChange={e=>sf('quantity',parseInt(e.target.value)||0)}/></div>
                 <div><label className="form-label">Unit *</label>
                   <select className="form-input" style={{appearance:'auto'}} value={form.unit} onChange={e=>sf('unit',e.target.value)}>
                     {['pcs','liters','kg','meters','boxes','sets'].map(u=><option key={u}>{u}</option>)}
@@ -2164,19 +2232,17 @@ function FuelLogsPage({ user }) {
                 </div>
               </div>
               <div className="form-row" style={{marginBottom:14}}>
-                <div><label className="form-label">Min Qty *</label><input className="form-input" type="text" value={form.minQuantity} onChange={e=>sf('minQuantity',parseInt(e.target.value)||0)}/></div>
-                <div><label className="form-label">Price (RWF) *</label><input className="form-input" type="text" value={form.unitPrice} onChange={e=>sf('unitPrice',parseInt(e.target.value)||0)}/></div>
+                <div><label className="form-label">Min Qty *</label><input className="form-input" type="number" value={form.minQuantity} onChange={e=>sf('minQuantity',parseInt(e.target.value)||0)}/></div>
+                <div><label className="form-label">Price (RWF) *</label><input className="form-input" type="number" value={form.unitPrice} onChange={e=>sf('unitPrice',parseInt(e.target.value)||0)}/></div>
               </div>
-              <div className="form-row">
+              <div className="form-row" style={{marginBottom:14}}>
                 <div><label className="form-label">Supplier *</label><input className="form-input" value={form.supplier} onChange={e=>sf('supplier',e.target.value)} placeholder="Supplier name"/></div>
                 <div><label className="form-label">Location *</label><input className="form-input" value={form.location} onChange={e=>sf('location',e.target.value)} placeholder="Shelf A-3"/></div>
               </div>
-
-
               <div className="form-group" style={{marginTop:14}}>
-  <label className="form-label">Notes</label>
-  <textarea className="form-input" rows={2} value={form.notes||''} onChange={e=>sf('notes',e.target.value)} placeholder="Any additional notes..." style={{resize:'vertical'}}/>
-</div>
+                <label className="form-label">Notes</label>
+                <textarea className="form-input" rows={2} value={form.notes||''} onChange={e=>sf('notes',e.target.value)} placeholder="Any additional notes..." style={{resize:'vertical'}}/>
+              </div>
             </div>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={()=>{setShowAdd(false);setEditing(null)}}>Cancel</button>
@@ -2185,10 +2251,83 @@ function FuelLogsPage({ user }) {
           </div>
         </div>
       )}
+
+      {/* Issue Modal */}
+      {showIssue&&selectedPart&&(
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowIssue(false)}>
+          <div className="modal" style={{maxWidth:460}}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-title">Issue Spare Part</div>
+                <div style={{fontSize:12,color:'var(--text2)',marginTop:2}}>{selectedPart.name} — Available: {selectedPart.quantity} {selectedPart.unit}</div>
+              </div>
+              <X onClick={()=>setShowIssue(false)}/>
+            </div>
+            <div className="modal-body">
+              <div className="form-group"><label className="form-label">Fleet Vehicle *</label>
+                <select className="form-input" style={{appearance:'auto'}} value={issueForm.vehicleId} onChange={e=>setIssueForm(f=>({...f,vehicleId:e.target.value}))}>
+                  <option value="">— Select vehicle —</option>
+                  {fleet.map(v=><option key={v.id} value={v.id}>{v.plate} — {v.make} {v.model}</option>)}
+                </select>
+              </div>
+              <div className="form-group"><label className="form-label">Quantity *</label>
+                <input className="form-input" type="number" min="1" max={selectedPart.quantity} value={issueForm.quantity} onChange={e=>setIssueForm(f=>({...f,quantity:parseInt(e.target.value)||1}))}/>
+              </div>
+              <div className="form-group"><label className="form-label">Reason *</label>
+                <input className="form-input" value={issueForm.reason} onChange={e=>setIssueForm(f=>({...f,reason:e.target.value}))} placeholder="e.g. Engine maintenance, Brake repair"/>
+              </div>
+              <div className="form-group"><label className="form-label">Done By *</label>
+                <input className="form-input" value={issueForm.doneBy} onChange={e=>setIssueForm(f=>({...f,doneBy:e.target.value}))} placeholder="Name of person"/>
+              </div>
+              <div className="form-group"><label className="form-label">Notes</label>
+                <textarea className="form-input" rows={2} value={issueForm.notes} onChange={e=>setIssueForm(f=>({...f,notes:e.target.value}))} style={{resize:'vertical'}}/>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={()=>setShowIssue(false)}>Cancel</button>
+              <button className="btn btn-blue" onClick={handleIssue}>Issue Part</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Usage History Modal */}
+      {showUsage&&selectedPart&&(
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowUsage(false)}>
+          <div className="modal" style={{maxWidth:520}}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-title">Usage History</div>
+                <div style={{fontSize:12,color:'var(--text2)',marginTop:2}}>{selectedPart.name} — {selectedPart.category}</div>
+              </div>
+              <X onClick={()=>setShowUsage(false)}/>
+            </div>
+            <div className="modal-body" style={{padding:0}}>
+              {usage.length===0?(
+                <div style={{padding:48,textAlign:'center',color:'var(--text3)'}}>No usage history yet</div>
+              ):(
+                [...usage].reverse().map(u=>(
+                  <div key={u.id} style={{padding:'14px 20px',borderBottom:'1px solid var(--border)'}}>
+                    <div style={{display:'flex',justifyContent:'space-between',marginBottom:4,alignItems:'center'}}>
+                      <span style={{fontWeight:700,fontSize:13,color:'var(--blue)'}}>{u.fleetVehicle?.plate} — {u.fleetVehicle?.make} {u.fleetVehicle?.model}</span>
+                      <span style={{fontSize:12,color:'var(--text2)'}}>{u.usedDate}</span>
+                    </div>
+                    <div style={{fontSize:13,marginBottom:4}}>Qty: <strong>{u.quantity} {selectedPart.unit}</strong> — {u.reason}</div>
+                    {u.doneBy&&<div style={{fontSize:11,color:'var(--text3)'}}>By: {u.doneBy}</div>}
+                    {u.notes&&<div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>{u.notes}</div>}
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={()=>setShowUsage(false)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
-
 //  STAFF 
 //  STAFF 
 function StaffPage() {
@@ -3493,7 +3632,7 @@ function TyresPage({ user }) {
                 <div><label className="form-label">Purchase Date *</label><input className="form-input" type="date" value={form.purchaseDate} onChange={e=>sf('purchaseDate',e.target.value)}/></div>
               </div>
               <div className="form-row" style={{marginBottom:14}}>
-                <div><label className="form-label">Purchase Price (RWF) *</label><input className="form-input" type="number" value={form.purchasePrice} onChange={e=>sf('purchasePrice',e.target.value)} placeholder="0"/></div>
+                <div><label className="form-label">Purchase Price (RWF) *</label><input className="form-input" type="text" value={form.purchasePrice} onChange={e=>sf('purchasePrice',e.target.value)} placeholder="0"/></div>
               </div>
               <div className="form-group">
                 <label className="form-label">Notes</label>
