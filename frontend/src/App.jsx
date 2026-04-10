@@ -257,7 +257,7 @@ const X = ({ onClick }) => (
 
 //  LOGIN 
 // Permissions helpers
-const PAGES = ['Vehicles','Fuel Logs','Expenses','Inventory','Alerts']
+const PAGES = ['Vehicles','Fuel Logs','Expenses','Spare Parts','Tyres','Alerts']
 const ACTIONS = ['view','add','edit','delete']
 const defaultPerms = () => {
   const p = {}
@@ -454,7 +454,8 @@ function Sidebar({ user, activeTab, setActiveTab, onLogout, alertCount, menuOpen
           {(user.role==='manager'||hasPerm(user,'Alerts','view'))&&N('alerts','Alerts',alertCount)}
           {(user.role==='manager'||hasPerm(user,'Vehicles','view'))&&N('vehicles','Vehicles')}
           {(user.role==='manager'||hasPerm(user,'Fuel Logs','view'))&&N('fuel','Fuel Logs')}
-          {(user.role==='manager'||hasPerm(user,'Inventory','view'))&&N('inventory','Inventory')}
+          {(user.role==='manager'||hasPerm(user,'Spare Parts','view'))&&N('spareParts','Spare Parts')}
+          {(user.role==='manager'||hasPerm(user,'Tyres','view'))&&N('tyres','Tyres')}
           {user.role==='manager'&&N('staff','Staff')}
           {(user.role==='manager'||hasPerm(user,'Expenses','view'))&&N('expenses','Expenses')}
           {user.role==='manager'&&N('audit','Audit Log')}
@@ -1215,7 +1216,7 @@ function ReportsPage() {
           {activeReport==='garage'&&(
             filteredGarage.length===0?<div style={{padding:48,textAlign:'center',color:'var(--text3)'}}>No garage vehicles found</div>:(
               <div className="table-wrap"><table className="table">
-                <thead><tr><th>Plate</th><th>Make/Model</th><th>Status</th><th className="hide-mobile">Owner</th><th className="hide-mobile">Mileage</th></tr></thead>
+                <thead><tr><th>Plate</th><th>Make/Model</th><th>Status</th><th className="hide-mobile">Owner</th></tr></thead>
                 <tbody>{filteredGarage.map(v=>{const ss=STATUS_STYLE[v.status]||STATUS_STYLE['Ready'];return(
                   <tr key={v.id}>
                     <td style={{fontFamily:'DM Mono,monospace',color:'var(--blue)',fontWeight:700}}>{v.plate}</td>
@@ -2054,38 +2055,49 @@ function FuelLogsPage({ user }) {
 }
 
 
-//  INVENTORY 
-function InventoryPage({ user }) {
+//  SPARE PARTS PAGE 
+  function SparePartsPage({ user }) {
   const [items, setItems] = useState([])
   const [showAdd, setShowAdd] = useState(false)
   const [editing, setEditing] = useState(null)
   const [search, setSearch] = useState('')
   const [catFilter, setCatFilter] = useState('ALL')
- const canAdd=user.role==='manager'||hasPerm(user,'Inventory','add')
-const canEdit=user.role==='manager'||hasPerm(user,'Inventory','edit')
-const canDelete=user.role==='manager'||hasPerm(user,'Inventory','delete')
-  const empty={name:'',category:'PART',description:'',quantity:0,minQuantity:5,unitPrice:0,unit:'pcs',supplier:'',location:''}
+  const canAdd=user.role==='manager'||hasPerm(user,'Spare Parts','add')
+  const canEdit=user.role==='manager'||hasPerm(user,'Spare Parts','edit')
+  const canDelete=user.role==='manager'||hasPerm(user,'Spare Parts','delete')
+
+ const empty={name:'',category:'PART',description:'',quantity:0,minQuantity:5,unitPrice:0,unit:'pcs',supplier:'',location:'',notes:''}
   const [form, setForm] = useState(empty)
   const sf=(k,v)=>setForm(f=>({...f,[k]:v}))
   useEffect(()=>{fetchItems()},[])
   const fetchItems=async()=>{try{const r=await api.get('/inventory');setItems(r.data)}catch(e){console.error(e)}}
   const handleSave=async()=>{
-    if(!form.name){alert('Item name required');return}
+  const missing=[]
+  if(!form.name) missing.push('Item Name')
+  if(!form.category) missing.push('Category')
+  if(!form.quantity) missing.push('Quantity')
+  if(!form.unit) missing.push('Unit')
+  if(!form.minQuantity) missing.push('Min Quantity')
+  if(!form.unitPrice) missing.push('Price')
+  if(!form.supplier) missing.push('Supplier')
+  if(!form.location) missing.push('Location')
+  if(missing.length>0){alert('Required fields missing:\n• '+missing.join('\n• '));return}
     try{
-      if(editing){await api.put(`/inventory/${editing.id}`,form);await logAudit(user,'EDIT','Inventory',`Edited item: ${form.name}`)}
-      else{await api.post('/inventory',form);await logAudit(user,'ADD','Inventory',`Added item: ${form.name}`)}
+      if(editing){await api.put(`/inventory/${editing.id}`,form);await logAudit(user,'EDIT','Spare Parts',`Edited item: ${form.name}`)}
+      else{await api.post('/inventory',form);await logAudit(user,'ADD','Spare Parts',`Added item: ${form.name}`)}
       fetchItems();setShowAdd(false);setEditing(null);setForm(empty)
     }catch{alert('Failed to save item')}
   }
   const handleDelete=async(id)=>{
     if(!window.confirm('Delete this item?'))return
-    try{const item=items.find(i=>i.id===id);await api.delete(`/inventory/${id}`);await logAudit(user,'DELETE','Inventory',`Deleted item: ${item?.name||id}`);fetchItems()}catch{alert('Failed to delete')}
+    try{const item=items.find(i=>i.id===id);await api.delete(`/inventory/${id}`);await logAudit(user,'DELETE','Spare Parts',`Deleted item: ${item?.name||id}`);fetchItems()}catch{alert('Failed to delete')}
   }
   const filtered=items.filter(i=>{const q=search.toLowerCase();return(catFilter==='ALL'||i.category===catFilter)&&(!q||i.name?.toLowerCase().includes(q)||i.supplier?.toLowerCase().includes(q))})
   return (
     <>
       <div className="page-header">
-        <div><div className="page-title">Inventory</div><div className="page-sub">Parts, tools and consumables</div></div>
+        <div className="page-title">Spare Parts</div>
+        <div className="page-sub">Parts, tools and consumables</div>
         {canEdit&&<div className="page-actions"><button className="btn btn-success btn-sm" onClick={()=>{setForm(empty);setEditing(null);setShowAdd(true)}}>+ Add Item</button></div>}
       </div>
       <div className="page-content">
@@ -2103,8 +2115,8 @@ const canDelete=user.role==='manager'||hasPerm(user,'Inventory','delete')
           </div>
         </div>
         <div className="card">
-          <div className="card-header"><div className="card-title">Stock List</div><span style={{fontSize:12,color:'var(--text2)',fontWeight:600}}>{filtered.length} items</span></div>
-          {filtered.length===0?<div style={{padding:48,textAlign:'center',color:'var(--text3)'}}>No items found</div>:(
+          <div className="card-header"><div className="card-title">Spare Parts List</div><span style={{fontSize:12,color:'var(--text2)',fontWeight:600}}>{filtered.length} items</span></div>
+          {filtered.length===0?<div style={{padding:48,textAlign:'center',color:'var(--text3)'}}>No spare parts found</div>:(
             <div className="table-wrap">
               <table className="table">
                 <thead><tr><th>Item</th><th className="hide-mobile">Category</th><th>Qty</th><th className="hide-mobile">Unit Price</th><th>Status</th>{canEdit&&<th>Actions</th>}</tr></thead>
@@ -2130,7 +2142,7 @@ const canDelete=user.role==='manager'||hasPerm(user,'Inventory','delete')
       {showAdd&&(
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowAdd(false)}>
           <div className="modal" style={{maxWidth:540}}>
-            <div className="modal-header"><div className="modal-title">{editing?'Edit Item':'Add Inventory Item'}</div><X onClick={()=>{setShowAdd(false);setEditing(null)}}/></div>
+            <div className="modal-header"><div className="modal-title">{editing?'Edit Spare Part':'Add Spare Part'}</div><X onClick={()=>{setShowAdd(false);setEditing(null)}}/></div>
             <div className="modal-body">
               <div className="form-row" style={{marginBottom:14}}>
                 <div><label className="form-label">Item Name *</label><input className="form-input" value={form.name} onChange={e=>sf('name',e.target.value)} placeholder="Oil Filter"/></div>
@@ -2141,7 +2153,7 @@ const canDelete=user.role==='manager'||hasPerm(user,'Inventory','delete')
                 </div>
               </div>
               <div className="form-row" style={{marginBottom:14}}>
-                <div><label className="form-label">Quantity *</label><input className="form-input" type="number" value={form.quantity} onChange={e=>sf('quantity',parseInt(e.target.value)||0)}/></div>
+                <div><label className="form-label">Quantity *</label><input className="form-input" type="text" value={form.quantity} onChange={e=>sf('quantity',parseInt(e.target.value)||0)}/></div>
                 <div><label className="form-label">Unit *</label>
                   <select className="form-input" style={{appearance:'auto'}} value={form.unit} onChange={e=>sf('unit',e.target.value)}>
                     {['pcs','liters','kg','meters','boxes','sets'].map(u=><option key={u}>{u}</option>)}
@@ -2149,17 +2161,23 @@ const canDelete=user.role==='manager'||hasPerm(user,'Inventory','delete')
                 </div>
               </div>
               <div className="form-row" style={{marginBottom:14}}>
-                <div><label className="form-label">Min Qty</label><input className="form-input" type="number" value={form.minQuantity} onChange={e=>sf('minQuantity',parseInt(e.target.value)||0)}/></div>
-                <div><label className="form-label">Price (RWF)</label><input className="form-input" type="number" value={form.unitPrice} onChange={e=>sf('unitPrice',parseInt(e.target.value)||0)}/></div>
+                <div><label className="form-label">Min Qty *</label><input className="form-input" type="text" value={form.minQuantity} onChange={e=>sf('minQuantity',parseInt(e.target.value)||0)}/></div>
+                <div><label className="form-label">Price (RWF) *</label><input className="form-input" type="text" value={form.unitPrice} onChange={e=>sf('unitPrice',parseInt(e.target.value)||0)}/></div>
               </div>
               <div className="form-row">
-                <div><label className="form-label">Supplier</label><input className="form-input" value={form.supplier} onChange={e=>sf('supplier',e.target.value)} placeholder="Supplier name"/></div>
-                <div><label className="form-label">Location</label><input className="form-input" value={form.location} onChange={e=>sf('location',e.target.value)} placeholder="Shelf A-3"/></div>
+                <div><label className="form-label">Supplier *</label><input className="form-input" value={form.supplier} onChange={e=>sf('supplier',e.target.value)} placeholder="Supplier name"/></div>
+                <div><label className="form-label">Location *</label><input className="form-input" value={form.location} onChange={e=>sf('location',e.target.value)} placeholder="Shelf A-3"/></div>
               </div>
+
+
+              <div className="form-group" style={{marginTop:14}}>
+  <label className="form-label">Notes</label>
+  <textarea className="form-input" rows={2} value={form.notes||''} onChange={e=>sf('notes',e.target.value)} placeholder="Any additional notes..." style={{resize:'vertical'}}/>
+</div>
             </div>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={()=>{setShowAdd(false);setEditing(null)}}>Cancel</button>
-              <button className="btn btn-success" onClick={handleSave}>{editing?'Save Changes':'Add Item'}</button>
+              <button className="btn btn-success" onClick={handleSave}>{editing?'Save Changes':'Add Spare Part'}</button>
             </div>
           </div>
         </div>
@@ -3181,7 +3199,337 @@ const canDelete=user.role==='manager'||hasPerm(user,'Vehicles','delete')
       )}
     </>
   )
+}  
+
+
+// Tyres Management Page
+
+function TyresPage({ user }) {
+  const [tyres, setTyres] = useState([])
+  const [fleet, setFleet] = useState([])
+  const [showAdd, setShowAdd] = useState(false)
+  const [editing, setEditing] = useState(null)
+  const [showHistory, setShowHistory] = useState(false)
+  const [selectedTyre, setSelectedTyre] = useState(null)
+  const [history, setHistory] = useState([])
+  const [search, setSearch] = useState('')
+  const [filterStatus, setFilterStatus] = useState('ALL')
+  const canAdd=user.role==='manager'||hasPerm(user,'Tyres','add')
+  const canEdit=user.role==='manager'||hasPerm(user,'Tyres','edit')
+  const canDelete=user.role==='manager'||hasPerm(user,'Tyres','delete')
+
+  const empty={serialNumber:'',brand:'',size:'',type:'',status:'New',condition:'Good',purchaseDate:'',purchasePrice:'',position:'',mileageAtFitting:'',currentMileage:'',notes:'',fleetVehicleId:''}
+  const [form, setForm] = useState(empty)
+  const sf=(k,v)=>setForm(f=>({...f,[k]:v}))
+
+  const STATUSES=['New','In_Use','Worn','Damaged','Disposed']
+  const CONDITIONS=['Good','Fair','Poor']
+  const POSITIONS=['Front_Left','Front_Right','Rear_Left','Rear_Right','Spare']
+  const STATUS_COLORS={
+    'New':{bg:'#d1fae5',color:'#065f46'},
+    'In_Use':{bg:'#dbeafe',color:'#1e40af'},
+    'Worn':{bg:'#fef3c7',color:'#92400e'},
+    'Damaged':{bg:'#fee2e2',color:'#991b1b'},
+    'Disposed':{bg:'#f3f4f6',color:'#6b7280'},
+  }
+  const CONDITION_COLORS={
+    'Good':{bg:'#d1fae5',color:'#065f46'},
+    'Fair':{bg:'#fef3c7',color:'#92400e'},
+    'Poor':{bg:'#fee2e2',color:'#991b1b'},
+  }
+
+  useEffect(()=>{fetchTyres();fetchFleet()},[])
+
+  const fetchTyres=async()=>{
+    try{const r=await api.get('/tyres');setTyres(Array.isArray(r.data)?r.data:[])}catch(e){console.error(e)}
+  }
+  const fetchFleet=async()=>{
+    try{const r=await api.get('/fleet');setFleet(Array.isArray(r.data)?r.data:r.data?.content||[])}catch(e){console.error(e)}
+  }
+  const fetchHistory=async(tyreId)=>{
+    try{const r=await api.get(`/tyres/movements/${tyreId}`);setHistory(Array.isArray(r.data)?r.data:[])}catch(e){console.error(e)}
+  }
+
+  const handleSave=async()=>{
+  const missing=[]
+  if(!form.serialNumber) missing.push('Serial Number')
+  if(!form.brand) missing.push('Brand')
+  if(!form.size) missing.push('Size')
+  if(!form.type) missing.push('Type')
+  if(!form.status) missing.push('Status')
+  if(!form.condition) missing.push('Condition')
+  if(!form.purchaseDate) missing.push('Purchase Date')
+  if(!form.purchasePrice) missing.push('Purchase Price')
+  if(!form.position) missing.push('Position')
+  if(missing.length>0){alert('Required fields missing:\n• '+missing.join('\n• '));return}
+    try{
+      const payload={
+        ...form,
+        purchasePrice:parseFloat(form.purchasePrice)||0,
+        mileageAtFitting:parseFloat(form.mileageAtFitting)||0,
+        currentMileage:parseFloat(form.currentMileage)||0,
+        fleetVehicle:form.fleetVehicleId?{id:parseInt(form.fleetVehicleId)}:null
+      }
+      if(editing){
+        await api.put(`/tyres/${editing.id}`,payload)
+        await logAudit(user,'EDIT','Tyres',`Edited tyre: ${form.serialNumber||form.brand}`)
+      }else{
+        await api.post('/tyres',payload)
+        await logAudit(user,'ADD','Tyres',`Added tyre: ${form.brand} ${form.size}`)
+      }
+      fetchTyres();setShowAdd(false);setEditing(null);setForm(empty)
+    }catch{alert('Failed to save tyre')}
+  }
+
+  const handleDelete=async(id)=>{
+    if(!window.confirm('Delete this tyre?'))return
+    try{
+      const tyre=tyres.find(t=>t.id===id)
+      await api.delete(`/tyres/${id}`)
+      await logAudit(user,'DELETE','Tyres',`Deleted tyre: ${tyre?.serialNumber||tyre?.brand}`)
+      fetchTyres()
+    }catch{alert('Failed to delete')}
+  }
+
+  const openEdit=(tyre)=>{
+    setEditing(tyre)
+    setForm({
+      serialNumber:tyre.serialNumber||'',
+      brand:tyre.brand||'',
+      size:tyre.size||'',
+      type:tyre.type||'',
+      status:tyre.status||'New',
+      condition:tyre.condition||'Good',
+      purchaseDate:tyre.purchaseDate||'',
+      purchasePrice:tyre.purchasePrice||'',
+      position:tyre.position||'',
+      mileageAtFitting:tyre.mileageAtFitting||'',
+      currentMileage:tyre.currentMileage||'',
+      notes:tyre.notes||'',
+      fleetVehicleId:tyre.fleetVehicle?.id||''
+    })
+    setShowAdd(true)
+  }
+
+  const openHistory=async(tyre)=>{
+    setSelectedTyre(tyre)
+    await fetchHistory(tyre.id)
+    setShowHistory(true)
+  }
+
+  const filtered=tyres.filter(t=>{
+    const q=search.toLowerCase()
+    return(filterStatus==='ALL'||t.status===filterStatus)&&
+      (!q||t.serialNumber?.toLowerCase().includes(q)||t.brand?.toLowerCase().includes(q)||t.fleetVehicle?.plate?.toLowerCase().includes(q))
+  })
+
+  const stats=[
+    {label:'Total Tyres',value:tyres.length,color:'var(--blue)'},
+    {label:'In Use',value:tyres.filter(t=>t.status==='In_Use').length,color:'#1e40af'},
+    {label:'New/Stock',value:tyres.filter(t=>t.status==='New').length,color:'var(--green)'},
+    {label:'Worn/Damaged',value:tyres.filter(t=>t.status==='Worn'||t.status==='Damaged').length,color:'var(--red)'},
+  ]
+
+  return (
+    <>
+      <div className="page-header">
+        <div><div className="page-title">Tyre Management</div><div className="page-sub">Track and manage fleet tyres</div></div>
+        {canAdd&&<div className="page-actions"><button className="btn btn-success btn-sm" onClick={()=>{setForm(empty);setEditing(null);setShowAdd(true)}}>+ Add Tyre</button></div>}
+      </div>
+      <div className="page-content">
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
+          {stats.map(s=>(
+            <div key={s.label} className="stat-card">
+              <div style={{fontSize:11,color:'var(--text2)',marginBottom:4,fontWeight:600}}>{s.label}</div>
+              <div style={{fontSize:22,fontWeight:800,color:s.color}}>{s.value}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{display:'flex',gap:10,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}>
+          <input className="form-input" style={{flex:1,minWidth:160}} placeholder="Search serial, brand, plate..." value={search} onChange={e=>setSearch(e.target.value)}/>
+          <div className="tab-bar" style={{width:'auto'}}>
+            {['ALL',...STATUSES].map(s=>(
+              <button key={s} className="tab-btn" onClick={()=>setFilterStatus(s)}
+                style={{background:filterStatus===s?'var(--blue)':'transparent',color:filterStatus===s?'#fff':'var(--text2)',padding:'7px 12px'}}>
+                {s==='ALL'?'All':s.replace('_',' ')}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-header"><div className="card-title">Tyres</div><span style={{fontSize:12,color:'var(--text2)',fontWeight:600}}>{filtered.length} tyres</span></div>
+          {filtered.length===0?<div style={{padding:48,textAlign:'center',color:'var(--text3)'}}>No tyres found</div>:(
+            <div className="table-wrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Serial No.</th>
+                    <th>Brand</th>
+                    <th>Size</th>
+                    <th>Status</th>
+                    <th>Condition</th>
+                    <th>Vehicle</th>
+                    <th>Position</th>
+                    <th className="hide-mobile">Mileage</th>
+                    <th className="hide-mobile">Price (RWF)</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(t=>{
+                    const sc=STATUS_COLORS[t.status]||STATUS_COLORS['New']
+                    const cc=CONDITION_COLORS[t.condition]||CONDITION_COLORS['Good']
+                    return(
+                      <tr key={t.id}>
+                        <td style={{fontFamily:'DM Mono,monospace',fontSize:13,fontWeight:700}}>{t.serialNumber||'—'}</td>
+                        <td style={{fontWeight:600}}>{t.brand}</td>
+                        <td style={{fontFamily:'DM Mono,monospace',fontSize:13}}>{t.size}</td>
+                        <td><span style={{fontSize:11,fontWeight:700,borderRadius:20,padding:'3px 8px',background:sc.bg,color:sc.color}}>{t.status?.replace('_',' ')}</span></td>
+                        <td><span style={{fontSize:11,fontWeight:700,borderRadius:20,padding:'3px 8px',background:cc.bg,color:cc.color}}>{t.condition}</span></td>
+                        <td style={{fontFamily:'DM Mono,monospace',color:'var(--blue)',fontWeight:700}}>{t.fleetVehicle?.plate||'—'}</td>
+                        <td style={{fontSize:13,color:'var(--text2)'}}>{t.position?.replace('_',' ')||'—'}</td>
+  
+                        <td className="hide-mobile" style={{fontFamily:'DM Mono,monospace',color:'var(--green)'}}>{t.purchasePrice?(t.purchasePrice).toLocaleString():'—'}</td>
+                        <td>
+                          <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                            <button className="btn btn-ghost btn-sm" onClick={()=>openHistory(t)}>History</button>
+                            {canEdit&&<button className="btn btn-ghost btn-sm" onClick={()=>openEdit(t)}>Edit</button>}
+                            {canDelete&&<button className="btn btn-danger btn-sm" onClick={()=>handleDelete(t.id)}>Del</button>}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Add/Edit Modal */}
+      {showAdd&&(
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowAdd(false)}>
+          <div className="modal" style={{maxWidth:560}}>
+            <div className="modal-header">
+              <div className="modal-title">{editing?'Edit Tyre':'Add Tyre'}</div>
+              <X onClick={()=>{setShowAdd(false);setEditing(null)}}/>
+            </div>
+            <div className="modal-body">
+              <div className="form-row" style={{marginBottom:14}}>
+                <div><label className="form-label">Serial Number</label><input className="form-input" value={form.serialNumber} onChange={e=>sf('serialNumber',e.target.value)} placeholder="e.g. BR-2024-001"/></div>
+                <div><label className="form-label">Brand *</label><input className="form-input" value={form.brand} onChange={e=>sf('brand',e.target.value)} placeholder="e.g. Bridgestone"/></div>
+              </div>
+              <div className="form-row" style={{marginBottom:14}}>
+                <div><label className="form-label">Size *</label><input className="form-input" value={form.size} onChange={e=>sf('size',e.target.value)} placeholder="e.g. 11R22.5"/></div>
+                <div><label className="form-label">Type</label><input className="form-input" value={form.type} onChange={e=>sf('type',e.target.value)} placeholder="e.g. Radial"/></div>
+              </div>
+              <div className="form-row" style={{marginBottom:14}}>
+                <div><label className="form-label">Status *</label>
+                  <select className="form-input" style={{appearance:'auto'}} value={form.status} onChange={e=>sf('status',e.target.value)}>
+                    {STATUSES.map(s=><option key={s} value={s}>{s.replace('_',' ')}</option>)}
+                  </select>
+                </div>
+                <div><label className="form-label">Condition</label>
+                  <select className="form-input" style={{appearance:'auto'}} value={form.condition} onChange={e=>sf('condition',e.target.value)}>
+                    {CONDITIONS.map(c=><option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="form-row" style={{marginBottom:14}}>
+                <div><label className="form-label">Purchase Date</label><input className="form-input" type="date" value={form.purchaseDate} onChange={e=>sf('purchaseDate',e.target.value)}/></div>
+                <div><label className="form-label">Purchase Price (RWF)</label><input className="form-input" type="text" value={form.purchasePrice} onChange={e=>sf('purchasePrice',e.target.value)} placeholder="0"/></div>
+              </div>
+              <div className="form-row" style={{marginBottom:14}}>
+                <div><label className="form-label">Fleet Vehicle</label>
+                  <select className="form-input" style={{appearance:'auto'}} value={form.fleetVehicleId} onChange={e=>sf('fleetVehicleId',e.target.value)}>
+                    <option value="">— Not assigned —</option>
+                    {fleet.map(v=><option key={v.id} value={v.id}>{v.plate} — {v.make} {v.model}</option>)}
+                  </select>
+                </div>
+                <div><label className="form-label">Position</label>
+                  <select className="form-input" style={{appearance:'auto'}} value={form.position} onChange={e=>sf('position',e.target.value)}>
+                    <option value="">— Select position —</option>
+                    {POSITIONS.map(p=><option key={p} value={p}>{p.replace('_',' ')}</option>)}
+                  </select>
+                </div>
+              </div>
+              
+              <div className="form-group">
+                <label className="form-label">Notes</label>
+                <textarea className="form-input" rows={2} value={form.notes} onChange={e=>sf('notes',e.target.value)} placeholder="Any additional notes..." style={{resize:'vertical'}}/>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={()=>{setShowAdd(false);setEditing(null)}}>Cancel</button>
+              <button className="btn btn-success" onClick={handleSave}>{editing?'Save Changes':'Add Tyre'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* History Modal */}
+      {showHistory&&selectedTyre&&(
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowHistory(false)}>
+          <div className="modal" style={{maxWidth:500}}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-title">Tyre History</div>
+                <div style={{fontSize:12,color:'var(--text2)',marginTop:2}}>{selectedTyre.brand} {selectedTyre.size} — {selectedTyre.serialNumber||'No serial'}</div>
+              </div>
+              <X onClick={()=>setShowHistory(false)}/>
+            </div>
+            <div className="modal-body" style={{padding:0}}>
+              {history.length===0?(
+                <div style={{padding:48,textAlign:'center',color:'var(--text3)'}}>No movement history yet</div>
+              ):(
+                history.map((h,i)=>(
+                  <div key={h.id} style={{padding:'14px 20px',borderBottom:'1px solid var(--border)'}}>
+                    <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
+                      <span style={{fontWeight:700,fontSize:13}}>{h.reason}</span>
+                      <span style={{fontSize:12,color:'var(--text2)'}}>{h.movedDate}</span>
+                    </div>
+                    <div style={{fontSize:12,color:'var(--text2)'}}>
+                      {h.fromVehicle&&<span>From: <strong>{h.fromVehicle}</strong> </span>}
+                      {h.toVehicle&&<span>To: <strong>{h.toVehicle}</strong></span>}
+                    </div>
+                    {h.movedBy&&<div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>By: {h.movedBy}</div>}
+                    {h.notes&&<div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>{h.notes}</div>}
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={()=>setShowHistory(false)}>Close</button>
+              {canAdd&&<button className="btn btn-blue" onClick={()=>{
+                const reason=prompt('Reason for movement?')
+                const fromVehicle=selectedTyre.fleetVehicle?.plate||''
+                const toVehicle=prompt('Move to vehicle plate?')||''
+                const movedBy=prompt('Moved by?')||''
+                if(reason){
+                  api.post('/tyres/movements',{
+                    tyreId:selectedTyre.id,
+                    fromVehicle,
+                    toVehicle,
+                    movedDate:new Date().toISOString().split('T')[0],
+                    reason,
+                    movedBy,
+                  }).then(()=>fetchHistory(selectedTyre.id))
+                }
+              }}>+ Log Movement</button>}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
 }
+
+
+
+
 
 //  APP 
 export default function App() {
@@ -3233,7 +3581,8 @@ export default function App() {
             {activeTab==='alerts'&&<AlertsDashboard onAlertsChange={setAlertCount} onNavigate={handleTabChange} onEditVehicle={v=>{setAlertEditVehicle(v);handleTabChange('vehicles')}}/>}
             {activeTab==='vehicles'&&<VehiclesPage user={user} initialEditVehicle={alertEditVehicle} onInitialEditDone={()=>setAlertEditVehicle(null)} initialSelectedVehicle={selectedGarageVehicle} onInitialSelectedDone={()=>setSelectedGarageVehicle(null)}/>}
             {activeTab==='fuel'&&(user.role==='manager'||hasPerm(user,'Fuel Logs','view'))&&<FuelLogsPage user={user}/>}
-            {activeTab==='inventory'&&(user.role==='manager'||hasPerm(user,'Inventory','view'))&&<InventoryPage user={user}/>}
+            {activeTab==='spareParts'&&(user.role==='manager'||hasPerm(user,'Spare Parts','view'))&&<SparePartsPage user={user}/>}
+            {activeTab==='tyres'&&(user.role==='manager'||hasPerm(user,'Tyres','view'))&&<TyresPage user={user}/>}
             {activeTab==='staff'&&user.role==='manager'&&<StaffPage/>}
             {activeTab==='expenses'&&(user.role==='manager'||hasPerm(user,'Expenses','view'))&&<ExpensesPage user={user}/>}
             {activeTab==='audit'&&user.role==='manager'&&<AuditLogPage/>}
