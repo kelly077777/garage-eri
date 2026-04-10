@@ -13,10 +13,13 @@ public class TyreMovement {
     private Long id;
     
     private Long tyreId;
+    private String action; // ASSIGNED, REMOVED, MOVED, DISPOSED
     private String fromVehicle;
     private String toVehicle;
-    private LocalDate movedDate;
+    private String fromPosition;
+    private String toPosition;
+    private LocalDate actionDate;
     private String reason;
-    private String movedBy;
+    private String doneBy;
     private String notes;
 }
