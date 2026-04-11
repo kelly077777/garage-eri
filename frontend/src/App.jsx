@@ -2664,7 +2664,7 @@ function FleetModal({ vehicle, onSave, onClose, backLabel }) {
               <div style={{fontSize:11,fontWeight:800,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:10}}>{doc.label}</div>
               <div className="form-row" style={{marginBottom:10}}>
                 <div><label className="form-label">Issued Date</label><input className="form-input" type="date" value={form[doc.issuedKey]||''} onChange={e=>s(doc.issuedKey,e.target.value)}/></div>
-                <div><label className="form-label">Expiry Date *</label><input className="form-input" type="date" value={form[doc.expiryKey]||''} onChange={e=>s(doc.expiryKey,e.target.value)}/></div>
+                <div><label className="form-label">Expiry Date </label><input className="form-input" type="date" value={form[doc.expiryKey]||''} onChange={e=>s(doc.expiryKey,e.target.value)}/></div>
               </div>
               <div>
                 <label className="form-label">Document File (PDF / JPG / PNG)</label>
@@ -2763,7 +2763,7 @@ function FleetModal({ vehicle, onSave, onClose, backLabel }) {
             if(!form.insuranceNumber)missing.push('Insurance Number')
             if(!form.insuranceExpiry)missing.push('Insurance Expiry')
             if(!form.inspectionExpiry)missing.push('Inspection Expiry')
-            if(!form.speedGovernorExpiry)missing.push('Speed Governor Expiry')
+          {/*  if(!form.speedGovernorExpiry)missing.push('Speed Governor Expiry')  */}
           {/*  if(!form.driverLicenseExpiry)missing.push('Driver License Expiry')    */}
 
             if(missing.length>0){alert('Required fields missing:\n• '+missing.join('\n• '));return}
