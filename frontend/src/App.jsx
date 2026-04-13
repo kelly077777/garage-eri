@@ -265,7 +265,13 @@ const defaultPerms = () => {
   return p
 }
 const parsePerms = (permStr) => {
-  try { return permStr ? JSON.parse(permStr) : defaultPerms() } catch { return defaultPerms() }
+  try {
+    const parsed = permStr ? JSON.parse(permStr) : defaultPerms()
+    const defaults = defaultPerms()
+    return {...defaults, ...parsed}
+  } catch {
+    return defaultPerms()
+  }
 }
 const hasPerm = (user, page, action) => {
   if(!user) return false
@@ -1123,63 +1129,365 @@ function AuditLogPage() {
   )
 }
 
-//  REPORTS PAGE 
 function ReportsPage() {
   const [activeReport, setActiveReport] = useState('fleet')
   const [search, setSearch] = useState('')
   const [fuelMonth, setFuelMonth] = useState('ALL')
   const [fuelTypeFilter, setFuelTypeFilter] = useState('ALL')
   const [expMonth, setExpMonth] = useState('ALL')
-  const [data, setData] = useState({vehicles:[],fleet:[],fuel:[],inventory:[],staff:[],expenses:[]})
+  const [data, setData] = useState({vehicles:[],fleet:[],fuel:[],inventory:[],staff:[],expenses:[],tyres:[]})
+  const [selectedVehicle, setSelectedVehicle] = useState(null)
+  const [vehicleTab, setVehicleTab] = useState('fuel')
+  const [vehicleData, setVehicleData] = useState({fuel:[],tyres:[],spareParts:[],expenses:[]})
+  const [loadingVehicle, setLoadingVehicle] = useState(false)
+
+  // Fetch all data on mount
   useEffect(()=>{
-    Promise.all([api.get('/vehicles'),api.get('/fleet'),api.get('/fleet/fuel/all'),api.get('/inventory'),api.get('/auth/users'),api.get('/expenses')])
-      .then(([v,f,fuel,inv,s,exp])=>setData({
-        vehicles:Array.isArray(v.data)?v.data:v.data?.content||[],
-        fleet:Array.isArray(f.data)?f.data:f.data?.content||[],
-        fuel:Array.isArray(fuel.data)?fuel.data:fuel.data?.content||[],
-        inventory:Array.isArray(inv.data)?inv.data:inv.data?.content||[],
-        staff:Array.isArray(s.data)?s.data:s.data?.content||[],
-        expenses:Array.isArray(exp.data)?exp.data:[]
-      })).catch(e=>console.error(e))
+    Promise.all([
+      api.get('/vehicles'),
+      api.get('/fleet'),
+      api.get('/fleet/fuel/all'),
+      api.get('/inventory'),
+      api.get('/auth/users'),
+      api.get('/expenses'),
+      api.get('/tyres')
+    ]).then(([v,f,fuel,inv,s,exp,t])=>setData({
+      vehicles:Array.isArray(v.data)?v.data:v.data?.content||[],
+      fleet:Array.isArray(f.data)?f.data:f.data?.content||[],
+      fuel:Array.isArray(fuel.data)?fuel.data:fuel.data?.content||[],
+      inventory:Array.isArray(inv.data)?inv.data:inv.data?.content||[],
+      staff:Array.isArray(s.data)?s.data:s.data?.content||[],
+      expenses:Array.isArray(exp.data)?exp.data:[],
+      tyres:Array.isArray(t.data)?t.data:[],
+    })).catch(e=>console.error(e))
   },[])
-  const reportTabs=[{key:'fleet',label:'Fleet'},{key:'garage',label:'Garage'},{key:'fuel',label:'Fuel'},{key:'inventory',label:'Inventory'},{key:'staff',label:'Staff'},{key:'expenses',label:'Expenses'}]
+
+  // Open full vehicle report modal and fetch vehicle-specific data
+  const openVehicleReport=async(vehicle)=>{
+    setSelectedVehicle(vehicle)
+    setVehicleTab('fuel')
+    setLoadingVehicle(true)
+    try{
+      const [fuel,tyres,spareParts,expenses]=await Promise.all([
+        api.get('/fleet/fuel/all').then(r=>(Array.isArray(r.data)?r.data:[]).filter(f=>f.fleetVehicle?.id===vehicle.id)),
+        api.get(`/tyres/vehicle/${vehicle.id}`).then(r=>Array.isArray(r.data)?r.data:[]),
+        api.get(`/inventory/usage/vehicle/${vehicle.id}`).then(r=>Array.isArray(r.data)?r.data:[]),
+        api.get('/expenses').then(r=>(Array.isArray(r.data)?r.data:[]).filter(e=>e.plate===vehicle.plate)),
+      ])
+      setVehicleData({fuel,tyres,spareParts,expenses})
+    }catch(e){console.error(e)}
+    setLoadingVehicle(false)
+  }
+
+  // Report tabs — added Tyres and Spare Parts
+  const reportTabs=[
+    {key:'fleet',label:'Fleet'},
+    {key:'garage',label:'Garage'},
+    {key:'fuel',label:'Fuel'},
+    {key:'spareParts',label:'Spare Parts'},
+    {key:'tyres',label:'Tyres'},
+    {key:'staff',label:'Staff'},
+    {key:'expenses',label:'Expenses'},
+  ]
+
   const q=search.toLowerCase()
+
+  // Filtered data for each tab
   const filteredFleet=data.fleet.filter(v=>!q||v.plate?.toLowerCase().includes(q)||v.make?.toLowerCase().includes(q)||v.driverName?.toLowerCase().includes(q))
   const filteredGarage=data.vehicles.filter(v=>!q||v.plate?.toLowerCase().includes(q)||v.make?.toLowerCase().includes(q)||v.ownerName?.toLowerCase().includes(q))
   const filteredFuel=data.fuel.filter(f=>!q||f.fleetVehicle?.plate?.toLowerCase().includes(q)||f.station?.toLowerCase().includes(q))
   const filteredInventory=data.inventory.filter(i=>!q||i.name?.toLowerCase().includes(q)||i.category?.toLowerCase().includes(q))
   const filteredStaff=data.staff.filter(s=>!q||s.name?.toLowerCase().includes(q)||s.email?.toLowerCase().includes(q))
-  const filteredExpenses=data.expenses.filter(e=>!q||e.plate?.toLowerCase().includes(q)||e.reason?.toLowerCase().includes(q)||e.domain?.toLowerCase().includes(q))
+  const filteredExpenses=data.expenses.filter(e=>!q||e.plate?.toLowerCase().includes(q)||e.reason?.toLowerCase().includes(q))
+  const filteredTyres=data.tyres.filter(t=>!q||t.serialNumber?.toLowerCase().includes(q)||t.brand?.toLowerCase().includes(q)||t.fleetVehicle?.plate?.toLowerCase().includes(q))
+
+  // CSV export for all tabs
   const exportCSV=(rows,headers,filename)=>{
     const csv=[headers,...rows].map(r=>r.map(c=>`"${c??''}"`).join(',')).join('\n')
     const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob)
     const a=document.createElement('a');a.href=url;a.download=`${filename}-${new Date().toISOString().split('T')[0]}.csv`;a.click();URL.revokeObjectURL(url)
   }
+
+  // Generic PDF export for list reports
   const exportPDF=(title,headers,rows)=>{
     const tableRows=rows.map(r=>`<tr>${r.map(c=>`<td>${c??'—'}</td>`).join('')}</tr>`).join('')
     const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title><style>body{font-family:Calibri,sans-serif;padding:30px;color:#111}h1{font-size:20px;margin-bottom:4px}p{color:#555;font-size:12px;margin:2px 0}table{width:100%;border-collapse:collapse;margin-top:16px;font-size:12px}th{background:#2563eb;color:#fff;padding:8px;text-align:left}td{padding:7px 8px;border-bottom:1px solid #eee}tr:nth-child(even) td{background:#f8faff}</style></head><body><h1>${title}</h1><p>Generated: ${new Date().toLocaleString()}</p><p>Total Records: ${rows.length}</p><table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${tableRows}</tbody></table></body></html>`
     const w=window.open('','_blank');w.document.write(html);w.document.close();w.print()
   }
+
+  // Full vehicle report PDF export with all sections
+  const exportVehicleReportPDF=()=>{
+    if(!selectedVehicle) return
+    const totalFuel=vehicleData.fuel.reduce((s,f)=>s+(f.totalCost||0),0)
+    const totalTyres=vehicleData.tyres.reduce((s,t)=>s+(t.purchasePrice||0),0)
+    const totalParts=vehicleData.spareParts.reduce((s,p)=>s+(p.quantity*(p.unitPrice||0)),0)
+    const totalExp=vehicleData.expenses.reduce((s,e)=>s+(e.amount||0),0)
+    const total=totalFuel+totalTyres+totalParts+totalExp
+
+    const fuelRows=vehicleData.fuel.map(f=>`<tr><td>${f.date||'—'}</td><td>${f.liters||0}L</td><td>${(f.totalCost||0).toLocaleString()} RWF</td><td>${f.station||'—'}</td></tr>`).join('')
+    const tyreRows=vehicleData.tyres.map(t=>`<tr><td>${t.serialNumber||'—'}</td><td>${t.brand||'—'}</td><td>${t.size||'—'}</td><td>${t.status||'—'}</td><td>${t.position?.replace(/_/g,' ')||'—'}</td></tr>`).join('')
+    const partRows=vehicleData.spareParts.map(p=>`<tr><td>${p.usedDate||'—'}</td><td>${p.reason||'—'}</td><td>${p.quantity||0}</td><td>${p.doneBy||'—'}</td></tr>`).join('')
+    const expRows=vehicleData.expenses.map(e=>`<tr><td>${e.date||'—'}</td><td>${e.reason||'—'}</td><td>${e.assignment||e.receivedBy||'—'}</td><td>${(e.amount||0).toLocaleString()} RWF</td></tr>`).join('')
+
+    const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Vehicle Report - ${selectedVehicle.plate}</title>
+    <style>
+      body{font-family:Calibri,sans-serif;padding:30px;color:#111}
+      h1{font-size:22px;color:#1e3a5f;margin-bottom:4px}
+      h2{font-size:15px;color:#2563eb;margin-top:24px;margin-bottom:8px;border-bottom:2px solid #2563eb;padding-bottom:4px}
+      p{color:#555;font-size:12px;margin:2px 0}
+      table{width:100%;border-collapse:collapse;margin-top:8px;font-size:12px}
+      th{background:#2563eb;color:#fff;padding:8px;text-align:left}
+      td{padding:7px 8px;border-bottom:1px solid #eee}
+      tr:nth-child(even) td{background:#f8faff}
+      .summary{background:#f0f7ff;border:1px solid #2563eb;border-radius:8px;padding:16px;margin-top:24px}
+      .summary-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #ddd;font-size:13px}
+      .summary-total{display:flex;justify-content:space-between;padding:8px 0;font-size:15px;font-weight:bold;color:#1e3a5f}
+    </style>
+    </head><body>
+    <h1>Vehicle Report — ${selectedVehicle.plate}</h1>
+    <p>${selectedVehicle.make} ${selectedVehicle.model} | Year: ${selectedVehicle.year} | Driver: ${selectedVehicle.driverName||'—'}</p>
+    <p>Department: ${selectedVehicle.companyDepartment||'—'} | Status: ${selectedVehicle.status||'—'}</p>
+    <p>Generated: ${new Date().toLocaleString()}</p>
+    <h2>Fuel History (${vehicleData.fuel.length} records)</h2>
+    <table><thead><tr><th>Date</th><th>Liters</th><th>Cost (RWF)</th><th>Station</th></tr></thead>
+    <tbody>${fuelRows||'<tr><td colspan="4">No fuel records</td></tr>'}</tbody></table>
+    <h2>Tyre History (${vehicleData.tyres.length} tyres)</h2>
+    <table><thead><tr><th>Serial No.</th><th>Brand</th><th>Size</th><th>Status</th><th>Position</th></tr></thead>
+    <tbody>${tyreRows||'<tr><td colspan="5">No tyre records</td></tr>'}</tbody></table>
+    <h2>Spare Parts Used (${vehicleData.spareParts.length} records)</h2>
+    <table><thead><tr><th>Date</th><th>Reason</th><th>Qty</th><th>Done By</th></tr></thead>
+    <tbody>${partRows||'<tr><td colspan="4">No spare parts records</td></tr>'}</tbody></table>
+    <h2>Expenses (${vehicleData.expenses.length} records)</h2>
+    <table><thead><tr><th>Date</th><th>Reason</th><th>Received By</th><th>Amount (RWF)</th></tr></thead>
+    <tbody>${expRows||'<tr><td colspan="4">No expense records</td></tr>'}</tbody></table>
+    <div class="summary">
+      <div class="summary-row"><span>Total Fuel Cost</span><span>${totalFuel.toLocaleString()} RWF</span></div>
+      <div class="summary-row"><span>Total Tyre Cost</span><span>${totalTyres.toLocaleString()} RWF</span></div>
+      <div class="summary-row"><span>Total Spare Parts Cost</span><span>${totalParts.toLocaleString()} RWF</span></div>
+      <div class="summary-row"><span>Total Expenses</span><span>${totalExp.toLocaleString()} RWF</span></div>
+      <div class="summary-total"><span>TOTAL VEHICLE COST</span><span>${total.toLocaleString()} RWF</span></div>
+    </div>
+    </body></html>`
+    const w=window.open('','_blank');w.document.write(html);w.document.close();w.print()
+  }
+
+  // CSV export handler for each tab
   const handleExportCSV=()=>{
     if(activeReport==='fleet')exportCSV(filteredFleet.map(v=>[v.plate,v.make,v.model,v.year,v.status,v.driverName,v.driverPhone,v.mileage,v.insuranceExpiry]),['Plate','Make','Model','Year','Status','Driver','Phone','Mileage','Ins. Expiry'],'fleet')
     else if(activeReport==='garage')exportCSV(filteredGarage.map(v=>[v.plate,v.make,v.model,v.year,v.status,v.ownerName,v.ownerPhone,v.mileage]),['Plate','Make','Model','Year','Status','Owner','Phone','Mileage'],'garage')
     else if(activeReport==='fuel')exportCSV(filteredFuel.map(f=>[f.fleetVehicle?.plate,f.date,f.liters,f.totalCost,f.station,f.filledBy]),['Vehicle','Date','Liters','Total Cost','Station','Filled By'],'fuel')
-    else if(activeReport==='inventory')exportCSV(filteredInventory.map(i=>[i.name,i.category,i.quantity,i.unit,i.unitPrice,i.status,i.supplier]),['Name','Category','Qty','Unit','Price','Status','Supplier'],'inventory')
+    else if(activeReport==='spareParts')exportCSV(filteredInventory.map(i=>[i.name,i.category,i.quantity,i.unit,i.unitPrice,i.status,i.supplier,i.location]),['Name','Category','Qty','Unit','Price','Status','Supplier','Location'],'spare-parts')
+    else if(activeReport==='tyres')exportCSV(filteredTyres.map(t=>[t.serialNumber,t.brand,t.size,t.status,t.condition,t.fleetVehicle?.plate||'—',t.position?.replace(/_/g,' ')||'—',t.purchaseDate,t.purchasePrice]),['Serial No','Brand','Size','Status','Condition','Vehicle','Position','Purchase Date','Price (RWF)'],'tyres')
     else if(activeReport==='staff')exportCSV(filteredStaff.map(s=>[s.name,s.email,s.role]),['Name','Email','Role'],'staff')
     else if(activeReport==='expenses')exportCSV(filteredExpenses.map(e=>[e.date,e.plate,e.reason,e.assignment||e.receivedBy||'',e.amount]),['Date','Plate','Reason','Received By','Amount'],'expenses')
   }
+
+  // PDF export handler for each tab
   const handleExportPDF=()=>{
     if(activeReport==='fleet')exportPDF('Fleet Vehicles Report',['Plate','Make','Model','Year','Status','Driver','Mileage','Ins. Expiry'],filteredFleet.map(v=>[v.plate,v.make,v.model,v.year,v.status,v.driverName,v.mileage,v.insuranceExpiry]))
     else if(activeReport==='garage')exportPDF('Garage Vehicles Report',['Plate','Make','Model','Year','Status','Owner','Phone','Mileage'],filteredGarage.map(v=>[v.plate,v.make,v.model,v.year,v.status,v.ownerName,v.ownerPhone,v.mileage]))
     else if(activeReport==='fuel')exportPDF('Fuel Logs Report',['Vehicle','Date','Liters','Total Cost (RWF)','Station','Filled By'],filteredFuel.map(f=>[f.fleetVehicle?.plate,f.date,f.liters,f.totalCost,f.station,f.filledBy]))
-    else if(activeReport==='inventory')exportPDF('Inventory Report',['Name','Category','Qty','Unit Price','Status','Supplier'],filteredInventory.map(i=>[i.name,i.category,`${i.quantity} ${i.unit}`,i.unitPrice,i.status,i.supplier]))
+    else if(activeReport==='spareParts')exportPDF('Spare Parts Report',['Name','Category','Qty','Unit Price','Status','Supplier','Location'],filteredInventory.map(i=>[i.name,i.category,`${i.quantity} ${i.unit}`,i.unitPrice,i.status,i.supplier,i.location]))
+    else if(activeReport==='tyres')exportPDF('Tyres Report',['Serial No','Brand','Size','Status','Condition','Vehicle','Position','Price (RWF)'],filteredTyres.map(t=>[t.serialNumber,t.brand,t.size,t.status,t.condition,t.fleetVehicle?.plate||'—',t.position?.replace(/_/g,' ')||'—',t.purchasePrice]))
     else if(activeReport==='staff')exportPDF('Staff Report',['Name','Email','Role'],filteredStaff.map(s=>[s.name,s.email,s.role]))
     else if(activeReport==='expenses')exportPDF('Expenses Report',['Date','Plate','Reason','Received By','Amount (RWF)'],filteredExpenses.map(e=>[e.date,e.plate||'—',e.reason,e.assignment||e.receivedBy||'—',(e.amount||0).toLocaleString()]))
   }
+
   const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December']
-  const currentCount={fleet:filteredFleet.length,garage:filteredGarage.length,fuel:filteredFuel.length,inventory:filteredInventory.length,staff:filteredStaff.length,expenses:filteredExpenses.length}[activeReport]||0
+
+  // Record count for current active tab
+  const currentCount={
+    fleet:filteredFleet.length,
+    garage:filteredGarage.length,
+    fuel:filteredFuel.length,
+    spareParts:filteredInventory.length,
+    tyres:filteredTyres.length,
+    staff:filteredStaff.length,
+    expenses:filteredExpenses.length
+  }[activeReport]||0
+
+  // Vehicle report totals
+  const totalFuelCostV=vehicleData.fuel.reduce((s,f)=>s+(f.totalCost||0),0)
+  const totalTyreCostV=vehicleData.tyres.reduce((s,t)=>s+(t.purchasePrice||0),0)
+  const totalPartsV=vehicleData.spareParts.reduce((s,p)=>s+(p.quantity*(p.unitPrice||0)),0)
+  const totalExpV=vehicleData.expenses.reduce((s,e)=>s+(e.amount||0),0)
+  const totalVehicleCost=totalFuelCostV+totalTyreCostV+totalPartsV+totalExpV
+
   return (
     <>
+      {/* ── Vehicle Report Modal ── */}
+      {selectedVehicle&&(
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setSelectedVehicle(null)}>
+          <div className="modal" style={{maxWidth:700,maxHeight:'90vh',overflowY:'auto'}}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-title">Vehicle Report — {selectedVehicle.plate}</div>
+                <div style={{fontSize:12,color:'var(--text2)',marginTop:2}}>{selectedVehicle.make} {selectedVehicle.model} | Driver: {selectedVehicle.driverName||'—'} | {selectedVehicle.companyDepartment||'—'}</div>
+              </div>
+              <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                <button className="btn btn-blue btn-sm" onClick={exportVehicleReportPDF}>Export PDF</button>
+                <X onClick={()=>setSelectedVehicle(null)}/>
+              </div>
+            </div>
+
+            {loadingVehicle?(
+              <div style={{padding:48,textAlign:'center',color:'var(--text3)'}}>Loading vehicle data...</div>
+            ):(
+              <div className="modal-body" style={{padding:0}}>
+
+                {/* Summary cost cards */}
+                <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,padding:'16px 20px',background:'var(--surface2)',borderBottom:'1px solid var(--border)'}}>
+                  {[
+                    {label:'Fuel Cost',value:totalFuelCostV,color:'#f59e0b'},
+                    {label:'Tyre Cost',value:totalTyreCostV,color:'#7c3aed'},
+                    {label:'Parts Cost',value:totalPartsV,color:'#0891b2'},
+                    {label:'Expenses',value:totalExpV,color:'var(--red)'},
+                  ].map(s=>(
+                    <div key={s.label} style={{textAlign:'center'}}>
+                      <div style={{fontSize:10,color:'var(--text2)',fontWeight:600,marginBottom:4}}>{s.label}</div>
+                      <div style={{fontSize:14,fontWeight:800,color:s.color}}>{s.value.toLocaleString()}</div>
+                      <div style={{fontSize:10,color:'var(--text3)'}}>RWF</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Total cost banner */}
+                <div style={{background:'#1e3a5f',color:'#fff',padding:'10px 20px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <span style={{fontWeight:700,fontSize:13}}>TOTAL VEHICLE COST</span>
+                  <span style={{fontFamily:'DM Mono,monospace',fontWeight:800,fontSize:16}}>{totalVehicleCost.toLocaleString()} RWF</span>
+                </div>
+
+                {/* Vehicle report inner tabs */}
+                <div className="tab-bar" style={{margin:'16px 20px 0',width:'auto'}}>
+                  {[['fuel','Fuel'],['tyres','Tyres'],['spareParts','Spare Parts'],['expenses','Expenses']].map(([key,label])=>(
+                    <button key={key} className="tab-btn" onClick={()=>setVehicleTab(key)}
+                      style={{background:vehicleTab===key?'var(--blue)':'transparent',color:vehicleTab===key?'#fff':'var(--text2)',padding:'7px 14px'}}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                <div style={{padding:'16px 20px'}}>
+
+                  {/* Fuel tab */}
+                  {vehicleTab==='fuel'&&(
+                    vehicleData.fuel.length===0?(
+                      <div style={{textAlign:'center',color:'var(--text3)',padding:32}}>No fuel records for this vehicle</div>
+                    ):(
+                      <table className="table">
+                        <thead><tr><th>Date</th><th>Type</th><th>Liters</th><th>Cost (RWF)</th><th className="hide-mobile">Station</th></tr></thead>
+                        <tbody>
+                          {[...vehicleData.fuel].reverse().map(f=>{
+                            const ft=f.filledBy?.startsWith('PETROL:')?'PETROL':'DIESEL'
+                            return(
+                              <tr key={f.id}>
+                                <td style={{color:'var(--text2)'}}>{f.date}</td>
+                                <td><span style={{fontSize:11,fontWeight:800,borderRadius:20,padding:'3px 9px',background:ft==='PETROL'?'#dbeafe':'#fef3c7',color:ft==='PETROL'?'#1e40af':'#92400e'}}>{ft}</span></td>
+                                <td style={{fontWeight:700}}>{f.liters}L</td>
+                                <td style={{fontFamily:'DM Mono,monospace',color:'var(--green)',fontWeight:700}}>{(f.totalCost||0).toLocaleString()}</td>
+                                <td className="hide-mobile" style={{color:'var(--text2)'}}>{f.station||'—'}</td>
+                              </tr>
+                            )
+                          })}
+                          <tr style={{background:'var(--surface2)',borderTop:'2px solid var(--border)'}}>
+                            <td colSpan={2} style={{fontWeight:800}}>TOTAL</td>
+                            <td style={{fontWeight:800}}>{vehicleData.fuel.reduce((s,f)=>s+(f.liters||0),0).toFixed(1)}L</td>
+                            <td style={{fontFamily:'DM Mono,monospace',color:'var(--green)',fontWeight:800}}>{totalFuelCostV.toLocaleString()}</td>
+                            <td/>
+                          </tr>
+                        </tbody>
+                      </table>
+                    )
+                  )}
+
+                  {/* Tyres tab */}
+                  {vehicleTab==='tyres'&&(
+                    vehicleData.tyres.length===0?(
+                      <div style={{textAlign:'center',color:'var(--text3)',padding:32}}>No tyre records for this vehicle</div>
+                    ):(
+                      <table className="table">
+                        <thead><tr><th>Serial No.</th><th>Brand</th><th>Size</th><th>Status</th><th>Position</th><th className="hide-mobile">Price (RWF)</th></tr></thead>
+                        <tbody>
+                          {vehicleData.tyres.map(t=>{
+                            const sc={New:{bg:'#d1fae5',color:'#065f46'},In_Use:{bg:'#dbeafe',color:'#1e40af'},Worn:{bg:'#fef3c7',color:'#92400e'},Damaged:{bg:'#fee2e2',color:'#991b1b'},Disposed:{bg:'#f3f4f6',color:'#6b7280'}}[t.status]||{bg:'#f3f4f6',color:'#6b7280'}
+                            return(
+                              <tr key={t.id}>
+                                <td style={{fontFamily:'DM Mono,monospace',fontWeight:700}}>{t.serialNumber||'—'}</td>
+                                <td style={{fontWeight:600}}>{t.brand}</td>
+                                <td style={{fontFamily:'DM Mono,monospace',fontSize:13}}>{t.size}</td>
+                                <td><span style={{fontSize:11,fontWeight:700,borderRadius:20,padding:'3px 8px',background:sc.bg,color:sc.color}}>{t.status?.replace('_',' ')}</span></td>
+                                <td style={{color:'var(--text2)'}}>{t.position?.replace(/_/g,' ')||'—'}</td>
+                                <td className="hide-mobile" style={{fontFamily:'DM Mono,monospace',color:'var(--green)'}}>{t.purchasePrice?(t.purchasePrice).toLocaleString():'—'}</td>
+                              </tr>
+                            )
+                          })}
+                          <tr style={{background:'var(--surface2)',borderTop:'2px solid var(--border)'}}>
+                            <td colSpan={5} style={{fontWeight:800}}>TOTAL TYRE COST</td>
+                            <td style={{fontFamily:'DM Mono,monospace',color:'var(--green)',fontWeight:800}}>{totalTyreCostV.toLocaleString()}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    )
+                  )}
+
+                  {/* Spare Parts tab */}
+                  {vehicleTab==='spareParts'&&(
+                    vehicleData.spareParts.length===0?(
+                      <div style={{textAlign:'center',color:'var(--text3)',padding:32}}>No spare parts records for this vehicle</div>
+                    ):(
+                      <table className="table">
+                        <thead><tr><th>Date</th><th>Reason</th><th>Qty</th><th className="hide-mobile">Done By</th><th className="hide-mobile">Notes</th></tr></thead>
+                        <tbody>
+                          {[...vehicleData.spareParts].reverse().map(p=>(
+                            <tr key={p.id}>
+                              <td style={{color:'var(--text2)'}}>{p.usedDate||'—'}</td>
+                              <td style={{fontWeight:600}}>{p.reason||'—'}</td>
+                              <td style={{fontFamily:'DM Mono,monospace',fontWeight:700}}>{p.quantity}</td>
+                              <td className="hide-mobile" style={{color:'var(--text2)'}}>{p.doneBy||'—'}</td>
+                              <td className="hide-mobile" style={{color:'var(--text2)',fontSize:12}}>{p.notes||'—'}</td>
+                            </tr>
+                          ))}
+                          <tr style={{background:'var(--surface2)',borderTop:'2px solid var(--border)'}}>
+                            <td colSpan={4} style={{fontWeight:800}}>TOTAL PARTS USED</td>
+                            <td style={{fontFamily:'DM Mono,monospace',fontWeight:800}}>{vehicleData.spareParts.reduce((s,p)=>s+p.quantity,0)}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    )
+                  )}
+
+                  {/* Expenses tab */}
+                  {vehicleTab==='expenses'&&(
+                    vehicleData.expenses.length===0?(
+                      <div style={{textAlign:'center',color:'var(--text3)',padding:32}}>No expense records for this vehicle</div>
+                    ):(
+                      <table className="table">
+                        <thead><tr><th>Date</th><th>Reason</th><th className="hide-mobile">Received By</th><th>Amount (RWF)</th></tr></thead>
+                        <tbody>
+                          {vehicleData.expenses.map(e=>(
+                            <tr key={e.id}>
+                              <td style={{color:'var(--text2)'}}>{e.date}</td>
+                              <td style={{fontWeight:600}}>{e.reason}</td>
+                              <td className="hide-mobile" style={{color:'var(--text2)'}}>{e.assignment||e.receivedBy||'—'}</td>
+                              <td style={{fontFamily:'DM Mono,monospace',color:'var(--red)',fontWeight:700}}>{(e.amount||0).toLocaleString()}</td>
+                            </tr>
+                          ))}
+                          <tr style={{background:'var(--surface2)',borderTop:'2px solid var(--border)'}}>
+                            <td colSpan={3} style={{fontWeight:800}}>TOTAL EXPENSES</td>
+                            <td style={{fontFamily:'DM Mono,monospace',color:'var(--red)',fontWeight:800}}>{totalExpV.toLocaleString()}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Page Header ── */}
       <div className="page-header">
         <div><div className="page-title">Reports</div><div className="page-sub">Generate and export reports</div></div>
         <div className="page-actions">
@@ -1187,39 +1495,55 @@ function ReportsPage() {
           <button className="btn btn-blue btn-sm" onClick={handleExportPDF}>PDF</button>
         </div>
       </div>
+
       <div className="page-content">
+        {/* ── Report Tab Bar ── */}
         <div className="tab-bar" style={{marginBottom:16}}>
           {reportTabs.map(t=>(
-            <button key={t.key} className="tab-btn" onClick={()=>{setActiveReport(t.key);setSearch('')}} style={{background:activeReport===t.key?'var(--blue)':'transparent',color:activeReport===t.key?'#fff':'var(--text2)'}}>{t.label}</button>
+            <button key={t.key} className="tab-btn" onClick={()=>{setActiveReport(t.key);setSearch('')}}
+              style={{background:activeReport===t.key?'var(--blue)':'transparent',color:activeReport===t.key?'#fff':'var(--text2)'}}>
+              {t.label}
+            </button>
           ))}
         </div>
+
+        {/* ── Search Bar ── */}
         <div style={{marginBottom:16,display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
           <input className="form-input" style={{flex:1,minWidth:160}} placeholder="Search..." value={search} onChange={e=>setSearch(e.target.value)}/>
-          {search&&<button className="btn btn-ghost btn-sm" onClick={()=>setSearch('')}></button>}
+          {search&&<button className="btn btn-ghost btn-sm" onClick={()=>setSearch('')}>✕</button>}
           <span style={{fontSize:13,color:'var(--text2)',fontWeight:600,whiteSpace:'nowrap'}}>{currentCount} records</span>
         </div>
+
         <div className="card">
+
+          {/* ── Fleet Tab — clickable plate + Report button ── */}
           {activeReport==='fleet'&&(
             filteredFleet.length===0?<div style={{padding:48,textAlign:'center',color:'var(--text3)'}}>No fleet vehicles found</div>:(
               <div className="table-wrap"><table className="table">
-                <thead><tr><th>Plate</th><th>Make/Model</th><th className="hide-mobile">Year</th><th>Status</th><th className="hide-mobile">Driver</th><th className="hide-mobile">Ins. Expiry</th></tr></thead>
+                <thead><tr><th>Plate</th><th>Make/Model</th><th className="hide-mobile">Year</th><th>Status</th><th className="hide-mobile">Driver</th><th className="hide-mobile">Ins. Expiry</th><th>Report</th></tr></thead>
                 <tbody>{filteredFleet.map(v=>{const ss=FLEET_STATUS[v.status]||FLEET_STATUS['Active'];return(
                   <tr key={v.id}>
-                    <td style={{fontFamily:'DM Mono,monospace',color:'var(--blue)',fontWeight:700}}>{v.plate}</td>
+                    <td>
+                      <span style={{fontFamily:'DM Mono,monospace',color:'var(--blue)',fontWeight:700,cursor:'pointer',textDecoration:'underline'}}
+                        onClick={()=>openVehicleReport(v)}>{v.plate}</span>
+                    </td>
                     <td style={{fontWeight:600}}>{v.make} {v.model}</td>
                     <td className="hide-mobile">{v.year}</td>
                     <td><span style={{fontSize:11,fontWeight:700,borderRadius:20,padding:'3px 8px',background:ss.bg,color:ss.color}}>{v.status?.replace('_',' ')}</span></td>
                     <td className="hide-mobile">{v.driverName||'—'}</td>
                     <td className="hide-mobile" style={{color:v.insuranceExpiry&&new Date(v.insuranceExpiry)<new Date()?'var(--red)':'var(--text2)'}}>{v.insuranceExpiry||'—'}</td>
+                    <td><button className="btn btn-ghost btn-sm" onClick={()=>openVehicleReport(v)}>Report</button></td>
                   </tr>
                 )})}</tbody>
               </table></div>
             )
           )}
+
+          {/* ── Garage Tab ── */}
           {activeReport==='garage'&&(
             filteredGarage.length===0?<div style={{padding:48,textAlign:'center',color:'var(--text3)'}}>No garage vehicles found</div>:(
               <div className="table-wrap"><table className="table">
-                <thead><tr><th>Plate</th><th>Make/Model</th><th>Status</th><th className="hide-mobile">Owner</th></tr></thead>
+                <thead><tr><th>Plate</th><th>Make/Model</th><th>Status</th><th className="hide-mobile">Owner</th><th className="hide-mobile">Mileage</th></tr></thead>
                 <tbody>{filteredGarage.map(v=>{const ss=STATUS_STYLE[v.status]||STATUS_STYLE['Ready'];return(
                   <tr key={v.id}>
                     <td style={{fontFamily:'DM Mono,monospace',color:'var(--blue)',fontWeight:700}}>{v.plate}</td>
@@ -1232,22 +1556,24 @@ function ReportsPage() {
               </table></div>
             )
           )}
+
+          {/* ── Fuel Tab ── */}
           {activeReport==='fuel'&&(()=>{
             const getFT=(log)=>{
               if(log.filledBy?.startsWith('PETROL:')) return 'PETROL'
               if(log.filledBy?.startsWith('DIESEL:')) return 'DIESEL'
               return log.fuelType||'DIESEL'
             }
-            const fuelFiltered = data.fuel
-              .filter(l=> fuelMonth==='ALL' || (l.date && new Date(l.date).getMonth()===MONTHS.indexOf(fuelMonth)))
-              .filter(l=> fuelTypeFilter==='ALL' || getFT(l)===fuelTypeFilter)
-              .filter(l=> !q || l.fleetVehicle?.plate?.toLowerCase().includes(q))
-            const dieselRows = fuelFiltered.filter(l=>getFT(l)==='DIESEL')
-            const petrolRows = fuelFiltered.filter(l=>getFT(l)==='PETROL')
-            const totalDieselL = dieselRows.reduce((s,l)=>s+(l.liters||0),0)
-            const totalDieselC = dieselRows.reduce((s,l)=>s+(l.totalCost||0),0)
-            const totalPetrolL = petrolRows.reduce((s,l)=>s+(l.liters||0),0)
-            const totalPetrolC = petrolRows.reduce((s,l)=>s+(l.totalCost||0),0)
+            const fuelFiltered=data.fuel
+              .filter(l=>fuelMonth==='ALL'||(l.date&&new Date(l.date).getMonth()===MONTHS.indexOf(fuelMonth)))
+              .filter(l=>fuelTypeFilter==='ALL'||getFT(l)===fuelTypeFilter)
+              .filter(l=>!q||l.fleetVehicle?.plate?.toLowerCase().includes(q))
+            const dieselRows=fuelFiltered.filter(l=>getFT(l)==='DIESEL')
+            const petrolRows=fuelFiltered.filter(l=>getFT(l)==='PETROL')
+            const totalDieselL=dieselRows.reduce((s,l)=>s+(l.liters||0),0)
+            const totalDieselC=dieselRows.reduce((s,l)=>s+(l.totalCost||0),0)
+            const totalPetrolL=petrolRows.reduce((s,l)=>s+(l.liters||0),0)
+            const totalPetrolC=petrolRows.reduce((s,l)=>s+(l.totalCost||0),0)
             return(
               <>
                 <div style={{display:'flex',gap:10,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}>
@@ -1295,22 +1621,95 @@ function ReportsPage() {
               </>
             )
           })()}
-          {activeReport==='inventory'&&(
-            filteredInventory.length===0?<div style={{padding:48,textAlign:'center',color:'var(--text3)'}}>No inventory items</div>:(
+
+          {/* ── Spare Parts Tab ── */}
+          {activeReport==='spareParts'&&(
+            filteredInventory.length===0?<div style={{padding:48,textAlign:'center',color:'var(--text3)'}}>No spare parts found</div>:(
               <div className="table-wrap"><table className="table">
-                <thead><tr><th>Name</th><th className="hide-mobile">Category</th><th>Qty</th><th className="hide-mobile">Unit Price</th><th>Status</th></tr></thead>
-                <tbody>{filteredInventory.map(i=>{const st=INV_STATUS[i.status]||INV_STATUS['In_Stock'];return(
-                  <tr key={i.id}>
-                    <td style={{fontWeight:600}}>{i.name}</td>
-                    <td className="hide-mobile"><span style={{fontSize:11,background:'var(--surface2)',color:'var(--text2)',borderRadius:6,padding:'3px 8px',fontWeight:600}}>{i.category}</span></td>
-                    <td style={{fontFamily:'DM Mono,monospace',fontWeight:600}}>{i.quantity} {i.unit}</td>
-                    <td className="hide-mobile" style={{fontFamily:'DM Mono,monospace',color:'var(--green)'}}>{(i.unitPrice||0).toLocaleString()} RWF</td>
-                    <td><span style={{fontSize:11,fontWeight:700,borderRadius:20,padding:'3px 8px',background:st.bg,color:st.color}}>{i.status?.replace('_',' ')}</span></td>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th className="hide-mobile">Category</th>
+                    <th>Qty</th>
+                    <th className="hide-mobile">Unit Price (RWF)</th>
+                    <th>Status</th>
+                    <th className="hide-mobile">Supplier</th>
+                    <th className="hide-mobile">Location</th>
                   </tr>
-                )})}</tbody>
+                </thead>
+                <tbody>
+                  {filteredInventory.map(i=>{
+                    const st=INV_STATUS[i.status]||INV_STATUS['In_Stock']
+                    return(
+                      <tr key={i.id}>
+                        <td style={{fontWeight:600}}>{i.name}</td>
+                        <td className="hide-mobile"><span style={{fontSize:11,background:'var(--surface2)',color:'var(--text2)',borderRadius:6,padding:'3px 8px',fontWeight:600}}>{i.category}</span></td>
+                        <td style={{fontFamily:'DM Mono,monospace',fontWeight:600}}>{i.quantity} {i.unit}</td>
+                        <td className="hide-mobile" style={{fontFamily:'DM Mono,monospace',color:'var(--green)'}}>{(i.unitPrice||0).toLocaleString()}</td>
+                        <td><span style={{fontSize:11,fontWeight:700,borderRadius:20,padding:'3px 8px',background:st.bg,color:st.color}}>{i.status?.replace('_',' ')}</span></td>
+                        <td className="hide-mobile" style={{color:'var(--text2)'}}>{i.supplier||'—'}</td>
+                        <td className="hide-mobile" style={{color:'var(--text2)'}}>{i.location||'—'}</td>
+                      </tr>
+                    )
+                  })}
+                  <tr style={{background:'var(--surface2)',borderTop:'2px solid var(--border)'}}>
+                    <td colSpan={5} style={{fontWeight:800}}>TOTAL STOCK VALUE</td>
+                    <td colSpan={2} style={{fontFamily:'DM Mono,monospace',color:'var(--green)',fontWeight:800}}>
+                      {filteredInventory.reduce((s,i)=>s+((i.quantity||0)*(i.unitPrice||0)),0).toLocaleString()} RWF
+                    </td>
+                  </tr>
+                </tbody>
               </table></div>
             )
           )}
+
+          {/* ── Tyres Tab ── */}
+          {activeReport==='tyres'&&(
+            filteredTyres.length===0?<div style={{padding:48,textAlign:'center',color:'var(--text3)'}}>No tyres found</div>:(
+              <div className="table-wrap"><table className="table">
+                <thead>
+                  <tr>
+                    <th>Serial No.</th>
+                    <th>Brand</th>
+                    <th>Size</th>
+                    <th>Status</th>
+                    <th className="hide-mobile">Condition</th>
+                    <th>Vehicle</th>
+                    <th className="hide-mobile">Position</th>
+                    <th className="hide-mobile">Purchase Date</th>
+                    <th className="hide-mobile">Price (RWF)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTyres.map(t=>{
+                    const sc={New:{bg:'#d1fae5',color:'#065f46'},In_Use:{bg:'#dbeafe',color:'#1e40af'},Worn:{bg:'#fef3c7',color:'#92400e'},Damaged:{bg:'#fee2e2',color:'#991b1b'},Disposed:{bg:'#f3f4f6',color:'#6b7280'}}[t.status]||{bg:'#f3f4f6',color:'#6b7280'}
+                    const cc={Good:{bg:'#d1fae5',color:'#065f46'},Fair:{bg:'#fef3c7',color:'#92400e'},Poor:{bg:'#fee2e2',color:'#991b1b'}}[t.condition]||{bg:'#f3f4f6',color:'#6b7280'}
+                    return(
+                      <tr key={t.id}>
+                        <td style={{fontFamily:'DM Mono,monospace',fontWeight:700}}>{t.serialNumber||'—'}</td>
+                        <td style={{fontWeight:600}}>{t.brand}</td>
+                        <td style={{fontFamily:'DM Mono,monospace',fontSize:13}}>{t.size}</td>
+                        <td><span style={{fontSize:11,fontWeight:700,borderRadius:20,padding:'3px 8px',background:sc.bg,color:sc.color}}>{t.status?.replace('_',' ')}</span></td>
+                        <td className="hide-mobile"><span style={{fontSize:11,fontWeight:700,borderRadius:20,padding:'3px 8px',background:cc.bg,color:cc.color}}>{t.condition}</span></td>
+                        <td style={{fontFamily:'DM Mono,monospace',color:'var(--blue)',fontWeight:700}}>{t.fleetVehicle?.plate||'—'}</td>
+                        <td className="hide-mobile" style={{color:'var(--text2)'}}>{t.position?.replace(/_/g,' ')||'—'}</td>
+                        <td className="hide-mobile" style={{color:'var(--text2)'}}>{t.purchaseDate||'—'}</td>
+                        <td className="hide-mobile" style={{fontFamily:'DM Mono,monospace',color:'var(--green)'}}>{t.purchasePrice?Number(t.purchasePrice).toLocaleString():'—'}</td>
+                      </tr>
+                    )
+                  })}
+                  <tr style={{background:'var(--surface2)',borderTop:'2px solid var(--border)'}}>
+                    <td colSpan={7} style={{fontWeight:800}}>TOTAL TYRE VALUE</td>
+                    <td colSpan={2} style={{fontFamily:'DM Mono,monospace',color:'var(--green)',fontWeight:800}}>
+                      {filteredTyres.reduce((s,t)=>s+(t.purchasePrice||0),0).toLocaleString()} RWF
+                    </td>
+                  </tr>
+                </tbody>
+              </table></div>
+            )
+          )}
+
+          {/* ── Staff Tab ── */}
           {activeReport==='staff'&&(
             filteredStaff.length===0?<div style={{padding:48,textAlign:'center',color:'var(--text3)'}}>No staff found</div>:(
               <div className="table-wrap"><table className="table">
@@ -1326,11 +1725,12 @@ function ReportsPage() {
             )
           )}
 
-                    {activeReport==='expenses'&&(()=>{
-            const expFiltered = data.expenses
-              .filter(e=> expMonth==='ALL' || (e.date && new Date(e.date).getMonth()===MONTHS.indexOf(expMonth)))
-              .filter(e=> !q || e.plate?.toLowerCase().includes(q) || e.reason?.toLowerCase().includes(q))
-            const totalExp = expFiltered.reduce((s,e)=>s+(e.amount||0),0)
+          {/* ── Expenses Tab ── */}
+          {activeReport==='expenses'&&(()=>{
+            const expFiltered=data.expenses
+              .filter(e=>expMonth==='ALL'||(e.date&&new Date(e.date).getMonth()===MONTHS.indexOf(expMonth)))
+              .filter(e=>!q||e.plate?.toLowerCase().includes(q)||e.reason?.toLowerCase().includes(q))
+            const totalExp=expFiltered.reduce((s,e)=>s+(e.amount||0),0)
             return(
               <>
                 <div style={{display:'flex',gap:10,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}>
@@ -1364,12 +1764,12 @@ function ReportsPage() {
               </>
             )
           })()}
+
         </div>
       </div>
     </>
   )
 }
-
 //  FUEL LOGS 
 function FuelLogsPage({ user }) {
   const [logs, setLogs] = useState([])
